@@ -9,7 +9,7 @@
 
 #define DEBUG_MODE
 
-#define VERSION "1.0.0"
+#define VERSION "1.0.1"
 
 
 #define SPI_SCK D8
@@ -28,13 +28,6 @@
 #define TXD_HMI D6
 #define RXD_HMI D7
 
-
-
-//pinout setting
-#define ENC_BUTTON 35
-#define ENC_CLK  33
-#define ENC_DT   32
-#define PWM_HEAT 26
 
 // pwm setting
 #define PWM_FREQ 10000
