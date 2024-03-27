@@ -158,7 +158,7 @@ SemaphoreHandle_t xSerialReadBufferMutex = NULL;
 QueueHandle_t queue_data_to_HMI = xQueueCreate(15, sizeof(uint8_t[BUFFER_SIZE])); // 发送到HMI的数据 hex格式化数据
 QueueHandle_t queueCMD_HMI = xQueueCreate(15, sizeof(uint8_t[BUFFER_SIZE]));          //从HMI接收到的Hex格式命令
 QueueHandle_t queueCMD_BLE = xQueueCreate(8, sizeof(char[BUFFER_SIZE]));
-QueueHandle_t queue_DATA_to_BLE = xQueueCreate(8, sizeof(char[BUFFER_SIZE]));
+QueueHandle_t queue_data_to_BLE = xQueueCreate(8, sizeof(char[BUFFER_SIZE]));
 
 
 

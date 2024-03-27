@@ -3,7 +3,6 @@
 
 #include <Arduino.h>
 #include <Wire.h>
-
 #include <Adafruit_MAX31865.h>
 #include <ModbusIP_ESP8266.h>
 
@@ -56,10 +55,10 @@ void Task_Thermo_get_data(void *pvParameters)
         make_frame_data(TEMP_DATA_Buffer, 1, int(round(BT_TEMP * 10)), 3);
         make_frame_data(TEMP_DATA_Buffer, 1, int(round(ET_HREG * 10)), 5);
         xQueueSend(queue_data_to_HMI, &TEMP_DATA_Buffer, xIntervel / 3);
-        xQueueSend(queue_DATA_to_BLE, &TEMP_DATA_Buffer, xIntervel / 3);
+        xQueueSend(queue_data_to_BLE, &TEMP_DATA_Buffer, xIntervel / 3);
         // send notify to TASK_data_to_HMI
         xTaskNotify(xTASK_data_to_HMI, 0, eIncrement);
-                xTaskNotify(xTASK_data_to_BLE, 0, eIncrement);
+        xTaskNotify(xTASK_data_to_BLE, 0, eIncrement);
     }
 
 } // function

@@ -5,7 +5,6 @@
 #include <Wire.h>
 #include <ModbusIP_ESP8266.h>
 
-SemaphoreHandle_t xGetDataMutex = NULL; // Mutex for 读取温度数据
 
 //  ModbusIP object
 ModbusIP mb;
@@ -14,10 +13,6 @@ ModbusIP mb;
 Pwm pwm_fan = Pwm();
 Pwm pwm_heat = Pwm();
 bool init_status = true;
-
-
-int16_t heat_from_enc = 0;
-
 
 // PWM Pins
 const int HEAT_OUT_PIN = PWM_HEAT; // GPIO26
