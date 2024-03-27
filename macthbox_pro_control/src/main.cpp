@@ -26,41 +26,21 @@ char ap_name[30];
 uint8_t macAddr[6];
 AsyncWebServer server(80);
 
-void task_send_Hreg(void *pvParameters);
-void task_get_data(void *pvParameters);
 
-void Task_modbus_control(void *pvParameters);
-void Task_Thermo_get_data(void *pvParameters);
 
 void setup()
 {
     loopTaskWDTEnabled = true;
     xGetDataMutex = xSemaphoreCreateMutex();
     xSerialReadBufferMutex = xSemaphoreCreateMutex();
+
     pinMode(HEAT_OUT_PIN, OUTPUT);
     pinMode(FAN_OUT_PIN, OUTPUT);
 
     Serial.begin(BAUDRATE);
     Serial_HMI(0).begin(HMI_BAUDRATE, SERIAL_8N1, -1, -1);
-
     thermo_BT.begin(MAX318652WIRE); // set to 2WIRE or 4WIRE as necessary
     thermo_ET.begin(MAX318652WIRE); // set to 2WIRE or 4WIRE as necessary
-
-#if defined(DEBUG_MODE)
-    Serial.printf("\nHOT AIR ROASTER STARTING...\n");
-#endif
-
-    // Init BLE Serial
-    // Disable watchdog timers
-    disableCore0WDT();
-    disableLoopWDT();
-    esp_task_wdt_delete(NULL);
-
-    SerialBLE.begin(ap_name, true, 8); // FOR ESP32C3 SuperMini board
-    SerialBLE.setTimeout(10);
-#if defined(DEBUG_MODE)
-    Serial.printf("\nSerial_BT setup OK\n");
-#endif
 
     // 初始化网络服务
 
@@ -68,6 +48,16 @@ void setup()
     WiFi.mode(WIFI_AP);
     sprintf(ap_name, "ROASTER_%02X%02X%02X", macAddr[3], macAddr[4], macAddr[5]);
     WiFi.softAP(ap_name, "12345678"); // defualt IP address :192.168.4.1 password min 8 digis
+
+
+    // Init BLE Serial
+    // Disable watchdog timers
+    disableCore0WDT();
+    disableLoopWDT();
+    esp_task_wdt_delete(NULL);
+
+    SerialBLE.begin(ap_name, false, -1); // FOR ESP32C3 SuperMini board
+    SerialBLE.setTimeout(10);
 
 #if defined(DEBUG_MODE)
     Serial.printf("\nStart Task...\n");

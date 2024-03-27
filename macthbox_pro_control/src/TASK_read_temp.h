@@ -4,9 +4,10 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-
 #include <Adafruit_MAX31865.h>
 #include <ModbusIP_ESP8266.h>
+
+ModbusIP mb; // declear object
 
 double BT_TEMP;
 double ET_TEMP;
@@ -14,9 +15,6 @@ double ET_TEMP;
 // Use software SPI: CS, DI, DO, CLK
 Adafruit_MAX31865 thermo_BT = Adafruit_MAX31865(SPI_CS_CT, SPI_MOSI, SPI_MISO, SPI_SCK);
 Adafruit_MAX31865 thermo_ET = Adafruit_MAX31865(SPI_CS_ET, SPI_MOSI, SPI_MISO, SPI_SCK);
-
-
-
 
 // Modbus Registers Offsets
 const uint16_t BT_HREG = 3001;
@@ -50,7 +48,7 @@ void Task_Thermo_get_data(void *pvParameters)
         }
 
         // update  Hreg data
-        mb.Hreg(BT_HREG, int(round(BT_TEMP * 10)));       // 初始化赋值
+        mb.Hreg(BT_HREG, int(round(BT_TEMP * 10))); // 初始化赋值
         mb.Hreg(ET_HREG, int(round(ET_HREG * 10))); // 初始化赋值
 
         make_frame_head(TEMP_DATA_Buffer, 1);
@@ -58,8 +56,10 @@ void Task_Thermo_get_data(void *pvParameters)
         make_frame_data(TEMP_DATA_Buffer, 1, int(round(BT_TEMP * 10)), 3);
         make_frame_data(TEMP_DATA_Buffer, 1, int(round(ET_HREG * 10)), 5);
         xQueueSend(queue_data_to_HMI, &TEMP_DATA_Buffer, xIntervel / 3);
+        xQueueSend(queue_DATA_to_BLE, &TEMP_DATA_Buffer, xIntervel / 3);
         // send notify to TASK_data_to_HMI
         xTaskNotify(xTASK_data_to_HMI, 0, eIncrement);
+                xTaskNotify(xTASK_data_to_BLE, 0, eIncrement);
     }
 
 } // function
