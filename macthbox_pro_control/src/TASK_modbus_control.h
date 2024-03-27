@@ -4,7 +4,6 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <ModbusIP_ESP8266.h>
-#include <pwmWrite.h>
 
 SemaphoreHandle_t xGetDataMutex = NULL; // Mutex for 读取温度数据
 

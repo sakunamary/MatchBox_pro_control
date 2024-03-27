@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="BzFfho2s-DosaZCxsHBp" name="第 1 页">
-        <mxGraphModel dx="2026" dy="1077" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="1748" dy="1077" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -28,6 +28,14 @@
                 </mxCell>
                 <mxCell id="8" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Menlo, Menlo, Menlo, Menlo, Monaco, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 21px;&quot;&gt;ET_TEMP&lt;/div&gt;&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Menlo, Menlo, Menlo, Menlo, Monaco, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 21px;&quot;&gt;&lt;div style=&quot;line-height: 21px;&quot;&gt;&lt;div style=&quot;line-height: 21px;&quot;&gt;BT_TEMP&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="635" y="360" width="120" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="67" value="" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="9" target="66">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="910" y="610"/>
+                            <mxPoint x="910" y="270"/>
+                        </Array>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="9" value="&lt;div style=&quot;background-color: rgb(31, 31, 31); font-family: Menlo, Menlo, Menlo, Menlo, Monaco, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 21px;&quot;&gt;&lt;div style=&quot;&quot;&gt;    &lt;span style=&quot;color: rgb(156, 220, 254);&quot;&gt;mb&lt;/span&gt;&lt;font color=&quot;#cccccc&quot;&gt;.&lt;/font&gt;&lt;span style=&quot;color: rgb(220, 220, 170);&quot;&gt;Hreg&lt;/span&gt;&lt;font color=&quot;#cccccc&quot;&gt;(BT_HREG, &lt;/font&gt;&lt;font color=&quot;#b5cea8&quot;&gt;BT_TEMP&lt;/font&gt;&lt;font color=&quot;#cccccc&quot;&gt;);&lt;/font&gt;&lt;span style=&quot;color: rgb(106, 153, 85);&quot;&gt;&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;color: rgb(204, 204, 204);&quot;&gt;    &lt;span style=&quot;color: #9cdcfe;&quot;&gt;mb&lt;/span&gt;.&lt;span style=&quot;color: #dcdcaa;&quot;&gt;Hreg&lt;/span&gt;(ET_HREG, &lt;/span&gt;&lt;font color=&quot;#b5cea8&quot;&gt;ET_TEMP&lt;/font&gt;&lt;font color=&quot;#cccccc&quot;&gt;);&lt;/font&gt;&lt;span style=&quot;color: rgb(106, 153, 85);&quot;&gt;&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="540" y="570" width="310" height="80" as="geometry"/>
@@ -157,6 +165,9 @@
                 </mxCell>
                 <mxCell id="63" value="初始化Modbus" style="whiteSpace=wrap;html=1;rounded=1;" parent="1" vertex="1">
                     <mxGeometry x="-190" y="670" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="66" value="" style="whiteSpace=wrap;html=1;rounded=1;" vertex="1" parent="1">
+                    <mxGeometry x="960" y="240" width="120" height="60" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>

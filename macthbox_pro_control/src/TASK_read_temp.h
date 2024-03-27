@@ -11,18 +11,11 @@
 double BT_TEMP;
 double ET_TEMP;
 
-SemaphoreHandle_t xThermoDataMutex = NULL;
-
 // Use software SPI: CS, DI, DO, CLK
 Adafruit_MAX31865 thermo_BT = Adafruit_MAX31865(SPI_CS_CT, SPI_MOSI, SPI_MISO, SPI_SCK);
 Adafruit_MAX31865 thermo_ET = Adafruit_MAX31865(SPI_CS_ET, SPI_MOSI, SPI_MISO, SPI_SCK);
 
 
-// The value of the Rref resistor. Use 430.0 for PT100 and 4300.0 for PT1000
-#define RREF      430.0
-// The 'nominal' 0-degrees-C resistance of the sensor
-// 100.0 for PT100, 1000.0 for PT1000
-#define RNOMINAL  100.0
 
 
 // Modbus Registers Offsets
@@ -52,10 +45,21 @@ void Task_Thermo_get_data(void *pvParameters)
             vTaskDelay(20);
             ET_TEMP = round((thermo_ET.readCelsius() * 10) / 10);
             vTaskDelay(20);
-            mb.Hreg(BT_HREG, BT_TEMP);        // 更新赋值
-            mb.Hreg(ET_HREG, ET_TEMP);        // 更新赋值
+
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
+
+        // update  Hreg data
+        mb.Hreg(BT_HREG, int(round(BT_TEMP * 10)));       // 初始化赋值
+        mb.Hreg(ET_HREG, int(round(ET_HREG * 10))); // 初始化赋值
+
+        make_frame_head(TEMP_DATA_Buffer, 1);
+        make_frame_end(TEMP_DATA_Buffer, 1);
+        make_frame_data(TEMP_DATA_Buffer, 1, int(round(BT_TEMP * 10)), 3);
+        make_frame_data(TEMP_DATA_Buffer, 1, int(round(ET_HREG * 10)), 5);
+        xQueueSend(queue_data_to_HMI, &TEMP_DATA_Buffer, xIntervel / 3);
+        // send notify to TASK_data_to_HMI
+        xTaskNotify(xTASK_data_to_HMI, 0, eIncrement);
     }
 
 } // function
