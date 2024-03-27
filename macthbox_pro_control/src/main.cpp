@@ -1,25 +1,38 @@
 #include <Arduino.h>
 #include <config.h>
-
-#include <StringTokenizer.h>
-#include "ArduinoJson.h"
-#include <pwmWrite.h>
-#include <ESP32Encoder.h>
 #include "esp_task_wdt.h"
-#include "OneButton.h"
+
+
+#include <HardwareSerial.h>
+
+
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <AsyncElegantOTA.h>
 #include <ModbusIP_ESP8266.h>
 
+
+#include <BleSerial.h>
+#include <esp_attr.h>
+#include <esp_task_wdt.h>
+#include <driver/rtc_io.h>
+#include "soc/rtc_wdt.h"
+
+const int BUFFER_SIZE = 1024;
+
+BleSerial SerialBLE;
+
+// For ESP32-C3
+HardwareSerial Serial_TC4(0);
+
+
+
 #include <TASK_modbus_control.h>
 #include <TASK_read_temp.h>
 
 
 String local_IP;
-
-
 
 extern bool loopTaskWDTEnabled;
 extern TaskHandle_t loopTaskHandle;
@@ -30,40 +43,12 @@ char ap_name[30];
 uint8_t macAddr[6];
 AsyncWebServer server(80);
 
-OneButton button(ENC_BUTTON, true);
-
-static IRAM_ATTR void enc_cb(void *arg);
 void task_send_Hreg(void *pvParameters);
 void task_get_data(void *pvParameters);
-
-void IRAM_ATTR checkTicks()
-{
-    // include all buttons here to be checked
-    button.tick(); // just call tick() to check the state.
-}
-
-// this function will be called when the button was released after a long hold.
-void pressStop()
-{
-    ESP.restart();
-} // pressStop()
-
-ESP32Encoder encoder(true);
-static IRAM_ATTR void enc_cb(void *arg)
-{
-    ESP32Encoder *enc = (ESP32Encoder *)arg;
-}
-
 
 
 void Task_modbus_control(void *pvParameters);
 void Task_Thermo_get_data(void *pvParameters);
-
-
-
-
-
-
 
 
 void setup()
@@ -82,13 +67,6 @@ void setup()
     Serial.printf("\nHOT AIR ROASTER STARTING...\n");
 #endif
 
-
-
-    // setup interrupt routine
-    // when not registering to the interrupt the sketch also works when the tick is called frequently.
-    attachInterrupt(digitalPinToInterrupt(ENC_BUTTON), checkTicks, CHANGE);
-    button.setPressMs(3000); // that is the time when LongPressStart is called
-    button.attachLongPressStop(pressStop);
 
     // 初始化网络服务
 
@@ -180,7 +158,6 @@ void setup()
 void loop()
 {
     mb.task();
-    // button loop
-    button.tick();
+
 
 }

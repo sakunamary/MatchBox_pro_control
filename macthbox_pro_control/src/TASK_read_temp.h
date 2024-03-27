@@ -3,16 +3,27 @@
 
 #include <Arduino.h>
 #include <Wire.h>
-#include "max6675.h"
+
+
+#include <Adafruit_MAX31865.h>
 #include <ModbusIP_ESP8266.h>
 
 double BT_TEMP;
 double ET_TEMP;
 
-MAX6675 thermo_BT(SPI_SCK, SPI_CS_BT, SPI_MISO); // CH2  thermoEX
-MAX6675 thermo_ET(SPI_SCK, SPI_CS_ET, SPI_MISO); // CH2  thermoEX
-
 SemaphoreHandle_t xThermoDataMutex = NULL;
+
+// Use software SPI: CS, DI, DO, CLK
+Adafruit_MAX31865 thermo_BT = Adafruit_MAX31865(SPI_CS_CT, SPI_MOSI, SPI_MISO, SPI_SCK);
+Adafruit_MAX31865 thermo_ET = Adafruit_MAX31865(SPI_CS_ET, SPI_MOSI, SPI_MISO, SPI_SCK);
+
+
+// The value of the Rref resistor. Use 430.0 for PT100 and 4300.0 for PT1000
+#define RREF      430.0
+// The 'nominal' 0-degrees-C resistance of the sensor
+// 100.0 for PT100, 1000.0 for PT1000
+#define RNOMINAL  100.0
+
 
 // Modbus Registers Offsets
 const uint16_t BT_HREG = 3001;
