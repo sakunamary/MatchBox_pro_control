@@ -1,8 +1,9 @@
 // 发送指令到HMI
-
-
 #ifndef __TASK_HMI_SERIAL_H__
 #define __TASK_HMI_SERIAL_H__
+
+#include <Arduino.h>
+#include <config.h>
 
 
 void TASK_data_to_HMI(void *pvParameters)

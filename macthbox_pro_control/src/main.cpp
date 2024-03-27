@@ -1,30 +1,19 @@
 #include <Arduino.h>
 #include <config.h>
-#include "esp_task_wdt.h"
-
-#include <HardwareSerial.h>
+#include <HardwareSerial.h
 
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <AsyncElegantOTA.h>
-#include <ModbusIP_ESP8266.h>
 
-#include <BleSerial.h>
-#include <esp_attr.h>
-#include <esp_task_wdt.h>
-#include <driver/rtc_io.h>
-#include "soc/rtc_wdt.h"
-
-const int BLE_BUFFER_SIZE = 1024;
-
-BleSerial SerialBLE;
+#include <TASK_read_temp.h>
+#include <TASK_BLE_Serial.h>
+#include <TASK_HMI_Serial.h>
+#include <TASK_modbus_control.h>
 
 // For ESP32-C3
-HardwareSerial Serial_TC4(0);
-
-#include <TASK_modbus_control.h>
-#include <TASK_read_temp.h>
+HardwareSerial Serial_HMI(0);
 
 String local_IP;
 
@@ -47,11 +36,12 @@ void setup()
 {
     loopTaskWDTEnabled = true;
     xGetDataMutex = xSemaphoreCreateMutex();
-
+    xSerialReadBufferMutex = xSemaphoreCreateMutex();
     pinMode(HEAT_OUT_PIN, OUTPUT);
     pinMode(FAN_OUT_PIN, OUTPUT);
 
     Serial.begin(BAUDRATE);
+    Serial_HMI(0).begin(HMI_BAUDRATE, SERIAL_8N1, -1, -1);
 
     thermo_BT.begin(MAX318652WIRE); // set to 2WIRE or 4WIRE as necessary
     thermo_ET.begin(MAX318652WIRE); // set to 2WIRE or 4WIRE as necessary
@@ -66,13 +56,11 @@ void setup()
     disableLoopWDT();
     esp_task_wdt_delete(NULL);
 
-
     SerialBLE.begin(ap_name, true, 8); // FOR ESP32C3 SuperMini board
     SerialBLE.setTimeout(10);
 #if defined(DEBUG_MODE)
     Serial.printf("\nSerial_BT setup OK\n");
 #endif
-
 
     // 初始化网络服务
 

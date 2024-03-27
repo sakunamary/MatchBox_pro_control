@@ -6,9 +6,10 @@
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
+#define HMI_BAUDRATE 9600
 
 #define DEBUG_MODE
-#define BUFFER_SIZE 32
+#define HMI_BUFFER_SIZE 32
 
 #define VERSION "1.0.1"
 
@@ -158,4 +159,7 @@ QueueHandle_t queue_data_to_HMI = xQueueCreate(15, sizeof(uint8_t[BUFFER_SIZE]))
 QueueHandle_t queueCMD_HMI = xQueueCreate(15, sizeof(uint8_t[BUFFER_SIZE]));          //从HMI接收到的Hex格式命令
 QueueHandle_t queueCMD_BLE = xQueueCreate(8, sizeof(char[BUFFER_SIZE]));
 QueueHandle_t queue_DATA_to_BLE = xQueueCreate(8, sizeof(char[BUFFER_SIZE]));
+
+
+
 #endif
