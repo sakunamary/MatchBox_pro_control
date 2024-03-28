@@ -9,9 +9,10 @@
 #include <driver/rtc_io.h>
 #include "soc/rtc_wdt.h"
 
+
 BleSerial SerialBLE;
 
-const int BLE_BUFFER_SIZE = 1024;
+//const int BLE_BUFFER_SIZE = 1024;
 
 
 
@@ -62,7 +63,7 @@ void TASK_CMD_From_BLE(void *pvParameters)
 void TASK_BLE_CMD_handle(void *pvParameters)
 {
     (void)pvParameters;
-    uint8_t BLE_CMD_Buffer[BUFFER_SIZE];
+    uint8_t BLE_CMD_Buffer[BLE_BUFFER_SIZE];
     const TickType_t timeOut = 1000;
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;

@@ -5,11 +5,43 @@
 #include <Arduino.h>
 #include <config.h>
 
+#include "esp32-hal.h"
+#include "soc/soc_caps.h"
+#include "driver/ledc.h"
+#include "esp32-hal-ledc.h"
+#include "soc/soc_caps.h"
+
+
+// For ESP32-C3
+HardwareSerial Serial_HMI(0);
+// Modbus Registers Offsets
+const uint16_t HEAT_HREG = 3003;
+const uint16_t FAN_HREG = 3004;
+
+
+
+
+
+extern uint16_t last_FAN;
+extern uint16_t last_PWR;
+
+
+// Arduino like analogWrite
+// value has to be between 0 and valueMax
+void PWMAnalogWrite(uint8_t channel, uint32_t value, uint32_t valueMax = 255) {
+  // calculate duty, 4095 from 2 ^ 12 - 1
+  uint32_t duty = (4095 / valueMax) * min(value, valueMax);
+
+  // write duty to LEDC
+  ledcWrite(channel, duty);
+}
+
+
 
 void TASK_data_to_HMI(void *pvParameters)
 {
     (void)pvParameters;
-    uint8_t Serial_DATA_Buffer[BUFFER_SIZE];
+    uint8_t Serial_DATA_Buffer[HMI_BUFFER_SIZE];
     const TickType_t timeOut = 500;
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
@@ -26,19 +58,17 @@ void TASK_data_to_HMI(void *pvParameters)
         {
             if (xQueueReceive(queue_data_to_HMI, &Serial_DATA_Buffer, timeOut) == pdPASS)
             { // 从接收QueueCMD 接收指令
-                Serial_HMI.write(Serial_DATA_Buffer, BUFFER_SIZE);
+                Serial_HMI.write(Serial_DATA_Buffer, HMI_BUFFER_SIZE);
                 vTaskDelay(20);
             }
         }
     }
 }
 
-
-
 void TASK_CMD_FROM_HMI(void *pvParameters)
 {
     (void)pvParameters;
-    uint8_t HMI_ReadBuffer[BUFFER_SIZE];
+    uint8_t HMI_ReadBuffer[HMI_BUFFER_SIZE];
     const TickType_t timeOut = 500;
     while (1)
     {
@@ -46,8 +76,8 @@ void TASK_CMD_FROM_HMI(void *pvParameters)
         {
             if (xSemaphoreTake(xSerialReadBufferMutex, timeOut) == pdPASS)
             {
-                Serial_HMI.readBytes(HMI_ReadBuffer, BUFFER_SIZE);
-                xQueueSend(queueCMD, &HMI_ReadBuffer, timeOut);   // 串口数据发送至队列
+                Serial_HMI.readBytes(HMI_ReadBuffer, HMI_BUFFER_SIZE);
+                xQueueSend(queueCMD_HMI, &HMI_ReadBuffer, timeOut);   // 串口数据发送至队列
                 xTaskNotify(xTASK_HMI_CMD_handle, 0, eIncrement); // 通知处理任务干活
             }
             xSemaphoreGive(xSerialReadBufferMutex);
@@ -59,7 +89,7 @@ void TASK_CMD_FROM_HMI(void *pvParameters)
 void TASK_HMI_CMD_handle(void *pvParameters)
 {
     (void)pvParameters;
-    uint8_t HMI_CMD_Buffer[BUFFER_SIZE];
+    uint8_t HMI_CMD_Buffer[HMI_BUFFER_SIZE];
     const TickType_t timeOut = 1000;
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
@@ -76,40 +106,27 @@ void TASK_HMI_CMD_handle(void *pvParameters)
 
         if (xResult == pdTRUE)
         {
-            if (xQueueReceive(queueCMD, &HMI_CMD_Buffer, timeOut) == pdPASS)
+            if (xQueueReceive(queueCMD_HMI, &HMI_CMD_Buffer, timeOut) == pdPASS)
             { // 从接收QueueCMD 接收指令
-                // HMI_CMD_Buffer[5] //火力开关
-                if (HMI_CMD_Buffer[5] != digitalRead(HEAT_RLY))
-                {
-                    if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 整合数据帧到HMI
-                    {
-                        mb.Hreg(HEAT_HREG, HMI_CMD_Buffer[5]);
-                        digitalWrite(HEAT_RLY, !digitalRead(HEAT_RLY)); // 将artisan的控制值控制开关
-                    }
-                    xSemaphoreGive(xThermoDataMutex); // end of lock mutex
-                }
-                // HMI_CMD_Buffer[7] //冷却开关
-                if (HMI_CMD_Buffer[7] != digitalRead(FAN_RLY))
-                {
-                    if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 整合数据帧到HMI
-                    {
-                        mb.Hreg(FAN_HREG, HMI_CMD_Buffer[7]);
-                        digitalWrite(FAN_RLY, !digitalRead(FAN_RLY)); // 将artisan的控制值控制开关
-                    }
-                    xSemaphoreGive(xThermoDataMutex); // end of lock mutex
-                }
                 // HMI_CMD_Buffer[3]   //火力数据
                 if (HMI_CMD_Buffer[3] != last_PWR)
                 {
                     last_PWR = HMI_CMD_Buffer[3];
-                    mb.Hreg(PWR_HREG, last_PWR);                                                 // last 火力pwr数据更新
-                    pwm_heat.write(HEAT_OUT_PIN, map(last_PWR, 0, 100, 230, 850), frequency, resolution); // 输出新火力pwr到SSRÍ
+                    mb.Hreg(HEAT_HREG, last_PWR);               // last 火力pwr数据更新
+                    PWMAnalogWrite(PWM_HEAT_CHANNEL, last_PWR); // 自动模式下，将heat数值转换后输出到pwm // 输出新火力pwr到SSRÍ
+                }
+
+                // HMI_CMD_Buffer[5]   //火力数据
+                if (HMI_CMD_Buffer[5] != last_FAN)
+                {
+                    last_FAN = HMI_CMD_Buffer[5];
+                    mb.Hreg(HEAT_HREG, last_FAN);              // last 火力pwr数据更新
+                    PWMAnalogWrite(PWM_FAN_CHANNEL, last_FAN); // 自动模式下，将heat数值转换后输出到pwm // 输出新火力pwr到SSRÍ
                 }
                 vTaskDelay(20);
             }
         }
     }
 }
-
 
 #endif

@@ -12,7 +12,7 @@ double BT_TEMP;
 double ET_TEMP;
 
 // Use software SPI: CS, DI, DO, CLK
-Adafruit_MAX31865 thermo_BT = Adafruit_MAX31865(SPI_CS_CT, SPI_MOSI, SPI_MISO, SPI_SCK);
+Adafruit_MAX31865 thermo_BT = Adafruit_MAX31865(SPI_CS_BT, SPI_MOSI, SPI_MISO, SPI_SCK);
 Adafruit_MAX31865 thermo_ET = Adafruit_MAX31865(SPI_CS_ET, SPI_MOSI, SPI_MISO, SPI_SCK);
 
 // Modbus Registers Offsets
@@ -25,7 +25,7 @@ void Task_Thermo_get_data(void *pvParameters)
     /* Variable Definition */
     (void)pvParameters;
     TickType_t xLastWakeTime;
-
+    uint8_t TEMP_DATA_Buffer[HMI_BUFFER_SIZE];
     const TickType_t xIntervel = 1500 / portTICK_PERIOD_MS;
     /* Task Setup and Initialize */
     // Initial the xLastWakeTime variable with the current time.
@@ -38,9 +38,9 @@ void Task_Thermo_get_data(void *pvParameters)
         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
         {                                                          // lock the  mutex
             // 读取max6675数据
-            BT_TEMP = round((thermo_BT.readCelsius() * 10) / 10);
+            BT_TEMP = round((thermo_BT.temperature(RNOMINAL, RREF) * 10) / 10);
             vTaskDelay(20);
-            ET_TEMP = round((thermo_ET.readCelsius() * 10) / 10);
+            ET_TEMP = round((thermo_ET.temperature(RNOMINAL, RREF) * 10) / 10);
             vTaskDelay(20);
 
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
