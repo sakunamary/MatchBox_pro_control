@@ -59,8 +59,8 @@ void Task_Thermo_get_data(void *pvParameters)
         // 封装BLE 协议
 
 
-        xQueueSend(queue_data_to_BLE, &TEMP_DATA_Buffer, xIntervel / 3);
-        xTaskNotify(xTASK_data_to_BLE, 0, eIncrement);        // send notify to TASK_data_to_HMI
+        // xQueueSend(queue_data_to_BLE, &TEMP_DATA_Buffer, xIntervel / 3);
+        // xTaskNotify(xTASK_data_to_BLE, 0, eIncrement);        // send notify to TASK_data_to_HMI
     }
 
 } // function

@@ -32,7 +32,7 @@ void Task_modbus_handle(void *pvParameters)
             {
                 last_FAN = mb.Hreg(FAN_HREG);
                 last_PWR = mb.Hreg(HEAT_HREG);
-                xQueueSend(queueCMD_BLE, &BLE_ReadBuffer, timeOut);   // 串口数据发送至队列
+               // xQueueSend(queueCMD_BLE, &BLE_ReadBuffer, timeOut);   // 串口数据发送至队列
 
             }
             else
