@@ -40,13 +40,11 @@
 #define PWM_RESOLUTION 10 // 0-1024
 
 
-
 // The value of the Rref resistor. Use 430.0 for PT100 and 4300.0 for PT1000
 #define RREF      430.0
 // The 'nominal' 0-degrees-C resistance of the sensor
 // 100.0 for PT100, 1000.0 for PT1000
 #define RNOMINAL  100.0
-
 
 
 // publc funciton
@@ -65,9 +63,6 @@ uint8_t make_frame_head(uint8_t data_array[HMI_BUFFER_SIZE], int cmd_type)
     case 2:                   // run_status
         data_array[2] = 0x02; // data type
         break;
-    case 3:                   // HMI_cmd
-        data_array[2] = 0x03; // data type
-        break;
     default:
         break;
     }
@@ -82,28 +77,14 @@ uint8_t make_frame_end(uint8_t data_array[HMI_BUFFER_SIZE], int cmd_type)
     {
     case 1: // data_frame
 
-        data_array[12] = 0x00; // frame end
-        data_array[13] = 0xff; // frame end
-        data_array[14] = 0xff; // frame end
-        data_array[15] = 0xff; // frame end
+        data_array[9] = 0xff; // frame end
+        data_array[10] = 0xff; // frame end
+        data_array[11] = 0xff; // frame end
         break;
     case 2:                    // run_status
-        data_array[9] = 0x00;  // frame end
-        data_array[10] = 0x00; // frame end
-        data_array[11] = 0x00; // frame end
-        data_array[12] = 0x00; // frame end
-        data_array[13] = 0xff; // frame end
-        data_array[14] = 0xff; // frame end
-        data_array[15] = 0xff; // frame end
-        break;
-    case 3:                    // HMI_cmd
-        data_array[9] = 0x00;  // frame end
-        data_array[10] = 0x00; // frame end
-        data_array[11] = 0x00; // frame end
-        data_array[12] = 0x00; // frame end
-        data_array[13] = 0xff; // frame end
-        data_array[14] = 0xff; // frame end
-        data_array[15] = 0xff; // frame end
+        data_array[9] = 0xff;  // frame end
+        data_array[10] = 0xff; // frame end
+        data_array[11] = 0xff; // frame end
         break;
     default:
         break;
@@ -119,7 +100,7 @@ uint8_t make_frame_data(uint8_t data_array[HMI_BUFFER_SIZE], int cmd_type, uint1
     switch (cmd_type)
     {
     case 1:
-        if (uBit > 2 && uBit < 13)
+        if (uBit > 2 && uBit < 7)
         {
             data_array[uBit] = low;      // frame end
             data_array[uBit + 1] = high; // frame end
@@ -127,13 +108,13 @@ uint8_t make_frame_data(uint8_t data_array[HMI_BUFFER_SIZE], int cmd_type, uint1
 
         break;
     case 2:
-        if (uBit > 2 && uBit < 9)
+        if (uBit > 2 && uBit < 7)
         {
             data_array[uBit] = low; // frame end
         }
         break;
     case 3:
-        if (uBit > 2 && uBit < 9)
+        if (uBit > 2 && uBit < 7)
         {
             data_array[uBit] = low; // frame end
         }
@@ -144,6 +125,18 @@ uint8_t make_frame_data(uint8_t data_array[HMI_BUFFER_SIZE], int cmd_type, uint1
     }
     return data_array[HMI_BUFFER_SIZE];
 }
+
+
+
+// HB --> HMI的数据帧 FrameLenght = 12
+// 帧头: 69 FF
+// 类型: 01温度数据
+// 温度1: 00 00 // uint16
+// 温度2: 00 00 // uint16
+// 火力 : 00
+// 风力 : 00
+// 帧尾:FF FF FF
+
 
 static TaskHandle_t xTASK_data_to_HMI = NULL;
 static TaskHandle_t xTASK_CMD_HMI = NULL;

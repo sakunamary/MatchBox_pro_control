@@ -97,18 +97,18 @@ void TASK_HMI_CMD_handle(void *pvParameters)
             if (xQueueReceive(queueCMD_HMI, &HMI_CMD_Buffer, timeOut) == pdPASS)
             { // 从接收QueueCMD 接收指令
                 // HMI_CMD_Buffer[3]   //火力数据
-                if (HMI_CMD_Buffer[3] != last_PWR)
+                if (HMI_CMD_Buffer[7] != last_PWR)
                 {
-                    last_PWR = HMI_CMD_Buffer[3];
+                    last_PWR = HMI_CMD_Buffer[7];
                     mb.Hreg(HEAT_HREG, last_PWR);               // last 火力pwr数据更新
                     PWMAnalogWrite(PWM_HEAT_CHANNEL, last_PWR); // 自动模式下，将heat数值转换后输出到pwm // 输出新火力pwr到SSRÍ
                 }
 
                 // HMI_CMD_Buffer[5]   //火力数据
-                if (HMI_CMD_Buffer[5] != last_FAN)
+                if (HMI_CMD_Buffer[8] != last_FAN)
                 {
-                    last_FAN = HMI_CMD_Buffer[5];
-                    mb.Hreg(HEAT_HREG, last_FAN);              // last 火力pwr数据更新
+                    last_FAN = HMI_CMD_Buffer[8];
+                    mb.Hreg(FAN_HREG, last_FAN);              // last 火力pwr数据更新
                     PWMAnalogWrite(PWM_FAN_CHANNEL, last_FAN); // 自动模式下，将heat数值转换后输出到pwm // 输出新火力pwr到SSRÍ
                 }
                 vTaskDelay(20);

@@ -69,7 +69,7 @@ void setup()
         ,
         1024 * 10 // This stack size can be checked & adjusted by reading the Stack Highwater
         ,
-        NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+        NULL, 4 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
         ,
         NULL // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
@@ -95,9 +95,9 @@ void setup()
         ,
         1024 * 2 // This stack size can be checked & adjusted by reading the Stack Highwater
         ,
-        NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+        NULL, 3 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
         ,
-        xTASK_data_to_BLE // Running Core decided by FreeRTOS,let core0 run wifi and BT
+        &xTASK_data_to_BLE // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
     Serial.printf("\nTASK3:TASK_DATA_to_BLE...\n");
@@ -108,9 +108,9 @@ void setup()
         ,
         1024 * 2 // This stack size can be checked & adjusted by reading the Stack Highwater
         ,
-        NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+        NULL, 3 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
         ,
-        xTASK_CMD_BLE // Running Core decided by FreeRTOS,let core0 run wifi and BT
+        &xTASK_CMD_BLE // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
     Serial.printf("\nTASK4:TASK_CMD_From_BLE...\n");
@@ -121,9 +121,9 @@ void setup()
         ,
         1024 * 6 // This stack size can be checked & adjusted by reading the Stack Highwater
         ,
-        NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+        NULL, 1 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
         ,
-        xTASK_BLE_CMD_handle // Running Core decided by FreeRTOS,let core0 run wifi and BT
+        &xTASK_BLE_CMD_handle // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
     Serial.printf("\nTASK5:TASK_BLE_CMD_handle...\n");
@@ -136,7 +136,7 @@ void setup()
         ,
         NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
         ,
-        xTASK_data_to_HMI // Running Core decided by FreeRTOS,let core0 run wifi and BT
+        &xTASK_data_to_HMI // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
     Serial.printf("\nTASK6:TASK_data_to_HMI...\n");
@@ -149,7 +149,7 @@ void setup()
         ,
         NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
         ,
-        xTASK_CMD_HMI // Running Core decided by FreeRTOS,let core0 run wifi and BT
+        &xTASK_CMD_HMI // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
     Serial.printf("\nTASK7:TASK_CMD_FROM_HMI...\n");
@@ -160,9 +160,9 @@ void setup()
         ,
         1024 * 6 // This stack size can be checked & adjusted by reading the Stack Highwater
         ,
-        NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+        NULL, 1 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
         ,
-        xTASK_HMI_CMD_handle // Running Core decided by FreeRTOS,let core0 run wifi and BT
+        &xTASK_HMI_CMD_handle // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
     Serial.printf("\nTASK8:TASK_HMI_CMD_handle...\n");

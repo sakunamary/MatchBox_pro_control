@@ -49,16 +49,18 @@ void Task_Thermo_get_data(void *pvParameters)
         // update  Hreg data
         mb.Hreg(BT_HREG, int(round(BT_TEMP * 10))); // 初始化赋值
         mb.Hreg(ET_HREG, int(round(ET_HREG * 10))); // 初始化赋值
-
+                                                    // 封装HMI 协议
         make_frame_head(TEMP_DATA_Buffer, 1);
         make_frame_end(TEMP_DATA_Buffer, 1);
         make_frame_data(TEMP_DATA_Buffer, 1, int(round(BT_TEMP * 10)), 3);
         make_frame_data(TEMP_DATA_Buffer, 1, int(round(ET_HREG * 10)), 5);
         xQueueSend(queue_data_to_HMI, &TEMP_DATA_Buffer, xIntervel / 3);
-        xQueueSend(queue_data_to_BLE, &TEMP_DATA_Buffer, xIntervel / 3);
-        // send notify to TASK_data_to_HMI
         xTaskNotify(xTASK_data_to_HMI, 0, eIncrement);
-        xTaskNotify(xTASK_data_to_BLE, 0, eIncrement);
+        // 封装BLE 协议
+
+
+        xQueueSend(queue_data_to_BLE, &TEMP_DATA_Buffer, xIntervel / 3);
+        xTaskNotify(xTASK_data_to_BLE, 0, eIncrement);        // send notify to TASK_data_to_HMI
     }
 
 } // function
