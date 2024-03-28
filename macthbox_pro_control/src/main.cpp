@@ -49,7 +49,7 @@ void setup()
     // 初始化网络服务
     WiFi.macAddress(macAddr);
     WiFi.mode(WIFI_AP);
-    sprintf(ap_name, "ROASTER_%02X%02X%02X", macAddr[3], macAddr[4], macAddr[5]);
+    sprintf(ap_name, "MATCH_BOX_%02X%02X%02X", macAddr[3], macAddr[4], macAddr[5]);
     WiFi.softAP(ap_name, "12345678"); // defualt IP address :192.168.4.1 password min 8 digis
 #if defined(DEBUG_MODE)
     Serial.printf("\nStart WIFI...\n");
