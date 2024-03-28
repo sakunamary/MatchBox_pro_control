@@ -148,13 +148,9 @@ uint8_t make_frame_data(uint8_t data_array[HMI_BUFFER_SIZE], int cmd_type, uint1
 static TaskHandle_t xTASK_data_to_HMI = NULL;
 static TaskHandle_t xTASK_CMD_HMI = NULL;
 static TaskHandle_t xTASK_HMI_CMD_handle = NULL;
-
 static TaskHandle_t xTASK_data_to_BLE = NULL;
 static TaskHandle_t xTASK_CMD_BLE = NULL;
 static TaskHandle_t xTASK_BLE_CMD_handle = NULL;
-
-
-
 
 SemaphoreHandle_t xThermoDataMutex = NULL;
 SemaphoreHandle_t xSerialReadBufferMutex = NULL;

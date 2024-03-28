@@ -5,12 +5,6 @@
 #include <Arduino.h>
 #include <config.h>
 
-#include "esp32-hal.h"
-#include "soc/soc_caps.h"
-#include "driver/ledc.h"
-#include "esp32-hal-ledc.h"
-#include "soc/soc_caps.h"
-
 
 // For ESP32-C3
 HardwareSerial Serial_HMI(0);
@@ -18,13 +12,8 @@ HardwareSerial Serial_HMI(0);
 const uint16_t HEAT_HREG = 3003;
 const uint16_t FAN_HREG = 3004;
 
-
-
-
-
 extern uint16_t last_FAN;
 extern uint16_t last_PWR;
-
 
 // Arduino like analogWrite
 // value has to be between 0 and valueMax
@@ -35,7 +24,6 @@ void PWMAnalogWrite(uint8_t channel, uint32_t value, uint32_t valueMax = 255) {
   // write duty to LEDC
   ledcWrite(channel, duty);
 }
-
 
 
 void TASK_data_to_HMI(void *pvParameters)
