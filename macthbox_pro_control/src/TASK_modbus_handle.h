@@ -7,14 +7,8 @@
 
 bool init_status = true;
 
-
 uint16_t last_FAN;
 uint16_t last_PWR;
-
-
-
-int heat_level_to_artisan = 0;
-int fan_level_to_artisan = 0;
 
 void Task_modbus_handle(void *pvParameters)
 { // function
@@ -32,8 +26,12 @@ void Task_modbus_handle(void *pvParameters)
             {
                 last_FAN = mb.Hreg(FAN_HREG);
                 last_PWR = mb.Hreg(HEAT_HREG);
-               // xQueueSend(queueCMD_BLE, &BLE_ReadBuffer, timeOut);   // 串口数据发送至队列
-
+                fan_level_to_artisan = last_FAN;
+                heat_level_to_artisan = last_PWR;
+                // xQueueSend(queueCMD_BLE, &BLE_ReadBuffer, timeOut);   // 串口数据发送至队列
+                init_status = false;
+                PWMAnalogWrite(PWM_FAN_CHANNEL, fan_level_to_artisan, 100);   // 自动模式下，将heat数值转换后输出到pwm
+                PWMAnalogWrite(PWM_HEAT_CHANNEL, heat_level_to_artisan, 100); // 自动模式下，将heat数值转换后输出到pwm
             }
             else
             {
@@ -49,8 +47,8 @@ void Task_modbus_handle(void *pvParameters)
 
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
-        PWMAnalogWrite(PWM_FAN_CHANNEL, fan_level_to_artisan); // 自动模式下，将heat数值转换后输出到pwm
-        PWMAnalogWrite(PWM_HEAT_CHANNEL, heat_level_to_artisan); // 自动模式下，将heat数值转换后输出到pwm
+        PWMAnalogWrite(PWM_FAN_CHANNEL, fan_level_to_artisan, 100);   // 自动模式下，将heat数值转换后输出到pwm
+        PWMAnalogWrite(PWM_HEAT_CHANNEL, heat_level_to_artisan, 100); // 自动模式下，将heat数值转换后输出到pwm
     }
 }
 

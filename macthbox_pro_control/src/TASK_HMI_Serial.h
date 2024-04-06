@@ -4,15 +4,33 @@
 
 #include <Arduino.h>
 #include <config.h>
+#include "ArduPID.h"
+
+ArduPID Heat_pid_controller;
 
 // For ESP32-C3
 HardwareSerial Serial_HMI(0);
 // Modbus Registers Offsets
 const uint16_t HEAT_HREG = 3003;
 const uint16_t FAN_HREG = 3004;
+const uint16_t PID_STRTUS_HREG = 3005;
+const uint16_t PID_SV_HREG = 3006;
+const uint16_t PID_TUNE_HREG = 3007;
 
 extern uint16_t last_FAN;
 extern uint16_t last_PWR;
+int heat_level_to_artisan = 0;
+int fan_level_to_artisan = 0;
+
+// Arbitrary setpoint and gains - adjust these as fit for your project:
+
+extern double BT_TEMP; // pid_input
+double PID_output;
+
+double pid_sv = 0;
+double p ;
+double i ;
+double d ;
 
 // Arduino like analogWrite
 // value has to be between 0 and valueMax
@@ -97,15 +115,15 @@ void TASK_HMI_CMD_handle(void *pvParameters)
                     if (HMI_CMD_Buffer[7] != last_PWR)
                     {
                         last_PWR = HMI_CMD_Buffer[7];
-                        mb.Hreg(HEAT_HREG, last_PWR);               // last 火力pwr数据更新
-                        PWMAnalogWrite(PWM_HEAT_CHANNEL, last_PWR); // 自动模式下，将heat数值转换后输出到pwm // 输出新火力pwr到SSRÍ
+                        mb.Hreg(HEAT_HREG, last_PWR);                                 // last 火力pwr数据更新
+                        PWMAnalogWrite(PWM_HEAT_CHANNEL, heat_level_to_artisan, 100); // 自动模式下，将heat数值转换后输出到pwm // 输出新火力pwr到SSRÍ
                     }
                     // HMI_CMD_Buffer[5]   //火力数据
                     if (HMI_CMD_Buffer[8] != last_FAN)
                     {
                         last_FAN = HMI_CMD_Buffer[8];
-                        mb.Hreg(FAN_HREG, last_FAN);               // last 火力pwr数据更新
-                        PWMAnalogWrite(PWM_FAN_CHANNEL, last_FAN); // 自动模式下，将heat数值转换后输出到pwm // 输出新火力pwr到SSRÍ
+                        mb.Hreg(FAN_HREG, last_FAN);                                // last 火力pwr数据更新
+                        PWMAnalogWrite(PWM_FAN_CHANNEL, fan_level_to_artisan, 100); // 自动模式下，将heat数值转换后输出到pwm // 输出新火力pwr到SSRÍ
                     }
                     xSemaphoreGive(xSerialReadBufferMutex);
                 }

@@ -3,14 +3,17 @@
 #include <HardwareSerial.h>
 #include <WiFi.h>
 #include <TASK_read_temp.h>
-//#include <TASK_BLE_Serial.h>
-#include <TASK_HMI_Serial.h>
 #include <TASK_modbus_handle.h>
+#include <TASK_HMI_Serial.h>
+// #include <TASK_BLE_Serial.h>
+
+
 
 String local_IP;
 
 extern bool loopTaskWDTEnabled;
 extern TaskHandle_t loopTaskHandle;
+extern double BT_TEMP;
 
 char ap_name[30];
 uint8_t macAddr[6];
@@ -38,7 +41,7 @@ void setup()
 
     Serial.begin(BAUDRATE);
     Serial_HMI.begin(HMI_BAUDRATE, SERIAL_8N1, -1, -1);
-    #if defined(DEBUG_MODE)
+#if defined(DEBUG_MODE)
     Serial.printf("\nStart HMI serial...\n");
 #endif
     thermo_BT.begin(MAX31865_2WIRE); // set to 2WIRE or 4WIRE as necessary
@@ -130,7 +133,6 @@ void setup()
     Serial.printf("\nTASK5:TASK_HMI_CMD_handle...\n");
 #endif
 
-
 //     xTaskCreate(
 //         TASK_DATA_to_BLE, "TASK_DATA_to_BLE" // 获取HB数据
 //         ,
@@ -170,8 +172,6 @@ void setup()
 //     Serial.printf("\nTASK8:TASK_BLE_CMD_handle...\n");
 // #endif
 
-
-
 // Init Modbus-TCP
 #if defined(DEBUG_MODE)
     Serial.printf("\nStart Modbus-TCP   service...\n");
@@ -181,11 +181,26 @@ void setup()
     mb.addHreg(ET_HREG);
     mb.addHreg(HEAT_HREG);
     mb.addHreg(FAN_HREG);
+    mb.addHreg(PID_STRTUS_HREG);
+    mb.addHreg(PID_SV_HREG);
+    mb.addHreg(PID_TUNE_HREG);
 
-    mb.Hreg(BT_HREG, 0);   // 初始化赋值
-    mb.Hreg(ET_HREG, 0);   // 初始化赋值
-    mb.Hreg(HEAT_HREG, 0); // 初始化赋值
-    mb.Hreg(FAN_HREG, 0);  // 初始化赋值
+    mb.Hreg(BT_HREG, 0);         // 初始化赋值
+    mb.Hreg(ET_HREG, 0);         // 初始化赋值
+    mb.Hreg(HEAT_HREG, 0);       // 初始化赋值
+    mb.Hreg(FAN_HREG, 0);        // 初始化赋值
+    mb.Hreg(PID_STRTUS_HREG, 0); // 初始化赋值
+    mb.Hreg(PID_SV_HREG, 0);     // 初始化赋值
+    mb.Hreg(PID_TUNE_HREG, 0);   // 初始化赋值
+
+    
+    Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, p, i, d);
+    Heat_pid_controller.setSampleTime(1500);      // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
+    Heat_pid_controller.setOutputLimits(PID_MIN_OUT*255/100,PID_MAX_OUT*255/100);
+    Heat_pid_controller.setBias(255.0 / 2.0);
+    Heat_pid_controller.setWindUpLimits(-10, 10); // Groth bounds for the integral term to prevent integral wind-up
+
+    Heat_pid_controller.start();
 }
 
 void loop()
