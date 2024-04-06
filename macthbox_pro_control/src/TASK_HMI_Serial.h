@@ -4,44 +4,24 @@
 
 #include <Arduino.h>
 #include <config.h>
-#include "ArduPID.h"
 
-ArduPID Heat_pid_controller;
+
+
 
 // For ESP32-C3
 HardwareSerial Serial_HMI(0);
-// Modbus Registers Offsets
-const uint16_t HEAT_HREG = 3003;
-const uint16_t FAN_HREG = 3004;
-const uint16_t PID_STRTUS_HREG = 3005;
-const uint16_t PID_SV_HREG = 3006;
-const uint16_t PID_TUNE_HREG = 3007;
 
 extern uint16_t last_FAN;
 extern uint16_t last_PWR;
-int heat_level_to_artisan = 0;
-int fan_level_to_artisan = 0;
+
 
 // Arbitrary setpoint and gains - adjust these as fit for your project:
 
 extern double BT_TEMP; // pid_input
-double PID_output;
+extern double PID_output;
+extern double pid_sv;
 
-double pid_sv = 0;
-double p ;
-double i ;
-double d ;
 
-// Arduino like analogWrite
-// value has to be between 0 and valueMax
-void PWMAnalogWrite(uint8_t channel, uint32_t value, uint32_t valueMax = 255)
-{
-    // calculate duty, 4095 from 2 ^ 12 - 1
-    uint32_t duty = (4095 / valueMax) * min(value, valueMax);
-
-    // write duty to LEDC
-    ledcWrite(channel, duty);
-}
 
 void TASK_data_to_HMI(void *pvParameters)
 {

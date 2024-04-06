@@ -7,8 +7,6 @@
 #include <TASK_HMI_Serial.h>
 // #include <TASK_BLE_Serial.h>
 
-
-
 String local_IP;
 
 extern bool loopTaskWDTEnabled;
@@ -52,7 +50,7 @@ void setup()
     // 初始化网络服务
     WiFi.macAddress(macAddr);
     WiFi.mode(WIFI_AP);
-    sprintf(ap_name, "MATCH_BOX_%02X%02X%02X", macAddr[3], macAddr[4], macAddr[5]);
+    sprintf(ap_name, "MATCHBOX_%02X%02X%02X", macAddr[3], macAddr[4], macAddr[5]);
     WiFi.softAP(ap_name, "12345678"); // defualt IP address :192.168.4.1 password min 8 digis
 #if defined(DEBUG_MODE)
     Serial.printf("\nStart WIFI...\n");
@@ -193,13 +191,11 @@ void setup()
     mb.Hreg(PID_SV_HREG, 0);     // 初始化赋值
     mb.Hreg(PID_TUNE_HREG, 0);   // 初始化赋值
 
-    
     Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, p, i, d);
-    Heat_pid_controller.setSampleTime(1500);      // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
-    Heat_pid_controller.setOutputLimits(PID_MIN_OUT*255/100,PID_MAX_OUT*255/100);
+    Heat_pid_controller.setSampleTime(1500); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
+    Heat_pid_controller.setOutputLimits(PID_MIN_OUT * 255 / 100, PID_MAX_OUT * 255 / 100);
     Heat_pid_controller.setBias(255.0 / 2.0);
-    Heat_pid_controller.setWindUpLimits(-10, 10); // Groth bounds for the integral term to prevent integral wind-up
-
+    Heat_pid_controller.setWindUpLimits(-3, 3); // Groth bounds for the integral term to prevent integral wind-up
     Heat_pid_controller.start();
 }
 
