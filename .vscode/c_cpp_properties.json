@@ -10,8 +10,8 @@
             "includePath": [
                 "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/include",
                 "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/src",
+                "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/lib/PID Autotuner",
                 "/Users/xiaoning/.platformio/packages/framework-arduinoespressif32/libraries/EEPROM/src",
-                "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/.pio/libdeps/esp32-c3-debug/PID Autotuner",
                 "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/.pio/libdeps/esp32-c3-debug/ArduPID/src",
                 "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/.pio/libdeps/esp32-c3-debug/FireTimer/src",
                 "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/.pio/libdeps/esp32-c3-debug/Adafruit MAX31865 library",
@@ -243,8 +243,8 @@
                 "path": [
                     "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/include",
                     "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/src",
+                    "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/lib/PID Autotuner",
                     "/Users/xiaoning/.platformio/packages/framework-arduinoespressif32/libraries/EEPROM/src",
-                    "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/.pio/libdeps/esp32-c3-debug/PID Autotuner",
                     "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/.pio/libdeps/esp32-c3-debug/ArduPID/src",
                     "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/.pio/libdeps/esp32-c3-debug/FireTimer/src",
                     "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/.pio/libdeps/esp32-c3-debug/Adafruit MAX31865 library",

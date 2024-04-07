@@ -7,7 +7,7 @@
 #include "ArduPID.h"
 
 ArduPID Heat_pid_controller;
-
+PIDAutotuner tuner = PIDAutotuner();
 bool init_status = true;
 
 // Modbus Registers Offsets
@@ -17,14 +17,18 @@ const uint16_t PID_STRTUS_HREG = 3005;
 const uint16_t PID_SV_HREG = 3006;
 const uint16_t PID_TUNE_HREG = 3007;
 
+long microseconds;
+long prevMicroseconds;
 uint16_t last_FAN;
 uint16_t last_PWR;
 int heat_level_to_artisan = 0;
 int fan_level_to_artisan = 0;
 bool pid_status = false;
+extern double BT_TEMP;
 
 double PID_output;
 double pid_sv = 0;
+double pid_tune_output;
 
 void Task_modbus_handle(void *pvParameters)
 { // function
@@ -50,7 +54,7 @@ void Task_modbus_handle(void *pvParameters)
                 pid_status = false;
                 // xQueueSend(queueCMD_BLE, &BLE_ReadBuffer, timeOut);   // 串口数据发送至队列
 
-                PWMAnalogWrite(PWM_FAN_CHANNEL, fan_level_to_artisan, 100);   // 自动模式下，将heat数值转换后输出到pwm
+                PWMAnalogWrite(PWM_FAN_CHANNEL, fan_level_to_artisan, 100);   // 自动模式下，将fan数值转换后输出到pwm
                 PWMAnalogWrite(PWM_HEAT_CHANNEL, heat_level_to_artisan, 100); // 自动模式下，将heat数值转换后输出到pwm
             }
             else
@@ -119,11 +123,47 @@ void Task_modbus_handle(void *pvParameters)
 
             xQueueSend(queue_data_to_HMI, &TEMP_DATA_Buffer, timeOut);
 #if defined(DEBUG_MODE)
-            Serial.write(TEMP_DATA_Buffer,HMI_BUFFER_SIZE);
+            Serial.write(TEMP_DATA_Buffer, HMI_BUFFER_SIZE);
 #endif
             xTaskNotify(xTASK_data_to_HMI, 0, eIncrement);
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
+    }
+    if (mb.Hreg(PID_TUNE_HREG) == 1)
+    {
+        // Run a loop until tuner.isFinished() returns true
+        long microseconds;
+        while (!tuner.isFinished())
+        {
+
+            // This loop must run at the same speed as the PID control loop being tuned
+            prevMicroseconds = microseconds;
+            microseconds = micros();
+
+            // Get input value here (temperature, encoder position, velocity, etc)
+            // Call tunePID() with the input value
+            pid_tune_output = tuner.tunePID(BT_TEMP);
+
+            // Set the output - tunePid() will return values within the range configured
+            // by setOutputRange(). Don't change the value or the tuning results will be
+            // incorrect.
+            PWMAnalogWrite(PWM_FAN_CHANNEL, 40, 100);               // 自动模式下，将heat数值转换后输出到pwm
+            PWMAnalogWrite(PWM_HEAT_CHANNEL, pid_tune_output, 100); // 自动模式下，将heat数值转换后输出到pwm
+            // This loop must run at the same speed as the PID control loop being tuned
+            while (micros() - microseconds < pid_parm.pid_CT)
+                delayMicroseconds(1);
+        }
+
+        // Turn the output off here.
+        PWMAnalogWrite(PWM_HEAT_CHANNEL, 0, 100);
+
+        // Get PID gains - set your PID controller's gains to these
+        pid_parm.p = tuner.getKp();
+        pid_parm.i = tuner.getKi();
+        pid_parm.d = tuner.getKd();
+        EEPROM.put(0, pid_parm);
+        EEPROM.commit();
+        mb.Hreg(PID_TUNE_HREG, 0);
     }
 }
 

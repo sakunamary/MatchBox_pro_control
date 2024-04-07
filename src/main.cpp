@@ -213,14 +213,13 @@ void setup()
     Heat_pid_controller.start();
 
 // INIT PID AUTOTUNE
-    PIDAutotuner tuner = PIDAutotuner();
 
     // Set the target value to tune to
     // This will depend on what you are tuning. This should be set to a value within
     // the usual range of the setpoint. For low-inertia systems, values at the lower
     // end of this range usually give better results. For anything else, start with a
     // value at the middle of the range.
-    tuner.setTargetInputValue(BT_TEMP);
+    tuner.setTargetInputValue(180.0);
 
     // Set the loop interval in microseconds
     // This must be the same as the interval the PID control loop will run at
