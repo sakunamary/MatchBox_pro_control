@@ -25,9 +25,6 @@ bool pid_status = false;
 
 double PID_output;
 double pid_sv = 0;
-double p = 2.0;
-double i = 0.12;
-double d = 5;
 
 void Task_modbus_handle(void *pvParameters)
 { // function
@@ -73,8 +70,11 @@ void Task_modbus_handle(void *pvParameters)
                         heat_level_to_artisan = PID_output * 255 / 100;    // 更新pid计算后的数值
                         last_PWR = PID_output * 255 / 100;                 // 更新pid计算后的数值
                         mb.Hreg(HEAT_HREG, round(PID_output * 255 / 100)); // 更新pid计算后的数值
+
+#if defined(DEBUG_MODE)
                         Heat_pid_controller.debug(&Serial,
                                                   "Heat_pid_controller", PRINT_INPUT | PRINT_OUTPUT | PRINT_SETPOINT | PRINT_BIAS);
+#endif
                     }
                     else
                     {                                                      // pid_status == true and pid_status_hreg ==1
@@ -83,8 +83,10 @@ void Task_modbus_handle(void *pvParameters)
                         heat_level_to_artisan = PID_output * 255 / 100;    // 更新pid计算后的数值
                         last_PWR = PID_output * 255 / 100;                 // 更新pid计算后的数值
                         mb.Hreg(HEAT_HREG, round(PID_output * 255 / 100)); // 更新pid计算后的数值
+#if defined(DEBUG_MODE)
                         Heat_pid_controller.debug(&Serial,
                                                   "Heat_pid_controller", PRINT_INPUT | PRINT_OUTPUT | PRINT_SETPOINT | PRINT_BIAS);
+#endif
                     }
                 }
                 else // 关闭pid控制--手动控制
@@ -97,8 +99,8 @@ void Task_modbus_handle(void *pvParameters)
                         heat_level_to_artisan = last_PWR;          // 恢复上一次的数据
                         mb.Hreg(HEAT_HREG, heat_level_to_artisan); // 恢复上一次的数据
                     }
-                    else// pid_status = false  and  pid_status_hreg ==0
-                    {                                       
+                    else // pid_status = false  and  pid_status_hreg ==0
+                    {
                         if (last_PWR != mb.Hreg(HEAT_HREG)) // 发生变动
                         {
                             heat_level_to_artisan = mb.Hreg(HEAT_HREG);
