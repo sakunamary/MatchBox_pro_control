@@ -84,6 +84,7 @@ void TASK_HMI_CMD_handle(void *pvParameters)
         {
             if (xQueueReceive(queueCMD_HMI, &HMI_CMD_Buffer, timeOut) == pdPASS)
             { // 从接收QueueCMD 接收指令
+
                 switch (HMI_CMD_Buffer[2])
                 {          // 判断命令的类型
                 case 0x01: // 操作控制
@@ -126,14 +127,20 @@ void TASK_HMI_CMD_handle(void *pvParameters)
                     EEPROM.commit();
                     break;
                 case 0x04: // 其他参数设置
+                    // if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
+                    // {
+                    //     pid_sv = double((HMI_CMD_Buffer[3] << 8 | HMI_CMD_Buffer[4]) / 100);
+                    //     xSemaphoreGive(xThermoDataMutex);  　
+                    // }
 
+HMI_CMD_Buffer[5]
                     break;
                 default:
                     break;
                 }
             }
+            vTaskDelay(20);
         }
-        vTaskDelay(20);
     }
 }
 
