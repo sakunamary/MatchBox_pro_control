@@ -68,8 +68,8 @@ void Task_modbus_handle(void *pvParameters)
                         pid_sv = mb.Hreg(PID_SV_HREG) / 10;                // 获取pid的SV
                         Heat_pid_controller.compute();                     // 计算输出值
                         heat_level_to_artisan = PID_output * 255 / 100;    // 更新pid计算后的数值
-                        last_PWR = PID_output * 255 / 100;                 // 更新pid计算后的数值
-                        mb.Hreg(HEAT_HREG, round(PID_output * 255 / 100)); // 更新pid计算后的数值
+                        last_PWR = heat_level_to_artisan;                 // 更新pid计算后的数值
+                        mb.Hreg(HEAT_HREG, round(heat_level_to_artisan)); // 更新pid计算后的数值
 
 #if defined(DEBUG_MODE)
                         Heat_pid_controller.debug(&Serial,
@@ -81,8 +81,8 @@ void Task_modbus_handle(void *pvParameters)
                         pid_sv = mb.Hreg(PID_SV_HREG) / 10;                // 获取pid的SV
                         Heat_pid_controller.compute();                     // 计算输出值
                         heat_level_to_artisan = PID_output * 255 / 100;    // 更新pid计算后的数值
-                        last_PWR = PID_output * 255 / 100;                 // 更新pid计算后的数值
-                        mb.Hreg(HEAT_HREG, round(PID_output * 255 / 100)); // 更新pid计算后的数值
+                        last_PWR = heat_level_to_artisan;                 // 更新pid计算后的数值
+                        mb.Hreg(HEAT_HREG, round(heat_level_to_artisan)); // 更新pid计算后的数值
 #if defined(DEBUG_MODE)
                         Heat_pid_controller.debug(&Serial,
                                                   "Heat_pid_controller", PRINT_INPUT | PRINT_OUTPUT | PRINT_SETPOINT | PRINT_BIAS);

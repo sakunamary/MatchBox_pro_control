@@ -151,14 +151,39 @@ void PWMAnalogWrite(uint8_t channel, uint32_t value, uint32_t valueMax = 255)
     ledcWrite(channel, duty);
 }
 
-// HB --> HMI的数据帧 FrameLenght = 12
+// HMI --> MatchBox的数据帧 FrameLenght = 12
 // 帧头: 69 FF
-// 类型: 01温度数据
+// 类型: 01 温度数据
 // 温度1: 00 00 // uint16
 // 温度2: 00 00 // uint16
 // 火力 : 00
 // 风力 : 00
 // 帧尾:FF FF FF
+
+// HMI --> MatchBox的数据帧 FrameLenght = 12
+// 帧头: 69 FF
+// 类型: 02 PID设定
+// P: 00 00 // uint16
+// I: 00 00 // uint16
+// D: 00 00 // uint16
+// 帧尾:FF FF FF
+
+// HMI --> MatchBox的数据帧 FrameLenght = 12
+// 帧头: 69 FF
+// 类型: 03 参数设定
+// PID ct: 00 00 // uint16
+// BT fix: 00 00 // uint16
+// ET fix: 00 00 // uint16
+// 帧尾:FF FF FF
+
+// HMI --> MatchBox的数据帧 FrameLenght = 12
+// 帧头: 69 FF
+// 类型: 04 PID run
+// PID SV: 00 00 // uint16
+// PID STATUS: 00 
+// NULL :00 00 00
+// 帧尾:FF FF FF
+
 
 static TaskHandle_t xTASK_data_to_HMI = NULL;
 static TaskHandle_t xTASK_CMD_HMI = NULL;

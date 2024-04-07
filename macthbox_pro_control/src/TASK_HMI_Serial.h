@@ -5,23 +5,18 @@
 #include <Arduino.h>
 #include <config.h>
 
-
-
-
 // For ESP32-C3
 HardwareSerial Serial_HMI(0);
 
 extern uint16_t last_FAN;
 extern uint16_t last_PWR;
 
-
 // Arbitrary setpoint and gains - adjust these as fit for your project:
 
 extern double BT_TEMP; // pid_input
 extern double PID_output;
 extern double pid_sv;
-
-
+extern bool pid_status;
 
 void TASK_data_to_HMI(void *pvParameters)
 {
@@ -88,28 +83,78 @@ void TASK_HMI_CMD_handle(void *pvParameters)
         if (xResult == pdTRUE)
         {
             if (xQueueReceive(queueCMD_HMI, &HMI_CMD_Buffer, timeOut) == pdPASS)
-            { // 从接收QueueCMD 接收指令
-                if (xSemaphoreTake(xSerialReadBufferMutex, timeOut) == pdPASS)
-                {
-                    // HMI_CMD_Buffer[3]   //火力数据
-                    if (HMI_CMD_Buffer[7] != last_PWR)
+            {                              // 从接收QueueCMD 接收指令
+                switch (HMI_CMD_Buffer[2]) // 判断命令的类型
+                case 0x01:                 // 操作控制
+                    if (xSemaphoreTake(xSerialReadBufferMutex, timeOut) == pdPASS)
                     {
-                        last_PWR = HMI_CMD_Buffer[7];
-                        mb.Hreg(HEAT_HREG, last_PWR);                                 // last 火力pwr数据更新
-                        PWMAnalogWrite(PWM_HEAT_CHANNEL, heat_level_to_artisan, 100); // 自动模式下，将heat数值转换后输出到pwm // 输出新火力pwr到SSRÍ
+                        if (pid_status == false && mb.Hreg(PID_STRTUS_HREG) == 0)
+                        {// pid_status = false  and  pid_status_hreg ==0
+                            if (HMI_CMD_Buffer[7] != last_PWR)
+                            { 
+                                last_PWR = HMI_CMD_Buffer[7];
+                                mb.Hreg(HEAT_HREG, last_PWR);                                 // last 火力pwr数据更新
+                                PWMAnalogWrite(PWM_HEAT_CHANNEL, heat_level_to_artisan, 100); // 自动模式下，将heat数值转换后输出到pwm // 输出新火力pwr到SSRÍ
+                            }
+                        }
+                        // HMI_CMD_Buffer[5]   //火力数据
+                        if (HMI_CMD_Buffer[8] != last_FAN)
+                        {
+                            last_FAN = HMI_CMD_Buffer[8];
+                            mb.Hreg(FAN_HREG, last_FAN);                                // last 火力pwr数据更新
+                            PWMAnalogWrite(PWM_FAN_CHANNEL, fan_level_to_artisan, 100); // 自动模式下，将heat数值转换后输出到pwm // 输出新火力pwr到SSRÍ
+                        }
+                        xSemaphoreGive(xSerialReadBufferMutex);
                     }
-                    // HMI_CMD_Buffer[5]   //火力数据
-                    if (HMI_CMD_Buffer[8] != last_FAN)
-                    {
-                        last_FAN = HMI_CMD_Buffer[8];
-                        mb.Hreg(FAN_HREG, last_FAN);                                // last 火力pwr数据更新
-                        PWMAnalogWrite(PWM_FAN_CHANNEL, fan_level_to_artisan, 100); // 自动模式下，将heat数值转换后输出到pwm // 输出新火力pwr到SSRÍ
-                    }
-                    xSemaphoreGive(xSerialReadBufferMutex);
-                }
+                break;
+            case 0x02: // PID参数设置
+
+                break;
+            case 0x03; // 其他参数设置
+
+                break;
+                case 0x04; // 其他参数设置
+
+                break;
+                default:
+                break;
             }
-            vTaskDelay(20);
         }
+        vTaskDelay(20);
     }
 }
+
 #endif
+
+// HMI --> MatchBox的数据帧 FrameLenght = 12
+// 帧头: 69 FF
+// 类型: 01 温度数据
+// 温度1: 00 00 // uint16
+// 温度2: 00 00 // uint16
+// 火力 : 00
+// 风力 : 00
+// 帧尾:FF FF FF
+
+// HMI --> MatchBox的数据帧 FrameLenght = 12
+// 帧头: 69 FF
+// 类型: 02 PID设定
+// P: 00 00 // uint16
+// I: 00 00 // uint16
+// D: 00 00 // uint16
+// 帧尾:FF FF FF
+
+// HMI --> MatchBox的数据帧 FrameLenght = 12
+// 帧头: 69 FF
+// 类型: 03 参数设定
+// PID ct: 00 00 // uint16
+// BT fix: 00 00 // uint16
+// ET fix: 00 00 // uint16
+// 帧尾:FF FF FF
+
+// HMI --> MatchBox的数据帧 FrameLenght = 12
+// 帧头: 69 FF
+// 类型: 04 PID run
+// PID SV: 00 00 // uint16
+// PID STATUS: 00
+// NULL :00 00 00
+// 帧尾:FF FF FF
