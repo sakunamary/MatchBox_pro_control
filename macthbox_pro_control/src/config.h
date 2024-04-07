@@ -45,21 +45,18 @@
 // 100.0 for PT100, 1000.0 for PT1000
 #define RNOMINAL 100.0
 
-
-
-// 
- typedef struct eeprom_settings 
+//
+typedef struct eeprom_settings
 {
-uint16_t pid_CT;
-double p ;
-double i ;
-double d ;
-uint16_t BT_tempfix;
-uint16_t ET_tempfix;
+    uint16_t pid_CT;
+    double p;
+    double i;
+    double d;
+    uint16_t BT_tempfix;
+    uint16_t ET_tempfix;
 } pid_setting_t;
 
-extern pid_setting_t  ;
-
+extern pid_setting_t;
 
 // publc funciton
 
@@ -75,6 +72,12 @@ uint8_t make_frame_head(uint8_t data_array[HMI_BUFFER_SIZE], int cmd_type)
         data_array[2] = 0x01; // data type
         break;
     case 2:                   // run_status
+        data_array[2] = 0x02; // data type
+        break;
+    case 3:                   // run_status
+        data_array[2] = 0x02; // data type
+        break;
+    case 4:                   // run_status
         data_array[2] = 0x02; // data type
         break;
     default:
@@ -96,6 +99,18 @@ uint8_t make_frame_end(uint8_t data_array[HMI_BUFFER_SIZE], int cmd_type)
         data_array[11] = 0xff; // frame end
         break;
     case 2:                    // run_status
+        data_array[9] = 0xff;  // frame end
+        data_array[10] = 0xff; // frame end
+        data_array[11] = 0xff; // frame end
+        break;
+    case 3:                    // run_status
+        data_array[9] = 0xff;  // frame end
+        data_array[10] = 0xff; // frame end
+        data_array[11] = 0xff; // frame end
+        break;
+    case 4:   
+        data_array[7] = 0x00;  // frame end
+        data_array[8] = 0x00; // frame end
         data_array[9] = 0xff;  // frame end
         data_array[10] = 0xff; // frame end
         data_array[11] = 0xff; // frame end
@@ -122,19 +137,22 @@ uint8_t make_frame_data(uint8_t data_array[HMI_BUFFER_SIZE], int cmd_type, uint1
 
         break;
     case 2:
-        if (uBit > 2 && uBit < 7)
+        if (uBit > 2 && uBit < 9)
         {
-            data_array[uBit] = low; // frame end
+            data_array[uBit] = low;      // frame end
+            data_array[uBit + 1] = high; // frame end
         }
         break;
     case 3:
-        if (uBit > 2 && uBit < 7)
+        if (uBit > 2 && uBit < 9)
         {
-            data_array[uBit] = low; // frame end
+            data_array[uBit] = low;      // frame end
+            data_array[uBit + 1] = high; // frame end
         }
         break;
 
     default:
+
         break;
     }
     return data_array[HMI_BUFFER_SIZE];
@@ -180,10 +198,10 @@ void PWMAnalogWrite(uint8_t channel, uint32_t value, uint32_t valueMax = 255)
 // 帧头: 69 FF
 // 类型: 04 PID run
 // PID SV: 00 00 // uint16
-// PID STATUS: 00 
-// NULL :00 00 00
+// PID STATUS: 00
+// PID TUNE : 00
+// NULL : 00 00
 // 帧尾:FF FF FF
-
 
 static TaskHandle_t xTASK_data_to_HMI = NULL;
 static TaskHandle_t xTASK_CMD_HMI = NULL;
