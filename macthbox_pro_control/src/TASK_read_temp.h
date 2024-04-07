@@ -2,6 +2,7 @@
 #define __TASK_READ_TEMP_H__
 
 #include <Arduino.h>
+#include <config.h>
 #include <Wire.h>
 #include <Adafruit_MAX31865.h>
 #include <ModbusIP_ESP8266.h>
@@ -28,7 +29,7 @@ void Task_Thermo_get_data(void *pvParameters)
     (void)pvParameters;
     TickType_t xLastWakeTime;
     uint8_t TEMP_DATA_Buffer[HMI_BUFFER_SIZE];
-    const TickType_t xIntervel = 1500 / portTICK_PERIOD_MS;
+    const TickType_t xIntervel = pid_parm.pid_CT / portTICK_PERIOD_MS;
     /* Task Setup and Initialize */
     // Initial the xLastWakeTime variable with the current time.
     xLastWakeTime = xTaskGetTickCount();

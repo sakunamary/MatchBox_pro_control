@@ -2,6 +2,7 @@
 #include <config.h>
 #include <HardwareSerial.h>
 #include <WiFi.h>
+#include <EEPROM.h>
 #include <TASK_read_temp.h>
 #include <TASK_modbus_handle.h>
 #include <TASK_HMI_Serial.h>
@@ -16,32 +17,43 @@ extern double BT_TEMP;
 char ap_name[30];
 uint8_t macAddr[6];
 
+pid_setting_t pid_parm = {
+
+    1500,// uint16_t pid_CT;
+    2.0,// double p ;
+    0.12,// double i ;
+    5.0,// double d ;
+    0.0,// uint16_t BT_tempfix;
+    -3.0// uint16_t ET_tempfix;
+};
+
 void setup()
 {
 
-    // Disable watchdog timers
-    // disableCore0WDT();
-    // disableLoopWDT();
-    // esp_task_wdt_delete(NULL);
     loopTaskWDTEnabled = true;
-
     xThermoDataMutex = xSemaphoreCreateMutex();
     xSerialReadBufferMutex = xSemaphoreCreateMutex();
 
+    // setup PWM Pins
     pinMode(PWM_HEAT, OUTPUT);
     pinMode(PWM_FAN, OUTPUT);
-    // PWM Pins
+
     ledcSetup(PWM_FAN_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
     ledcAttachPin(PWM_FAN, PWM_FAN_CHANNEL);
 
     ledcSetup(PWM_HEAT_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
     ledcAttachPin(PWM_HEAT, PWM_HEAT_CHANNEL);
 
+    // read pid data from EEPROM
+    EEPROM.begin(sizeof(pid_parm));
+    EEPROM.get(0, pid_parm);
+    // start Serial
     Serial.begin(BAUDRATE);
     Serial_HMI.begin(HMI_BAUDRATE, SERIAL_8N1, -1, -1);
 #if defined(DEBUG_MODE)
     Serial.printf("\nStart HMI serial...\n");
 #endif
+    // start Thermo
     thermo_BT.begin(MAX31865_2WIRE); // set to 2WIRE or 4WIRE as necessary
     thermo_ET.begin(MAX31865_2WIRE); // set to 2WIRE or 4WIRE as necessary
 #if defined(DEBUG_MODE)
@@ -191,9 +203,11 @@ void setup()
     mb.Hreg(PID_SV_HREG, 0);     // 初始化赋值
     mb.Hreg(PID_TUNE_HREG, 0);   // 初始化赋值
 
-    Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, p, i, d);
-    Heat_pid_controller.setSampleTime(1500); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
-    Heat_pid_controller.setOutputLimits(PID_MIN_OUT * 255 / 100, PID_MAX_OUT * 255 / 100);
+    //init PID 
+
+    Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);
+    Heat_pid_controller.setSampleTime(pid_parm.pid_CT); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
+    Heat_pid_controller.setOutputLimits(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
     Heat_pid_controller.setBias(255.0 / 2.0);
     Heat_pid_controller.setWindUpLimits(-3, 3); // Groth bounds for the integral term to prevent integral wind-up
     Heat_pid_controller.start();

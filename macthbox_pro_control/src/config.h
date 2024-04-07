@@ -45,6 +45,22 @@
 // 100.0 for PT100, 1000.0 for PT1000
 #define RNOMINAL 100.0
 
+
+
+// 
+ typedef struct eeprom_settings 
+{
+uint16_t pid_CT;
+double p ;
+double i ;
+double d ;
+uint16_t BT_tempfix;
+uint16_t ET_tempfix;
+} pid_setting_t;
+
+extern pid_setting_t  ;
+
+
 // publc funciton
 
 uint8_t make_frame_head(uint8_t data_array[HMI_BUFFER_SIZE], int cmd_type)
