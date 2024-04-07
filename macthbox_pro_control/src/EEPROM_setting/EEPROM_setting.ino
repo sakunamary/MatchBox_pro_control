@@ -14,8 +14,8 @@ typedef struct eeprom_settings
     double p;
     double i;
     double d;
-    uint16_t BT_tempfix;
-    uint16_t ET_tempfix;
+    double BT_tempfix;
+    double ET_tempfix;
 } pid_setting_t;
 
 extern pid_setting_t;
@@ -40,7 +40,7 @@ void setup()
         pid_parm.pid_CT = 1500;
         pid_parm.p = 2.0;
         pid_parm.i = 0.12;
-        pid_parm.d = 5;
+        pid_parm.d = 5.0;
         pid_parm.BT_tempfix = 0.0;
         pid_parm.ET_tempfix = -3.0;
 

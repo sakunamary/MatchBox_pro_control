@@ -83,15 +83,16 @@ void TASK_HMI_CMD_handle(void *pvParameters)
         if (xResult == pdTRUE)
         {
             if (xQueueReceive(queueCMD_HMI, &HMI_CMD_Buffer, timeOut) == pdPASS)
-            {                              // 从接收QueueCMD 接收指令
-                switch (HMI_CMD_Buffer[2]) // 判断命令的类型
-                case 0x01:                 // 操作控制
+            { // 从接收QueueCMD 接收指令
+                switch (HMI_CMD_Buffer[2])
+                {          // 判断命令的类型
+                case 0x01: // 操作控制
                     if (xSemaphoreTake(xSerialReadBufferMutex, timeOut) == pdPASS)
                     {
                         if (pid_status == false && mb.Hreg(PID_STRTUS_HREG) == 0)
-                        {// pid_status = false  and  pid_status_hreg ==0
+                        { // pid_status = false  and  pid_status_hreg ==0
                             if (HMI_CMD_Buffer[7] != last_PWR)
-                            { 
+                            {
                                 last_PWR = HMI_CMD_Buffer[7];
                                 mb.Hreg(HEAT_HREG, last_PWR);                                 // last 火力pwr数据更新
                                 PWMAnalogWrite(PWM_HEAT_CHANNEL, heat_level_to_artisan, 100); // 自动模式下，将heat数值转换后输出到pwm // 输出新火力pwr到SSRÍ
@@ -106,18 +107,30 @@ void TASK_HMI_CMD_handle(void *pvParameters)
                         }
                         xSemaphoreGive(xSerialReadBufferMutex);
                     }
-                break;
-            case 0x02: // PID参数设置
+                    break;
+                case 0x02: // PID参数设置
+                    if (xSemaphoreTake(xSerialReadBufferMutex, timeOut) == pdPASS)
+                    {
+                        pid_parm.p = double((HMI_CMD_Buffer[3] << 8 | HMI_CMD_Buffer[4]) / 100);
+                        pid_parm.i = double((HMI_CMD_Buffer[5] << 8 | HMI_CMD_Buffer[6]) / 100);
+                        pid_parm.d = double((HMI_CMD_Buffer[7] << 8 | HMI_CMD_Buffer[8]) / 100);
+                        EEPROM.put(0, pid_parm);
+                        EEPROM.commit();
+                    }
+                    break;
+                case 0x03: // 其他参数设置
+                    pid_parm.pid_CT = HMI_CMD_Buffer[3] << 8 | HMI_CMD_Buffer[4];
+                    pid_parm.BT_tempfix = double((HMI_CMD_Buffer[5] << 8 | HMI_CMD_Buffer[6]) / 100);
+                    pid_parm.ET_tempfix = double((HMI_CMD_Buffer[7] << 8 | HMI_CMD_Buffer[8]) / 100);
+                    EEPROM.put(0, pid_parm);
+                    EEPROM.commit();
+                    break;
+                case 0x04: // 其他参数设置
 
-                break;
-            case 0x03; // 其他参数设置
-
-                break;
-                case 0x04; // 其他参数设置
-
-                break;
+                    break;
                 default:
-                break;
+                    break;
+                }
             }
         }
         vTaskDelay(20);
