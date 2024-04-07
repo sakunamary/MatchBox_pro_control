@@ -3,6 +3,8 @@
 #include <HardwareSerial.h>
 #include <WiFi.h>
 #include <EEPROM.h>
+#include <PIDAutotuner.h>
+
 #include <TASK_read_temp.h>
 #include <TASK_modbus_handle.h>
 #include <TASK_HMI_Serial.h>
@@ -18,7 +20,6 @@ char ap_name[30];
 uint8_t macAddr[6];
 
 pid_setting_t pid_parm = {
-
     1500,// uint16_t pid_CT;
     2.0,// double p ;
     0.12,// double i ;
@@ -210,6 +211,32 @@ void setup()
     Heat_pid_controller.setBias(255.0 / 2.0);
     Heat_pid_controller.setWindUpLimits(-3, 3); // Groth bounds for the integral term to prevent integral wind-up
     Heat_pid_controller.start();
+
+// INIT PID AUTOTUNE
+    PIDAutotuner tuner = PIDAutotuner();
+
+    // Set the target value to tune to
+    // This will depend on what you are tuning. This should be set to a value within
+    // the usual range of the setpoint. For low-inertia systems, values at the lower
+    // end of this range usually give better results. For anything else, start with a
+    // value at the middle of the range.
+    tuner.setTargetInputValue(BT_TEMP);
+
+    // Set the loop interval in microseconds
+    // This must be the same as the interval the PID control loop will run at
+    tuner.setLoopInterval(pid_parm.pid_CT);
+
+    // Set the output range
+    // These are the maximum and minimum possible output values of whatever you are
+    // using to control the system (analogWrite is 0-255)
+    tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
+
+    // Set the Ziegler-Nichols tuning mode
+    // Set it to either PIDAutotuner::znModeBasicPID, PIDAutotuner::znModeLessOvershoot,
+    // or PIDAutotuner::znModeNoOvershoot. Test with znModeBasicPID first, but if there
+    // is too much overshoot you can try the others.
+    tuner.setZNMode(PIDAutotuner::znModeBasicPID);
+
 }
 
 void loop()

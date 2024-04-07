@@ -20,6 +20,8 @@ Adafruit_MAX31865 thermo_ET = Adafruit_MAX31865(SPI_CS_ET, SPI_MOSI, SPI_MISO, S
 const uint16_t BT_HREG = 3001;
 const uint16_t ET_HREG = 3002;
 
+extern pid_setting_t pid_parm;
+
 void Task_Thermo_get_data(void *pvParameters)
 { // function
 
@@ -64,3 +66,36 @@ void Task_Thermo_get_data(void *pvParameters)
 } // function
 
 #endif
+
+// HMI --> MatchBox的数据帧 FrameLenght = 12
+// 帧头: 69 FF
+// 类型: 01 温度数据
+// 温度1: 00 00 // uint16
+// 温度2: 00 00 // uint16
+// 火力 : 00
+// 风力 : 00
+// 帧尾:FF FF FF
+
+// HMI --> MatchBox的数据帧 FrameLenght = 12
+// 帧头: 69 FF
+// 类型: 02 PID设定
+// P: 00 00 // uint16
+// I: 00 00 // uint16
+// D: 00 00 // uint16
+// 帧尾:FF FF FF
+
+// HMI --> MatchBox的数据帧 FrameLenght = 12
+// 帧头: 69 FF
+// 类型: 03 参数设定
+// PID ct: 00 00 // uint16
+// BT fix: 00 00 // uint16
+// ET fix: 00 00 // uint16
+// 帧尾:FF FF FF
+
+// HMI --> MatchBox的数据帧 FrameLenght = 12
+// 帧头: 69 FF
+// 类型: 04 PID run
+// PID SV: 00 00 // uint16
+// PID STATUS: 00 
+// NULL :00 00 00
+// 帧尾:FF FF FF

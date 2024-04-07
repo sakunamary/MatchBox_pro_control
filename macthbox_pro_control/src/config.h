@@ -11,7 +11,7 @@
 #define DEBUG_MODE
 #define HMI_BUFFER_SIZE 32
 
-#define VERSION "1.0.4"
+#define VERSION "1.0.5"
 
 #define SPI_SCK 8
 #define SPI_MISO 9
@@ -52,11 +52,9 @@ typedef struct eeprom_settings
     double p;
     double i;
     double d;
-    uint16_t BT_tempfix;
-    uint16_t ET_tempfix;
+    double BT_tempfix;
+    double ET_tempfix;
 } pid_setting_t;
-
-extern pid_setting_t;
 
 // publc funciton
 
@@ -75,10 +73,10 @@ uint8_t make_frame_head(uint8_t data_array[HMI_BUFFER_SIZE], int cmd_type)
         data_array[2] = 0x02; // data type
         break;
     case 3:                   // run_status
-        data_array[2] = 0x02; // data type
+        data_array[2] = 0x03; // data type
         break;
     case 4:                   // run_status
-        data_array[2] = 0x02; // data type
+        data_array[2] = 0x04; // data type
         break;
     default:
         break;
