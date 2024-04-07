@@ -117,6 +117,7 @@ void TASK_HMI_CMD_handle(void *pvParameters)
                         pid_parm.d = double((HMI_CMD_Buffer[7] << 8 | HMI_CMD_Buffer[8]) / 100);
                         EEPROM.put(0, pid_parm);
                         EEPROM.commit();
+                        xSemaphoreGive(xSerialReadBufferMutex);
                     }
                     break;
                 case 0x03: // 其他参数设置
@@ -127,13 +128,14 @@ void TASK_HMI_CMD_handle(void *pvParameters)
                     EEPROM.commit();
                     break;
                 case 0x04: // 其他参数设置
-                    // if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
-                    // {
-                    //     pid_sv = double((HMI_CMD_Buffer[3] << 8 | HMI_CMD_Buffer[4]) / 100);
-                    //     xSemaphoreGive(xThermoDataMutex);  　
-                    // }
+                           // if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
+                           // {
+                           //     pid_sv = double((HMI_CMD_Buffer[3] << 8 | HMI_CMD_Buffer[4]) / 100);
+                           //     xSemaphoreGive(xThermoDataMutex);  　
+                           // }
 
-HMI_CMD_Buffer[5]
+                    mb.Hreg(PID_STRTUS_HREG, HMI_CMD_Buffer[5]);
+                    mb.Hreg(PID_TUNE_HREG, HMI_CMD_Buffer[6]);
                     break;
                 default:
                     break;
@@ -176,5 +178,6 @@ HMI_CMD_Buffer[5]
 // 类型: 04 PID run
 // PID SV: 00 00 // uint16
 // PID STATUS: 00
-// NULL :00 00 00
+// PID TUNE : 00
+// NULL : 00 00
 // 帧尾:FF FF FF
