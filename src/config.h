@@ -33,7 +33,7 @@
 #define PWM_HEAT_CHANNEL 0
 #define PWM_FAN_CHANNEL 1
 
-#define PWM_FREQ 5000
+#define PWM_FREQ 1000
 #define PWM_RESOLUTION 12 // 0-1024
 
 #define PID_MAX_OUT 80
