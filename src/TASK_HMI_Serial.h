@@ -11,6 +11,11 @@ HardwareSerial Serial_HMI(0);
 extern uint16_t last_FAN;
 extern uint16_t last_PWR;
 
+long microseconds;
+long prevMicroseconds;
+extern int heat_level_to_artisan;
+extern int fan_level_to_artisan;
+
 // Arbitrary setpoint and gains - adjust these as fit for your project:
 
 extern double BT_TEMP; // pid_input
@@ -128,14 +133,47 @@ void TASK_HMI_CMD_handle(void *pvParameters)
                     EEPROM.commit();
                     break;
                 case 0x04: // 其他参数设置
-                           // if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
-                           // {
-                           //     pid_sv = double((HMI_CMD_Buffer[3] << 8 | HMI_CMD_Buffer[4]) / 100);
-                           //     xSemaphoreGive(xThermoDataMutex);  　
-                           // }
+                    mb.Hreg(PID_STATUS_HREG, HMI_CMD_Buffer[5]);
 
-                    mb.Hreg(PID_STRTUS_HREG, HMI_CMD_Buffer[5]);
-                    mb.Hreg(PID_TUNE_HREG, HMI_CMD_Buffer[6]);
+                    if (HMI_CMD_Buffer[6] == 1) // pid 自动设定
+                    {
+                        mb.Hreg(PID_STATUS_HREG, 0); // 关闭 pid
+                        vTaskDelay(1000);            // 让pid关闭有足够时间执行
+                        while (!tuner.isFinished())  // 开始自动整定
+                        {
+                            prevMicroseconds = microseconds;
+                            microseconds = micros();
+                            pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
+
+                            pwm.write(pwm_fan_out, map(fan_level_to_artisan, 0, 100, 10, 250), frequency, resolution);
+                            pwm.write(pwm_heat_out, map(pid_tune_output, 0, 100, 230, 850), frequency, resolution);
+                            // This loop must run at the same speed as the PID control loop being tuned
+                            while (micros() - microseconds < pid_parm.pid_CT)
+                                delayMicroseconds(1);
+                        }
+
+                        // Turn the output off here.
+                        pwm.write(pwm_fan_out, map(fan_level_to_artisan, 0, 100, 10, 250), frequency, resolution);
+                        pwm.write(pwm_heat_out, map(pid_tune_output, 0, 100, 230, 850), frequency, resolution);
+
+                        // Get PID gains - set your PID controller's gains to these
+                        pid_parm.p = tuner.getKp();
+                        pid_parm.i = tuner.getKi();
+                        pid_parm.d = tuner.getKd();
+                        EEPROM.put(0, pid_parm);
+                        EEPROM.commit();
+                        // 发送最新的pid参数到HMI，封装数据
+                        make_frame_head(TEMP_DATA_Buffer, 3);
+                        make_frame_data(TEMP_DATA_Buffer, 3, int(pid_parm.p), 3);
+                        make_frame_data(TEMP_DATA_Buffer, 3, int(pid_parm.i), 5);
+                        make_frame_data(TEMP_DATA_Buffer, 3, int(pid_parm.d), 7);
+                        make_frame_end(TEMP_DATA_Buffer, 3);
+
+                        // 跳出PID自动整定，发送命令到HMI
+                        make_frame_head(TEMP_DATA_Buffer, 4);
+                        TEMP_DATA_Buffer[6] = fan_level_to_artisan;
+                        make_frame_end(TEMP_DATA_Buffer, 4);
+                    }
                     break;
                 default:
                     break;

@@ -10,12 +10,9 @@
 // Modbus Registers Offsets
 const uint16_t HEAT_HREG = 3003;
 const uint16_t FAN_HREG = 3004;
-const uint16_t PID_STRTUS_HREG = 3005;
+const uint16_t PID_STATUS_HREG = 3005;
 const uint16_t PID_SV_HREG = 3006;
-const uint16_t PID_TUNE_HREG = 3007;
 
-long microseconds;
-long prevMicroseconds;
 uint16_t last_FAN;
 uint16_t last_PWR;
 int heat_level_to_artisan = 0;
@@ -135,36 +132,6 @@ void Task_modbus_handle(void *pvParameters)
             xTaskNotify(xTASK_data_to_HMI, 0, eIncrement);
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
-    }
-    if (mb.Hreg(PID_TUNE_HREG) == 1)
-    {
-        // Run a loop until tuner.isFinished() returns true
-        long microseconds;
-        while (!tuner.isFinished())
-        {
-
-            prevMicroseconds = microseconds;
-            microseconds = micros();
-            pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
-
-            pwm.write(pwm_fan_out, map(fan_level_to_artisan, 0, 100, 10, 250), frequency, resolution);
-            pwm.write(pwm_heat_out, map(pid_tune_output, 0, 100, 230, 850), frequency, resolution);
-            // This loop must run at the same speed as the PID control loop being tuned
-            while (micros() - microseconds < pid_parm.pid_CT)
-                delayMicroseconds(1);
-        }
-
-        // Turn the output off here.
-        pwm.write(pwm_fan_out, map(fan_level_to_artisan, 0, 100, 10, 250), frequency, resolution);
-        pwm.write(pwm_heat_out, map(pid_tune_output, 0, 100, 230, 850), frequency, resolution);
-
-        // Get PID gains - set your PID controller's gains to these
-        pid_parm.p = tuner.getKp();
-        pid_parm.i = tuner.getKi();
-        pid_parm.d = tuner.getKd();
-        EEPROM.put(0, pid_parm);
-        EEPROM.commit();
-        mb.Hreg(PID_TUNE_HREG, 0);
     }
 }
 

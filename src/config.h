@@ -26,13 +26,9 @@
 #define TXD_HMI 21
 #define RXD_HMI 20
 
+// pwm setting
 #define PWM_FAN 5
 #define PWM_HEAT 2
-
-// pwm setting
-// #define PWM_HEAT_CHANNEL 0
-// #define PWM_FAN_CHANNEL 1
-
 #define PWM_FREQ 1000
 #define PWM_RESOLUTION 12 // 0-1024
 
@@ -154,17 +150,6 @@ uint8_t make_frame_data(uint8_t data_array[HMI_BUFFER_SIZE], int cmd_type, uint1
         break;
     }
     return data_array[HMI_BUFFER_SIZE];
-}
-
-// Arduino like analogWrite
-// value has to be between 0 and valueMax
-void PWMAnalogWrite(uint8_t channel, uint32_t value, uint32_t valueMax = 255)
-{
-    // calculate duty, 4095 from 2 ^ 12 - 1
-    uint32_t duty = (4095 / valueMax) * min(value, valueMax);
-
-    // write duty to LEDC
-    ledcWrite(channel, duty);
 }
 
 // HMI --> MatchBox的数据帧 FrameLenght = 12
