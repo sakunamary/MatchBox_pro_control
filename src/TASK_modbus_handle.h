@@ -5,10 +5,7 @@
 #include <Wire.h>
 #include <ModbusIP_ESP8266.h>
 #include "ArduPID.h"
-
-ArduPID Heat_pid_controller;
-PIDAutotuner tuner = PIDAutotuner();
-bool init_status = true;
+#include <pwmWrite.h>
 
 // Modbus Registers Offsets
 const uint16_t HEAT_HREG = 3003;
@@ -25,10 +22,20 @@ int heat_level_to_artisan = 0;
 int fan_level_to_artisan = 0;
 bool pid_status = false;
 extern double BT_TEMP;
+bool init_status = true;
 
 double PID_output;
 double pid_sv = 0;
 double pid_tune_output;
+const uint32_t frequency = PWM_FREQ;
+const byte resolution = PWM_RESOLUTION;
+const byte pwm_fan_out = PWM_FAN;
+const byte pwm_heat_out = PWM_HEAT;
+
+Pwm pwm = Pwm();
+
+ArduPID Heat_pid_controller;
+PIDAutotuner tuner = PIDAutotuner();
 
 void Task_modbus_handle(void *pvParameters)
 { // function
@@ -54,8 +61,8 @@ void Task_modbus_handle(void *pvParameters)
                 pid_status = false;
                 // xQueueSend(queueCMD_BLE, &BLE_ReadBuffer, timeOut);   // 串口数据发送至队列
 
-                PWMAnalogWrite(PWM_FAN_CHANNEL, fan_level_to_artisan, 100);   // 自动模式下，将fan数值转换后输出到pwm
-                PWMAnalogWrite(PWM_HEAT_CHANNEL, heat_level_to_artisan, 100); // 自动模式下，将heat数值转换后输出到pwm
+                pwm.write(pwm_fan_out, map(fan_level_to_artisan, 0, 100, 10, 250), frequency, resolution);
+                pwm.write(pwm_heat_out, map(heat_level_to_artisan, 0, 100, 230, 850), frequency, resolution);
             }
             else
             {
@@ -113,9 +120,9 @@ void Task_modbus_handle(void *pvParameters)
                     }
                 }
             }
-            PWMAnalogWrite(PWM_FAN_CHANNEL, fan_level_to_artisan, 100);   // 自动模式下，将heat数值转换后输出到pwm
-            PWMAnalogWrite(PWM_HEAT_CHANNEL, heat_level_to_artisan, 100); // 自动模式下，将heat数值转换后输出到pwm
-                                                                          // 封装HMI数据
+            pwm.write(pwm_fan_out, map(fan_level_to_artisan, 0, 100, 10, 250), frequency, resolution);
+            pwm.write(pwm_heat_out, map(heat_level_to_artisan, 0, 100, 230, 850), frequency, resolution);
+            // 封装HMI数据
             make_frame_head(TEMP_DATA_Buffer, 1);
             TEMP_DATA_Buffer[7] = heat_level_to_artisan;
             TEMP_DATA_Buffer[8] = fan_level_to_artisan;
@@ -136,26 +143,20 @@ void Task_modbus_handle(void *pvParameters)
         while (!tuner.isFinished())
         {
 
-            // This loop must run at the same speed as the PID control loop being tuned
             prevMicroseconds = microseconds;
             microseconds = micros();
+            pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
 
-            // Get input value here (temperature, encoder position, velocity, etc)
-            // Call tunePID() with the input value
-            pid_tune_output = tuner.tunePID(BT_TEMP);
-
-            // Set the output - tunePid() will return values within the range configured
-            // by setOutputRange(). Don't change the value or the tuning results will be
-            // incorrect.
-            PWMAnalogWrite(PWM_FAN_CHANNEL, 40, 100);               // 自动模式下，将heat数值转换后输出到pwm
-            PWMAnalogWrite(PWM_HEAT_CHANNEL, pid_tune_output, 100); // 自动模式下，将heat数值转换后输出到pwm
+            pwm.write(pwm_fan_out, map(fan_level_to_artisan, 0, 100, 10, 250), frequency, resolution);
+            pwm.write(pwm_heat_out, map(pid_tune_output, 0, 100, 230, 850), frequency, resolution);
             // This loop must run at the same speed as the PID control loop being tuned
             while (micros() - microseconds < pid_parm.pid_CT)
                 delayMicroseconds(1);
         }
 
         // Turn the output off here.
-        PWMAnalogWrite(PWM_HEAT_CHANNEL, 0, 100);
+        pwm.write(pwm_fan_out, map(fan_level_to_artisan, 0, 100, 10, 250), frequency, resolution);
+        pwm.write(pwm_heat_out, map(pid_tune_output, 0, 100, 230, 850), frequency, resolution);
 
         // Get PID gains - set your PID controller's gains to these
         pid_parm.p = tuner.getKp();

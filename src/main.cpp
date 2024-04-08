@@ -3,7 +3,7 @@
 #include <HardwareSerial.h>
 #include <WiFi.h>
 #include <EEPROM.h>
-#include <PIDAutotuner.h>
+#include <pidautotuner.h>
 
 #include <TASK_read_temp.h>
 #include <TASK_modbus_handle.h>
@@ -20,12 +20,12 @@ char ap_name[30];
 uint8_t macAddr[6];
 
 pid_setting_t pid_parm = {
-    1500,// uint16_t pid_CT;
-    2.0,// double p ;
-    0.12,// double i ;
-    5.0,// double d ;
-    0.0,// uint16_t BT_tempfix;
-    -3.0// uint16_t ET_tempfix;
+    1500, // uint16_t pid_CT;
+    2.0,  // double p ;
+    0.12, // double i ;
+    5.0,  // double d ;
+    0.0,  // uint16_t BT_tempfix;
+    -3.0  // uint16_t ET_tempfix;
 };
 
 void setup()
@@ -35,15 +35,15 @@ void setup()
     xThermoDataMutex = xSemaphoreCreateMutex();
     xSerialReadBufferMutex = xSemaphoreCreateMutex();
 
-    // setup PWM Pins
-    pinMode(PWM_HEAT, OUTPUT);
-    pinMode(PWM_FAN, OUTPUT);
+    // // setup PWM Pins
+    // pinMode(PWM_HEAT, OUTPUT);
+    // pinMode(PWM_FAN, OUTPUT);
 
-    ledcSetup(PWM_FAN_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
-    ledcAttachPin(PWM_FAN, PWM_FAN_CHANNEL);
+    // ledcSetup(PWM_FAN_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
+    // ledcAttachPin(PWM_FAN, PWM_FAN_CHANNEL);
 
-    ledcSetup(PWM_HEAT_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
-    ledcAttachPin(PWM_HEAT, PWM_HEAT_CHANNEL);
+    // ledcSetup(PWM_HEAT_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
+    // ledcAttachPin(PWM_HEAT, PWM_HEAT_CHANNEL);
 
     // read pid data from EEPROM
     EEPROM.begin(sizeof(pid_parm));
@@ -60,6 +60,13 @@ void setup()
 #if defined(DEBUG_MODE)
     Serial.printf("\nStart MAX31865...\n");
 #endif
+
+    pwm.pause();
+    pwm.write(pwm_fan_out, 0, frequency, resolution);
+    pwm.write(pwm_heat_out, 0, frequency, resolution);
+    pwm.resume();
+    pwm.printDebug();
+
     // 初始化网络服务
     WiFi.macAddress(macAddr);
     WiFi.mode(WIFI_AP);
@@ -204,7 +211,7 @@ void setup()
     mb.Hreg(PID_SV_HREG, 0);     // 初始化赋值
     mb.Hreg(PID_TUNE_HREG, 0);   // 初始化赋值
 
-    //init PID 
+    // init PID
     Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);
     Heat_pid_controller.setSampleTime(pid_parm.pid_CT); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
     Heat_pid_controller.setOutputLimits(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
@@ -212,30 +219,12 @@ void setup()
     Heat_pid_controller.setWindUpLimits(-3, 3); // Groth bounds for the integral term to prevent integral wind-up
     Heat_pid_controller.start();
 
-// INIT PID AUTOTUNE
+    // INIT PID AUTOTUNE
 
-    // Set the target value to tune to
-    // This will depend on what you are tuning. This should be set to a value within
-    // the usual range of the setpoint. For low-inertia systems, values at the lower
-    // end of this range usually give better results. For anything else, start with a
-    // value at the middle of the range.
     tuner.setTargetInputValue(180.0);
-
-    // Set the loop interval in microseconds
-    // This must be the same as the interval the PID control loop will run at
     tuner.setLoopInterval(pid_parm.pid_CT);
-
-    // Set the output range
-    // These are the maximum and minimum possible output values of whatever you are
-    // using to control the system (analogWrite is 0-255)
     tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
-
-    // Set the Ziegler-Nichols tuning mode
-    // Set it to either PIDAutotuner::znModeBasicPID, PIDAutotuner::znModeLessOvershoot,
-    // or PIDAutotuner::znModeNoOvershoot. Test with znModeBasicPID first, but if there
-    // is too much overshoot you can try the others.
-    tuner.setZNMode(PIDAutotuner::znModeBasicPID);
-
+    tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
 }
 
 void loop()

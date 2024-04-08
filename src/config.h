@@ -30,8 +30,8 @@
 #define PWM_HEAT 2
 
 // pwm setting
-#define PWM_HEAT_CHANNEL 0
-#define PWM_FAN_CHANNEL 1
+// #define PWM_HEAT_CHANNEL 0
+// #define PWM_FAN_CHANNEL 1
 
 #define PWM_FREQ 1000
 #define PWM_RESOLUTION 12 // 0-1024
