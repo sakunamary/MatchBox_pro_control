@@ -18,13 +18,11 @@ typedef struct eeprom_settings
     double ET_tempfix;
 } pid_setting_t;
 
-extern pid_setting_t;
-
-extern pid_setting_t pid_parm;
+pid_setting_t pid_parm;
 
 void setup()
 {
-    Serial.begin(BAUDRATE);
+    Serial.begin(115200);
     Serial.println("start...");
     if (!EEPROM.begin(sizeof(pid_parm)))
     {
@@ -37,12 +35,12 @@ void setup()
         delay(3000);
         EEPROM.get(0, pid_parm);
 
-        pid_parm.pid_CT = 1500;
+        pid_parm.pid_CT = 2000;
         pid_parm.p = 2.0;
         pid_parm.i = 0.12;
         pid_parm.d = 5.0;
         pid_parm.BT_tempfix = 0.0;
-        pid_parm.ET_tempfix = -3.0;
+        pid_parm.ET_tempfix = 0.0;
 
         EEPROM.put(0, pid_parm);
         EEPROM.commit();
