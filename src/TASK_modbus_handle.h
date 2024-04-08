@@ -63,10 +63,6 @@ void Task_modbus_handle(void *pvParameters)
             }
             else
             {
-                if (last_FAN != mb.Hreg(FAN_HREG)) // 发生变动
-                {
-                    fan_level_to_artisan = mb.Hreg(FAN_HREG);
-                }
                 // 判断是否在pid自动烘焙模式
                 if (mb.Hreg(PID_STRTUS_HREG) == 1) // 开pid控制
                 {
@@ -116,6 +112,11 @@ void Task_modbus_handle(void *pvParameters)
                         }
                     }
                 }
+            }
+            /////////////////////////////////风力控制始终手动
+            if (last_FAN != mb.Hreg(FAN_HREG)) // 发生变动
+            {
+                fan_level_to_artisan = mb.Hreg(FAN_HREG);
             }
             pwm.write(pwm_fan_out, map(fan_level_to_artisan, 0, 100, 10, 250), frequency, resolution);
             pwm.write(pwm_heat_out, map(heat_level_to_artisan, 0, 100, 230, 850), frequency, resolution);
