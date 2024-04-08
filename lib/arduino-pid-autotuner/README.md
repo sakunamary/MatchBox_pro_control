@@ -1,15 +1,20 @@
 # arduino-pid-autotuner
-Automated PID tuning using Ziegler-Nichols/relay method on Arduino and compatible boards
+Automated PID tuning using Ziegler-Nichols/relay method.
+
+Originally written for Arduino and compatible boards, but does not rely on the Arduino standard library.
+
+## Disclaimer
+**Issues have been disabled on this repository due to too many off-topic questions about PID control in general or how to use this code. This project is a simple implementation of the algorithm described [here](https://en.wikipedia.org/wiki/Ziegler%E2%80%93Nichols_method) and is not guaranteed to work in every use case. If you don't know what this code is intended to do, you probably don't need to use it.**
 
 ## How does it work?
-`PIDAutotuner.h` and `PIDAutotuner.cpp` are fully commented to explain how the algorithm works.
+`pidautotuner.h` and `pidautotuner.cpp` are fully commented to explain how the algorithm works.
 
 ## What PID controller does this work with?
-This algorithm should work with all PID controllers and PID control libraries if it is properly configured.
+This algorithm should work with any implementation of PID control if it is properly configured.
 
-## Example code
+## Example code (Arduino)
 ```c
-#include <PIDAutotuner.h>
+#include <pidautotuner.h>
 
 void setup() {
 
@@ -27,18 +32,19 @@ void setup() {
     tuner.setLoopInterval(loopInterval);
 
     // Set the output range
-    // These are the maximum and minimum possible output values of whatever you are
-    // using to control the system (analogWrite is 0-255)
+    // These are the minimum and maximum possible output values of whatever you are
+    // using to control the system (Arduino analogWrite, for example, is 0-255)
     tuner.setOutputRange(0, 255);
 
     // Set the Ziegler-Nichols tuning mode
-    // Set it to either PIDAutotuner::znModeBasicPID, PIDAutotuner::znModeLessOvershoot,
-    // or PIDAutotuner::znModeNoOvershoot. Test with znModeBasicPID first, but if there
-    // is too much overshoot you can try the others.
-    tuner.setZNMode(PIDAutotuner::znModeBasicPID);
+    // Set it to either PIDAutotuner::ZNModeBasicPID, PIDAutotuner::ZNModeLessOvershoot,
+    // or PIDAutotuner::ZNModeNoOvershoot. Defaults to ZNModeNoOvershoot as it is the
+    // safest option.
+    tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
 
     // This must be called immediately before the tuning loop
-    tuner.startTuningLoop();
+    // Must be called with the current time in microseconds
+    tuner.startTuningLoop(micros());
 
     // Run a loop until tuner.isFinished() returns true
     long microseconds;
@@ -51,8 +57,8 @@ void setup() {
         // Get input value here (temperature, encoder position, velocity, etc)
         double input = doSomethingToGetInput();
 
-        // Call tunePID() with the input value
-        double output = tuner.tunePID(input);
+        // Call tunePID() with the input value and current time in microseconds
+        double output = tuner.tunePID(input, microseconds);
 
         // Set the output - tunePid() will return values within the range configured
         // by setOutputRange(). Don't change the value or the tuning results will be
