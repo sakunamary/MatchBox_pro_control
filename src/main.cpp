@@ -25,7 +25,7 @@ pid_setting_t pid_parm = {
     0.12, // double i ;
     5.0,  // double d ;
     0.0,  // uint16_t BT_tempfix;
-    -3.0  // uint16_t ET_tempfix;
+    0.0  // uint16_t ET_tempfix;
 };
 
 void setup()
