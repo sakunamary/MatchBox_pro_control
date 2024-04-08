@@ -25,7 +25,7 @@ pid_setting_t pid_parm = {
     0.12, // double i ;
     5.0,  // double d ;
     0.0,  // uint16_t BT_tempfix;
-    0.0  // uint16_t ET_tempfix;
+    0.0   // uint16_t ET_tempfix;
 };
 
 void setup()
@@ -199,17 +199,15 @@ void setup()
     mb.addHreg(ET_HREG);
     mb.addHreg(HEAT_HREG);
     mb.addHreg(FAN_HREG);
-    mb.addHreg(PID_STRTUS_HREG);
+    mb.addHreg(PID_STATUS_HREG);
     mb.addHreg(PID_SV_HREG);
-    mb.addHreg(PID_TUNE_HREG);
 
     mb.Hreg(BT_HREG, 0);         // 初始化赋值
     mb.Hreg(ET_HREG, 0);         // 初始化赋值
     mb.Hreg(HEAT_HREG, 0);       // 初始化赋值
     mb.Hreg(FAN_HREG, 0);        // 初始化赋值
-    mb.Hreg(PID_STRTUS_HREG, 0); // 初始化赋值
+    mb.Hreg(PID_STATUS_HREG, 0); // 初始化赋值
     mb.Hreg(PID_SV_HREG, 0);     // 初始化赋值
-    mb.Hreg(PID_TUNE_HREG, 0);   // 初始化赋值
 
     // init PID
     Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);

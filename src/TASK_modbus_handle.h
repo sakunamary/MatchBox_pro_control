@@ -58,7 +58,7 @@ void Task_modbus_handle(void *pvParameters)
                 pid_status = false;
                 // xQueueSend(queueCMD_BLE, &BLE_ReadBuffer, timeOut);   // 串口数据发送至队列
 
-                pwm.write(pwm_fan_out, map(fan_level_to_artisan, 0, 100, 10, 250), frequency, resolution);
+                pwm.write(pwm_fan_out, map(fan_level_to_artisan, 0, 100, 100, 1000), frequency, resolution);
                 pwm.write(pwm_heat_out, map(heat_level_to_artisan, 0, 100, 230, 850), frequency, resolution);
             }
             else
@@ -118,7 +118,7 @@ void Task_modbus_handle(void *pvParameters)
             {
                 fan_level_to_artisan = mb.Hreg(FAN_HREG);
             }
-            pwm.write(pwm_fan_out, map(fan_level_to_artisan, 0, 100, 10, 250), frequency, resolution);
+            pwm.write(pwm_fan_out, map(fan_level_to_artisan, 0, 100, 100, 1000), frequency, resolution);
             pwm.write(pwm_heat_out, map(heat_level_to_artisan, 0, 100, 230, 850), frequency, resolution);
             // 封装HMI数据
             make_frame_head(TEMP_DATA_Buffer, 1);
