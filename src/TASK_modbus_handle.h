@@ -64,7 +64,7 @@ void Task_modbus_handle(void *pvParameters)
             else
             {
                 // 判断是否在pid自动烘焙模式
-                if (mb.Hreg(PID_STRTUS_HREG) == 1) // 开pid控制
+                if (mb.Hreg(PID_STATUS_HREG) == 1) // 开pid控制
                 {
                     if (pid_status == false)
                     {                                                     // pid_status == false  and pid_status_hreg ==1
