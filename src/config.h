@@ -44,7 +44,7 @@
 //
 typedef struct eeprom_settings
 {
-    uint16_t pid_CT;
+    long pid_CT;
     double p;
     double i;
     double d;
