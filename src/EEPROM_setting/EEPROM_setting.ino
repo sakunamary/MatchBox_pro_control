@@ -27,7 +27,7 @@ void setup()
     if (!EEPROM.begin(sizeof(pid_parm)))
     {
         Serial.println("failed to initialise EEPROM");
-        delay(1000000);
+        delay(5000);
     }
     else
     {
