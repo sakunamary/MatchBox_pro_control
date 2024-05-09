@@ -29,7 +29,7 @@
 // pwm setting
 #define PWM_FAN 5
 #define PWM_HEAT 2
-#define PWM_FREQ 1000
+#define PWM_FREQ 3922
 #define PWM_RESOLUTION 10 // 0-1024
 
 #define PID_MAX_OUT 80
