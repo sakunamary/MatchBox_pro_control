@@ -53,18 +53,20 @@ void setup()
 #if defined(DEBUG_MODE)
     Serial.printf("\nStart HMI serial...\n");
 #endif
-    // start Thermo
-    thermo_BT.begin(MAX31865_2WIRE); // set to 2WIRE or 4WIRE as necessary
-    thermo_ET.begin(MAX31865_2WIRE); // set to 2WIRE or 4WIRE as necessary
-#if defined(DEBUG_MODE)
-    Serial.printf("\nStart MAX31865...\n");
-#endif
+
+    MCP.NewConversion();  // New conversion is initiated
+    aht20.begin();
+
 
     pwm.pause();
     pwm.write(pwm_fan_out, 0, frequency, resolution);
     pwm.write(pwm_heat_out, 0, frequency, resolution);
     pwm.resume();
-    pwm.printDebug();
+    //pwm.printDebug();
+
+#if defined(DEBUG_MODE)
+    Serial.printf("\nStart PWM...\n");
+#endif
 
     // 初始化网络服务
     WiFi.macAddress(macAddr);
@@ -198,6 +200,9 @@ void setup()
     mb.addHreg(ET_HREG);
     mb.addHreg(HEAT_HREG);
     mb.addHreg(FAN_HREG);
+        mb.addHreg(AMB_RH_HREG);
+    mb.addHreg(AMB_TEMP_HREG);
+
     mb.addHreg(PID_STATUS_HREG);
     mb.addHreg(PID_SV_HREG);
 
@@ -207,6 +212,9 @@ void setup()
     mb.Hreg(FAN_HREG, 0);        // 初始化赋值
     mb.Hreg(PID_STATUS_HREG, 0); // 初始化赋值
     mb.Hreg(PID_SV_HREG, 0);     // 初始化赋值
+    
+    mb.Hreg(AMB_RH_HREG, 0);   // 初始化赋值
+    mb.Hreg(AMB_TEMP_HREG, 0); // 初始化赋值
 
     // init PID
     Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);
