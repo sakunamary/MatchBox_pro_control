@@ -24,7 +24,7 @@ pid_setting_t pid_parm = {
     2.0,                // double p ;
     0.12,               // double i ;
     5.0,                // double d ;
-    0.0,                // uint16_t BT_tempfix;
+    2.0,                // uint16_t BT_tempfix;
     0.0                 // uint16_t ET_tempfix;
 };
 
@@ -59,7 +59,7 @@ void setup()
 
 
     pwm.pause();
-    pwm.write(pwm_fan_out, 0, frequency, resolution);
+    pwm.write(pwm_fan_out, 600, frequency, resolution);
     pwm.write(pwm_heat_out, 0, frequency, resolution);
     pwm.resume();
     //pwm.printDebug();
@@ -209,7 +209,7 @@ void setup()
     mb.Hreg(BT_HREG, 0);         // 初始化赋值
     mb.Hreg(ET_HREG, 0);         // 初始化赋值
     mb.Hreg(HEAT_HREG, 0);       // 初始化赋值
-    mb.Hreg(FAN_HREG, 0);        // 初始化赋值
+    mb.Hreg(FAN_HREG, 10);        // 初始化赋值
     mb.Hreg(PID_STATUS_HREG, 0); // 初始化赋值
     mb.Hreg(PID_SV_HREG, 0);     // 初始化赋值
     
