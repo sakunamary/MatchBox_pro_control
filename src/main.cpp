@@ -59,7 +59,7 @@ void setup()
 
 
     pwm.pause();
-    pwm.write(pwm_fan_out, 600, frequency, resolution);
+    pwm.write(pwm_fan_out, 750, frequency, resolution);
     pwm.write(pwm_heat_out, 0, frequency, resolution);
     pwm.resume();
     //pwm.printDebug();

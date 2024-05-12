@@ -61,7 +61,7 @@ void Task_modbus_handle(void *pvParameters)
                 {
                     fan_level_to_artisan = 10;
                 }
-                pwm.write(pwm_fan_out, map(fan_level_to_artisan, 10, 100, 600, 1000), frequency, resolution);
+                pwm.write(pwm_fan_out, map(fan_level_to_artisan, 10, 100, 750, 1000), frequency, resolution);
                 pwm.write(pwm_heat_out, map(heat_level_to_artisan, 1, 100, 230, 950), frequency, resolution);
             }
             else
@@ -125,7 +125,7 @@ void Task_modbus_handle(void *pvParameters)
                 }
                 fan_level_to_artisan = mb.Hreg(FAN_HREG);
             }
-            pwm.write(pwm_fan_out, map(fan_level_to_artisan, 10, 100, 600, 1000), frequency, resolution);
+            pwm.write(pwm_fan_out, map(fan_level_to_artisan, 10, 100, 750, 1000), frequency, resolution);
             pwm.write(pwm_heat_out, map(heat_level_to_artisan, 0, 100, 230, 950), frequency, resolution);
             // 封装HMI数据
             make_frame_head(TEMP_DATA_Buffer, 1);
