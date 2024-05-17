@@ -1,4 +1,5 @@
 dlloydev/ESP32 ESP32S2 AnalogWrite@^5.0.2
+powerbroker2/ArduPID@^0.2.1
+iakop/LiquidCrystal_I2C_ESP32@^1.1.6
 emelianov/modbus-esp8266@^4.1.0
 dfrobot/DFRobot_AHT20@^1.0.0
-powerbroker2/ArduPID@^0.2.1

@@ -7,7 +7,8 @@
 
 #include <TASK_read_temp.h>
 #include <TASK_modbus_handle.h>
-#include <TASK_HMI_Serial.h>
+#include <TASK_LCD.h>
+// #include <TASK_HMI_Serial.h>
 // #include <TASK_BLE_Serial.h>
 
 String local_IP;
@@ -49,20 +50,20 @@ void setup()
 
     // start Serial
     Serial.begin(BAUDRATE);
-    Serial_HMI.begin(HMI_BAUDRATE, SERIAL_8N1, -1, -1);
+    // Serial_HMI.begin(HMI_BAUDRATE, SERIAL_8N1, -1, -1);
 #if defined(DEBUG_MODE)
     Serial.printf("\nStart HMI serial...\n");
 #endif
 
-    MCP.NewConversion();  // New conversion is initiated
+    MCP.NewConversion(); // New conversion is initiated
     aht20.begin();
-
+    lcd.init(I2C_SDA, I2C_SCL); // initialize the lcd to use user defined I2C pins
 
     pwm.pause();
     pwm.write(pwm_fan_out, 750, frequency, resolution);
     pwm.write(pwm_heat_out, 0, frequency, resolution);
     pwm.resume();
-    //pwm.printDebug();
+    // pwm.printDebug();
 
 #if defined(DEBUG_MODE)
     Serial.printf("\nStart PWM...\n");
@@ -114,43 +115,56 @@ void setup()
 #endif
 
     xTaskCreate(
-        TASK_data_to_HMI, "TASK_data_to_HMI" // 获取HB数据
+        Task_OLED, "Task_OLED" // 获取HB数据
         ,
-        1024 * 2 // This stack size can be checked & adjusted by reading the Stack Highwater
+        1024 * 4 // This stack size can be checked & adjusted by reading the Stack Highwater
         ,
-        NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+        NULL, 3 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
         ,
-        &xTASK_data_to_HMI // Running Core decided by FreeRTOS,let core0 run wifi and BT
+        NULL // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
-    Serial.printf("\nTASK3:TASK_data_to_HMI...\n");
+    Serial.printf("\nTASK6:Task_OLED...\n");
 #endif
 
-    xTaskCreate(
-        TASK_CMD_FROM_HMI, "TASK_CMD_FROM_HMI" // 获取HB数据
-        ,
-        1024 * 2 // This stack size can be checked & adjusted by reading the Stack Highwater
-        ,
-        NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-        ,
-        &xTASK_CMD_HMI // Running Core decided by FreeRTOS,let core0 run wifi and BT
-    );
-#if defined(DEBUG_MODE)
-    Serial.printf("\nTASK4:TASK_CMD_FROM_HMI...\n");
-#endif
+//     xTaskCreate(
+//         TASK_data_to_HMI, "TASK_data_to_HMI" // 获取HB数据
+//         ,
+//         1024 * 2 // This stack size can be checked & adjusted by reading the Stack Highwater
+//         ,
+//         NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+//         ,
+//         &xTASK_data_to_HMI // Running Core decided by FreeRTOS,let core0 run wifi and BT
+//     );
+// #if defined(DEBUG_MODE)
+//     Serial.printf("\nTASK3:TASK_data_to_HMI...\n");
+// #endif
 
-    xTaskCreate(
-        TASK_HMI_CMD_handle, "TASK_HMI_CMD_handle" // 获取HB数据
-        ,
-        1024 * 6 // This stack size can be checked & adjusted by reading the Stack Highwater
-        ,
-        NULL, 1 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-        ,
-        &xTASK_HMI_CMD_handle // Running Core decided by FreeRTOS,let core0 run wifi and BT
-    );
-#if defined(DEBUG_MODE)
-    Serial.printf("\nTASK5:TASK_HMI_CMD_handle...\n");
-#endif
+//     xTaskCreate(
+//         TASK_CMD_FROM_HMI, "TASK_CMD_FROM_HMI" // 获取HB数据
+//         ,
+//         1024 * 2 // This stack size can be checked & adjusted by reading the Stack Highwater
+//         ,
+//         NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+//         ,
+//         &xTASK_CMD_HMI // Running Core decided by FreeRTOS,let core0 run wifi and BT
+//     );
+// #if defined(DEBUG_MODE)
+//     Serial.printf("\nTASK4:TASK_CMD_FROM_HMI...\n");
+// #endif
+
+//     xTaskCreate(
+//         TASK_HMI_CMD_handle, "TASK_HMI_CMD_handle" // 获取HB数据
+//         ,
+//         1024 * 6 // This stack size can be checked & adjusted by reading the Stack Highwater
+//         ,
+//         NULL, 1 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+//         ,
+//         &xTASK_HMI_CMD_handle // Running Core decided by FreeRTOS,let core0 run wifi and BT
+//     );
+// #if defined(DEBUG_MODE)
+//     Serial.printf("\nTASK5:TASK_HMI_CMD_handle...\n");
+// #endif
 
 //     xTaskCreate(
 //         TASK_DATA_to_BLE, "TASK_DATA_to_BLE" // 获取HB数据
@@ -200,7 +214,7 @@ void setup()
     mb.addHreg(ET_HREG);
     mb.addHreg(HEAT_HREG);
     mb.addHreg(FAN_HREG);
-        mb.addHreg(AMB_RH_HREG);
+    mb.addHreg(AMB_RH_HREG);
     mb.addHreg(AMB_TEMP_HREG);
 
     mb.addHreg(PID_STATUS_HREG);
@@ -209,16 +223,16 @@ void setup()
     mb.Hreg(BT_HREG, 0);         // 初始化赋值
     mb.Hreg(ET_HREG, 0);         // 初始化赋值
     mb.Hreg(HEAT_HREG, 0);       // 初始化赋值
-    mb.Hreg(FAN_HREG, 10);        // 初始化赋值
+    mb.Hreg(FAN_HREG, 10);       // 初始化赋值
     mb.Hreg(PID_STATUS_HREG, 0); // 初始化赋值
     mb.Hreg(PID_SV_HREG, 0);     // 初始化赋值
-    
+
     mb.Hreg(AMB_RH_HREG, 0);   // 初始化赋值
     mb.Hreg(AMB_TEMP_HREG, 0); // 初始化赋值
 
     // init PID
     Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);
-    Heat_pid_controller.setSampleTime(pid_parm.pid_CT/1000); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
+    Heat_pid_controller.setSampleTime(pid_parm.pid_CT / 1000); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
     Heat_pid_controller.setOutputLimits(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
     Heat_pid_controller.setBias(255.0 / 2.0);
     Heat_pid_controller.setWindUpLimits(-3, 0); // Groth bounds for the integral term to prevent integral wind-up
