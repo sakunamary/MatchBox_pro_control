@@ -43,7 +43,7 @@ void Task_OLED(void *pvParameters)
     lcd.setCursor(4, 0);
     lcd.print(F("MatchBox Pro"));
     lcd.setCursor(4, 1);
-    lcd.print(F(ver));
+    lcd.print(ver);
 
 
 
