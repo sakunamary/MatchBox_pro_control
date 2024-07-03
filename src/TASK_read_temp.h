@@ -40,6 +40,7 @@ void Task_Thermo_get_data(void *pvParameters)
     /* Variable Definition */
     (void)pvParameters;
     TickType_t xLastWakeTime;
+    char   temp_data_buffer_ble[BLE_BUFFER_SIZE];
     uint8_t TEMP_DATA_Buffer[HMI_BUFFER_SIZE];
     const TickType_t xIntervel = (pid_parm.pid_CT / 1000) / portTICK_PERIOD_MS;
     /* Task Setup and Initialize */
@@ -65,7 +66,7 @@ void Task_Thermo_get_data(void *pvParameters)
             vTaskDelay(200);
             MCP.Configuration(2, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
             Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
-            ET_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+            ET_TEMP = pid_parm.ET_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
 
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
@@ -84,8 +85,10 @@ void Task_Thermo_get_data(void *pvParameters)
         xQueueSend(queue_data_to_HMI, &TEMP_DATA_Buffer, xIntervel / 3);
         xTaskNotify(xTASK_data_to_HMI, 0, eIncrement);
         // 封装BLE 协议
-        // xQueueSend(queue_data_to_BLE, &TEMP_DATA_Buffer, xIntervel / 3);
-        // xTaskNotify(xTASK_data_to_BLE, 0, eIncrement);        // send notify to TASK_data_to_HMI
+        // ambient,chan1,chan2,chan3,chan4
+        sprintf(temp_data_buffer_ble, "%4.2d,%4.2d,%4.2d,0.0,0.0", AMB_TEMP, BT_TEMP, ET_TEMP);
+        xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel / 3);
+        xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
     }
 
 } // function

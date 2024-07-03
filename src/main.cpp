@@ -7,9 +7,10 @@
 
 #include <TASK_read_temp.h>
 #include <TASK_modbus_handle.h>
-#include <TASK_LCD.h>
+#include <TASK_BLE_Serial.h>
+//#include <TASK_LCD.h>
 // #include <TASK_HMI_Serial.h>
-// #include <TASK_BLE_Serial.h>
+
 
 String local_IP;
 
@@ -25,7 +26,7 @@ pid_setting_t pid_parm = {
     2.0,                // double p ;
     0.12,               // double i ;
     5.0,                // double d ;
-    2.0,                // uint16_t BT_tempfix;
+    0.0,                // uint16_t BT_tempfix;
     0.0                 // uint16_t ET_tempfix;
 };
 
@@ -143,18 +144,18 @@ void setup()
 //     Serial.printf("\nTASK5:TASK_HMI_CMD_handle...\n");
 // #endif
 
-//     xTaskCreate(
-//         TASK_DATA_to_BLE, "TASK_DATA_to_BLE" // 获取HB数据
-//         ,
-//         1024 * 2 // This stack size can be checked & adjusted by reading the Stack Highwater
-//         ,
-//         NULL, 3 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-//         ,
-//         &xTASK_data_to_BLE // Running Core decided by FreeRTOS,let core0 run wifi and BT
-//     );
-// #if defined(DEBUG_MODE)
-//     Serial.printf("\nTASK6:TASK_DATA_to_BLE...\n");
-// #endif
+    xTaskCreate(
+        TASK_DATA_to_BLE, "TASK_DATA_to_BLE" // 获取HB数据
+        ,
+        1024 * 2 // This stack size can be checked & adjusted by reading the Stack Highwater
+        ,
+        NULL, 3 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+        ,
+        &xTASK_data_to_BLE // Running Core decided by FreeRTOS,let core0 run wifi and BT
+    );
+#if defined(DEBUG_MODE)
+    Serial.printf("\nTASK6:TASK_DATA_to_BLE...\n");
+#endif
 
 //     xTaskCreate(
 //         TASK_CMD_From_BLE, "TASK_CMD_From_BLE" // 获取HB数据

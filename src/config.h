@@ -6,9 +6,10 @@
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
-#define HMI_BAUDRATE 9600
+#define HMI_BAUDRATE 57600
 
 #define DEBUG_MODE
+#define BLE_BUFFER_SIZE 64
 #define HMI_BUFFER_SIZE 16
 
 #define VERSION "1.0.5"
@@ -183,7 +184,7 @@ uint8_t make_frame_data(uint8_t data_array[HMI_BUFFER_SIZE], int cmd_type, uint1
 static TaskHandle_t xTASK_data_to_HMI = NULL;
 static TaskHandle_t xTASK_CMD_HMI = NULL;
 static TaskHandle_t xTASK_HMI_CMD_handle = NULL;
-// static TaskHandle_t xTASK_data_to_BLE = NULL;
+ static TaskHandle_t xTASK_data_to_BLE = NULL;
 // static TaskHandle_t xTASK_CMD_BLE = NULL;
 // static TaskHandle_t xTASK_BLE_CMD_handle = NULL;
 
@@ -192,7 +193,7 @@ SemaphoreHandle_t xSerialReadBufferMutex = NULL;
 
 QueueHandle_t queue_data_to_HMI = xQueueCreate(15, sizeof(uint8_t[HMI_BUFFER_SIZE])); // 发送到HMI的数据 hex格式化数据
 QueueHandle_t queueCMD_HMI = xQueueCreate(15, sizeof(uint8_t[HMI_BUFFER_SIZE]));      // 从HMI接收到的Hex格式命令
-// QueueHandle_t queueCMD_BLE = xQueueCreate(8, sizeof(char[HMI_BUFFER_SIZE]));
-// QueueHandle_t queue_data_to_BLE = xQueueCreate(8, sizeof(char[HMI_BUFFER_SIZE]));
+QueueHandle_t queueCMD_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
+QueueHandle_t queue_data_to_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
 
 #endif
