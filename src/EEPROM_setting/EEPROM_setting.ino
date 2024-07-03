@@ -7,6 +7,7 @@
 */
 
 #include "EEPROM.h"
+#include "config.h"
 
 typedef struct eeprom_settings
 {
@@ -35,7 +36,7 @@ void setup()
         delay(3000);
         EEPROM.get(0, pid_parm);
 
-        pid_parm.pid_CT = 2000;
+        pid_parm.pid_CT = 2;
         pid_parm.p = 2.0;
         pid_parm.i = 0.12;
         pid_parm.d = 5.0;

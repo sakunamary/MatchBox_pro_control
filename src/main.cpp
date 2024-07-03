@@ -21,7 +21,7 @@ char ap_name[30];
 uint8_t macAddr[6];
 
 pid_setting_t pid_parm = {
-    2 * uS_TO_S_FACTOR, // uint16_t pid_CT;
+    2 , // uint16_t pid_CT;
     2.0,                // double p ;
     0.12,               // double i ;
     5.0,                // double d ;
@@ -36,15 +36,6 @@ void setup()
     xThermoDataMutex = xSemaphoreCreateMutex();
     xSerialReadBufferMutex = xSemaphoreCreateMutex();
 
-    // // setup PWM Pins
-    // pinMode(PWM_HEAT, OUTPUT);
-    // pinMode(PWM_FAN, OUTPUT);
-
-    // ledcSetup(PWM_FAN_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
-    // ledcAttachPin(PWM_FAN, PWM_FAN_CHANNEL);
-
-    // ledcSetup(PWM_HEAT_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
-    // ledcAttachPin(PWM_HEAT, PWM_HEAT_CHANNEL);
 
     // read pid data from EEPROM
 
@@ -57,8 +48,7 @@ void setup()
 
     MCP.NewConversion(); // New conversion is initiated
     aht20.begin();
-    lcd.init(I2C_SDA, I2C_SCL); // initialize the lcd to use user defined I2C pins
-
+    
     pwm.pause();
     pwm.write(pwm_fan_out, 750, frequency, resolution);
     pwm.write(pwm_heat_out, 0, frequency, resolution);
@@ -112,19 +102,6 @@ void setup()
     );
 #if defined(DEBUG_MODE)
     Serial.printf("\nTASK2:Task_modbus_control...\n");
-#endif
-
-    xTaskCreate(
-        Task_OLED, "Task_OLED" // 获取HB数据
-        ,
-        1024 * 4 // This stack size can be checked & adjusted by reading the Stack Highwater
-        ,
-        NULL, 3 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-        ,
-        NULL // Running Core decided by FreeRTOS,let core0 run wifi and BT
-    );
-#if defined(DEBUG_MODE)
-    Serial.printf("\nTASK6:Task_OLED...\n");
 #endif
 
 //     xTaskCreate(
@@ -232,7 +209,7 @@ void setup()
 
     // init PID
     Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);
-    Heat_pid_controller.setSampleTime(pid_parm.pid_CT / 1000); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
+    Heat_pid_controller.setSampleTime(pid_parm.pid_CT * 1000); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
     Heat_pid_controller.setOutputLimits(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
     Heat_pid_controller.setBias(255.0 / 2.0);
     Heat_pid_controller.setWindUpLimits(-3, 0); // Groth bounds for the integral term to prevent integral wind-up
