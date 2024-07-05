@@ -1,16 +1,12 @@
 #include <Arduino.h>
 #include <config.h>
-#include <HardwareSerial.h>
 #include <WiFi.h>
-#include <EEPROM.h>
 #include <pidautotuner.h>
-
 #include <TASK_read_temp.h>
 #include <TASK_modbus_handle.h>
 #include <TASK_BLE_Serial.h>
-//#include <TASK_LCD.h>
-// #include <TASK_HMI_Serial.h>
-
+// #include <TASK_LCD.h>
+//  #include <TASK_HMI_Serial.h>
 
 String local_IP;
 
@@ -22,12 +18,12 @@ char ap_name[30];
 uint8_t macAddr[6];
 
 pid_setting_t pid_parm = {
-    2 , // uint16_t pid_CT;
-    2.0,                // double p ;
-    0.12,               // double i ;
-    5.0,                // double d ;
-    0.0,                // uint16_t BT_tempfix;
-    0.0                 // uint16_t ET_tempfix;
+    2,    // uint16_t pid_CT;
+    2.0,  // double p ;
+    0.12, // double i ;
+    5.0,  // double d ;
+    0.0,  // uint16_t BT_tempfix;
+    0.0   // uint16_t ET_tempfix;
 };
 
 void setup()
@@ -37,24 +33,27 @@ void setup()
     xThermoDataMutex = xSemaphoreCreateMutex();
     xSerialReadBufferMutex = xSemaphoreCreateMutex();
 
-
     // read pid data from EEPROM
 
     // start Serial
     Serial.begin(BAUDRATE);
     // Serial_HMI.begin(HMI_BAUDRATE, SERIAL_8N1, -1, -1);
+    // #if defined(DEBUG_MODE)
+    //     Serial.printf("\nStart HMI serial...\n");
+    // #endif
+
 #if defined(DEBUG_MODE)
-    Serial.printf("\nStart HMI serial...\n");
+    Serial.printf("\nStart Task...\n");
 #endif
 
     MCP.NewConversion(); // New conversion is initiated
     aht20.begin();
-    
+
     pwm.pause();
     pwm.write(pwm_fan_out, 750, frequency, resolution);
     pwm.write(pwm_heat_out, 0, frequency, resolution);
     pwm.resume();
-    // pwm.printDebug();
+    pwm.printDebug();
 
 #if defined(DEBUG_MODE)
     Serial.printf("\nStart PWM...\n");
@@ -70,17 +69,17 @@ void setup()
 #endif
 
     // Init BLE Serial
-    // SerialBLE.begin(ap_name, false, -1); // FOR ESP32C3 SuperMini board
-    // SerialBLE.setTimeout(10);
+    SerialBLE.begin(ap_name, false, -1); // FOR ESP32C3 SuperMini board
+    SerialBLE.setTimeout(10);
 
 #if defined(DEBUG_MODE)
-    Serial.printf("\nStart Task...\n");
+    Serial.printf("\nStart BLE serial...\n");
 #endif
 
     /*---------- Task Definition ---------------------*/
     // Setup tasks to run independently.
     xTaskCreate(
-        Task_Thermo_get_data, "Thermo_get_data" // 获取HB数据
+        Task_Thermo_get_data, "Task_Thermo_get_data" // 获取HB数据
         ,
         1024 * 10 // This stack size can be checked & adjusted by reading the Stack Highwater
         ,
@@ -102,47 +101,47 @@ void setup()
         NULL // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
-    Serial.printf("\nTASK2:Task_modbus_control...\n");
+    Serial.printf("\nTASK2:Task_modbus_handle...\n");
 #endif
 
-//     xTaskCreate(
-//         TASK_data_to_HMI, "TASK_data_to_HMI" // 获取HB数据
-//         ,
-//         1024 * 2 // This stack size can be checked & adjusted by reading the Stack Highwater
-//         ,
-//         NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-//         ,
-//         &xTASK_data_to_HMI // Running Core decided by FreeRTOS,let core0 run wifi and BT
-//     );
-// #if defined(DEBUG_MODE)
-//     Serial.printf("\nTASK3:TASK_data_to_HMI...\n");
-// #endif
+    //     xTaskCreate(
+    //         TASK_data_to_HMI, "TASK_data_to_HMI" // 获取HB数据
+    //         ,
+    //         1024 * 2 // This stack size can be checked & adjusted by reading the Stack Highwater
+    //         ,
+    //         NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    //         ,
+    //         &xTASK_data_to_HMI // Running Core decided by FreeRTOS,let core0 run wifi and BT
+    //     );
+    // #if defined(DEBUG_MODE)
+    //     Serial.printf("\nTASK3:TASK_data_to_HMI...\n");
+    // #endif
 
-//     xTaskCreate(
-//         TASK_CMD_FROM_HMI, "TASK_CMD_FROM_HMI" // 获取HB数据
-//         ,
-//         1024 * 2 // This stack size can be checked & adjusted by reading the Stack Highwater
-//         ,
-//         NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-//         ,
-//         &xTASK_CMD_HMI // Running Core decided by FreeRTOS,let core0 run wifi and BT
-//     );
-// #if defined(DEBUG_MODE)
-//     Serial.printf("\nTASK4:TASK_CMD_FROM_HMI...\n");
-// #endif
+    //     xTaskCreate(
+    //         TASK_CMD_FROM_HMI, "TASK_CMD_FROM_HMI" // 获取HB数据
+    //         ,
+    //         1024 * 2 // This stack size can be checked & adjusted by reading the Stack Highwater
+    //         ,
+    //         NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    //         ,
+    //         &xTASK_CMD_HMI // Running Core decided by FreeRTOS,let core0 run wifi and BT
+    //     );
+    // #if defined(DEBUG_MODE)
+    //     Serial.printf("\nTASK4:TASK_CMD_FROM_HMI...\n");
+    // #endif
 
-//     xTaskCreate(
-//         TASK_HMI_CMD_handle, "TASK_HMI_CMD_handle" // 获取HB数据
-//         ,
-//         1024 * 6 // This stack size can be checked & adjusted by reading the Stack Highwater
-//         ,
-//         NULL, 1 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-//         ,
-//         &xTASK_HMI_CMD_handle // Running Core decided by FreeRTOS,let core0 run wifi and BT
-//     );
-// #if defined(DEBUG_MODE)
-//     Serial.printf("\nTASK5:TASK_HMI_CMD_handle...\n");
-// #endif
+    //     xTaskCreate(
+    //         TASK_HMI_CMD_handle, "TASK_HMI_CMD_handle" // 获取HB数据
+    //         ,
+    //         1024 * 6 // This stack size can be checked & adjusted by reading the Stack Highwater
+    //         ,
+    //         NULL, 1 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    //         ,
+    //         &xTASK_HMI_CMD_handle // Running Core decided by FreeRTOS,let core0 run wifi and BT
+    //     );
+    // #if defined(DEBUG_MODE)
+    //     Serial.printf("\nTASK5:TASK_HMI_CMD_handle...\n");
+    // #endif
 
     xTaskCreate(
         TASK_DATA_to_BLE, "TASK_DATA_to_BLE" // 获取HB数据

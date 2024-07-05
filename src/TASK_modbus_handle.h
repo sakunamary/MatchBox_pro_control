@@ -128,17 +128,17 @@ void Task_modbus_handle(void *pvParameters)
             pwm.write(pwm_fan_out, map(fan_level_to_artisan, 10, 100, 750, 1000), frequency, resolution);
             pwm.write(pwm_heat_out, map(heat_level_to_artisan, 0, 100, 230, 950), frequency, resolution);
             // 封装HMI数据
-            make_frame_head(TEMP_DATA_Buffer, 1);
-            TEMP_DATA_Buffer[7] = heat_level_to_artisan;
-            TEMP_DATA_Buffer[8] = fan_level_to_artisan;
-            make_frame_end(TEMP_DATA_Buffer, 1);
+//             make_frame_head(TEMP_DATA_Buffer, 1);
+//             TEMP_DATA_Buffer[7] = heat_level_to_artisan;
+//             TEMP_DATA_Buffer[8] = fan_level_to_artisan;
+//             make_frame_end(TEMP_DATA_Buffer, 1);
 
-            xQueueSend(queue_data_to_HMI, &TEMP_DATA_Buffer, timeOut);
-#if defined(DEBUG_MODE)
-            Serial.write(TEMP_DATA_Buffer, HMI_BUFFER_SIZE);
-#endif
-            xTaskNotify(xTASK_data_to_HMI, 0, eIncrement);
-            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
+//             xQueueSend(queue_data_to_HMI, &TEMP_DATA_Buffer, timeOut);
+// #if defined(DEBUG_MODE)
+//             Serial.write(TEMP_DATA_Buffer, HMI_BUFFER_SIZE);
+// #endif
+            // xTaskNotify(xTASK_data_to_HMI, 0, eIncrement);
+            // xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
     }
 }
