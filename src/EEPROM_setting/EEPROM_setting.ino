@@ -43,6 +43,8 @@ pid_setting_t pid_parm = {
 void setup()
 {
     Serial.begin(115200);
+    Wire.begin();
+    I2C_EEPROM.setMemoryType(64);
     Serial.println("start...\n");
     ADC_MCP3424.NewConversion(); // New conversion is initiated
     aht20.begin();
