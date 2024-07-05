@@ -32,7 +32,7 @@ const byte pwm_heat_out = PWM_HEAT;
 Pwm pwm = Pwm();
 
 ArduPID Heat_pid_controller;
-PIDAutotuner tuner = PIDAutotuner();
+//PIDAutotuner tuner = PIDAutotuner();
 
 void Task_modbus_handle(void *pvParameters)
 { // function
@@ -138,7 +138,7 @@ void Task_modbus_handle(void *pvParameters)
 //             Serial.write(TEMP_DATA_Buffer, HMI_BUFFER_SIZE);
 // #endif
             // xTaskNotify(xTASK_data_to_HMI, 0, eIncrement);
-            // xSemaphoreGive(xThermoDataMutex); // end of lock mutex
+             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
     }
 }

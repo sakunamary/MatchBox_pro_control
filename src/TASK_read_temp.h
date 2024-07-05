@@ -58,6 +58,7 @@ void Task_Thermo_get_data(void *pvParameters)
             {
                 AMB_TEMP = aht20.getTemperature_C();
                 AMB_RH = aht20.getHumidity_RH();
+                Serial.printf("raw data:AMB_TEMP:%4.2f\n",AMB_TEMP);
             }
             vTaskDelay(200);
             MCP.Configuration(1, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
@@ -86,7 +87,9 @@ void Task_Thermo_get_data(void *pvParameters)
         // xTaskNotify(xTASK_data_to_HMI, 0, eIncrement);
         // 封装BLE 协议
         // ambient,chan1,chan2,chan3,chan4
-        sprintf(temp_data_buffer_ble, "%4.2d,%4.2d,%4.2d,0.0,0.0", AMB_TEMP, BT_TEMP, ET_TEMP);
+
+        sprintf(temp_data_buffer_ble, "%4.2f,%4.2f,%4.2f,0.00\n\r", AMB_TEMP, BT_TEMP, ET_TEMP);
+        Serial.println(temp_data_buffer_ble);
         xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel / 3);
         xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
     }

@@ -1,7 +1,9 @@
 #include <Arduino.h>
 #include <config.h>
 #include <WiFi.h>
-#include <pidautotuner.h>
+//#include <pidautotuner.h>
+#include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
+
 #include <TASK_read_temp.h>
 #include <TASK_modbus_handle.h>
 #include <TASK_BLE_Serial.h>
@@ -13,8 +15,8 @@ String local_IP;
 extern bool loopTaskWDTEnabled;
 extern TaskHandle_t loopTaskHandle;
 extern double BT_TEMP;
-
-char ap_name[30];
+uint8_t aht20_status;
+char ap_name[16];
 uint8_t macAddr[6];
 
 pid_setting_t pid_parm = {
@@ -32,31 +34,27 @@ void setup()
     loopTaskWDTEnabled = true;
     xThermoDataMutex = xSemaphoreCreateMutex();
     xSerialReadBufferMutex = xSemaphoreCreateMutex();
-
+    
     // read pid data from EEPROM
 
     // start Serial
     Serial.begin(BAUDRATE);
-    // Serial_HMI.begin(HMI_BAUDRATE, SERIAL_8N1, -1, -1);
-    // #if defined(DEBUG_MODE)
-    //     Serial.printf("\nStart HMI serial...\n");
-    // #endif
 
 #if defined(DEBUG_MODE)
-    Serial.printf("\nStart Task...\n");
+    Serial.printf("\nStart Task...");
 #endif
-
+    aht20_status = aht20.begin();
+    Serial.printf("check aht20 code : %d\n", aht20_status);
     MCP.NewConversion(); // New conversion is initiated
-    aht20.begin();
 
     pwm.pause();
     pwm.write(pwm_fan_out, 750, frequency, resolution);
     pwm.write(pwm_heat_out, 0, frequency, resolution);
     pwm.resume();
-    pwm.printDebug();
+    // pwm.printDebug();
 
 #if defined(DEBUG_MODE)
-    Serial.printf("\nStart PWM...\n");
+    Serial.printf("\nStart PWM...");
 #endif
 
     // 初始化网络服务
@@ -65,7 +63,7 @@ void setup()
     sprintf(ap_name, "MATCHBOX_%02X%02X%02X", macAddr[3], macAddr[4], macAddr[5]);
     WiFi.softAP(ap_name, "12345678"); // defualt IP address :192.168.4.1 password min 8 digis
 #if defined(DEBUG_MODE)
-    Serial.printf("\nStart WIFI...\n");
+    Serial.printf("\nStart WIFI...");
 #endif
 
     // Init BLE Serial
@@ -73,7 +71,7 @@ void setup()
     SerialBLE.setTimeout(10);
 
 #if defined(DEBUG_MODE)
-    Serial.printf("\nStart BLE serial...\n");
+    Serial.printf("\nStart BLE serial...");
 #endif
 
     /*---------- Task Definition ---------------------*/
@@ -88,7 +86,7 @@ void setup()
         NULL // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
-    Serial.printf("\nTASK1:Task_Thermo_get_data...\n");
+    Serial.printf("\nTASK1:Task_Thermo_get_data...");
 #endif
 
     xTaskCreate(
@@ -101,7 +99,7 @@ void setup()
         NULL // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
-    Serial.printf("\nTASK2:Task_modbus_handle...\n");
+    Serial.printf("\nTASK2:Task_modbus_handle...");
 #endif
 
     //     xTaskCreate(
@@ -153,7 +151,7 @@ void setup()
         &xTASK_data_to_BLE // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
-    Serial.printf("\nTASK6:TASK_DATA_to_BLE...\n");
+    Serial.printf("\nTASK6:TASK_DATA_to_BLE...");
 #endif
 
 //     xTaskCreate(
@@ -184,7 +182,7 @@ void setup()
 
 // Init Modbus-TCP
 #if defined(DEBUG_MODE)
-    Serial.printf("\nStart Modbus-TCP   service...\n");
+    Serial.printf("\nStart Modbus-TCP   service...");
 #endif
     mb.server(502); // Start Modbus IP //default port :502
     mb.addHreg(BT_HREG);
@@ -217,10 +215,10 @@ void setup()
 
     // INIT PID AUTOTUNE
 
-    tuner.setTargetInputValue(180.0);
-    tuner.setLoopInterval(pid_parm.pid_CT);
-    tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
-    tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
+    // tuner.setTargetInputValue(180.0);
+    // tuner.setLoopInterval(pid_parm.pid_CT * uS_TO_S_FACTOR);
+    // tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
+    // tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
 }
 
 void loop()
