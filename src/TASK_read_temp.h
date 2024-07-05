@@ -7,7 +7,6 @@
 #include <ModbusIP_ESP8266.h>
 #include <MCP3424.h>
 #include "DFRobot_AHT20.h"
-#include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 
 ModbusIP mb; // declear object
 
