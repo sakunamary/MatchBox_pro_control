@@ -34,6 +34,40 @@ DFRobot_AHT20 aht20;
 
 extern pid_setting_t pid_parm;
 
+
+class MyServerCallbacks: public BLEServerCallbacks {
+    void onConnect(BLEServer* pServer) {
+      deviceConnected = true;
+    };
+
+    void onDisconnect(BLEServer* pServer) {
+      deviceConnected = false;
+    }
+};
+
+class MyCallbacks: public BLECharacteristicCallbacks {
+    void onWrite(BLECharacteristic *pCharacteristic) {
+      std::string rxValue = pCharacteristic->getValue();
+
+      if (rxValue.length() > 0) {
+        Serial.println("*********");
+        Serial.print("Received Value: ");
+        for (int i = 0; i < rxValue.length(); i++)
+          Serial.print(rxValue[i]);
+
+        Serial.println();
+        Serial.println("*********");
+      }
+    }
+};
+
+
+
+
+
+
+
+
 void Task_Thermo_get_data(void *pvParameters)
 { // function
 
@@ -58,9 +92,9 @@ void Task_Thermo_get_data(void *pvParameters)
             {
                 AMB_TEMP = aht20.getTemperature_C();
                 AMB_RH = aht20.getHumidity_RH();
-#if defined(DEBUG_MODE)
-                Serial.printf("raw data:AMB_TEMP:%4.2f\n", AMB_TEMP);
-#endif
+// #if defined(DEBUG_MODE)
+//                 Serial.printf("raw data:AMB_TEMP:%4.2f\n", AMB_TEMP);
+// #endif
             }
             vTaskDelay(200);
             MCP.Configuration(1, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8

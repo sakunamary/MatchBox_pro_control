@@ -3,13 +3,57 @@
 #define __TASK_BLE_SERIAL_H__
 #include <Arduino.h>
 #include <config.h>
-#include <BleSerial.h>
 #include <esp_attr.h>
 #include <esp_task_wdt.h>
 #include <driver/rtc_io.h>
 #include "soc/rtc_wdt.h"
 
-BleSerial SerialBLE;
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
+#include <BLE2902.h>
+
+BLEServer *pServer = NULL;
+BLECharacteristic *pTxCharacteristic;
+bool deviceConnected = false;
+bool oldDeviceConnected = false;
+uint8_t txValue = 0;
+
+// See the following for generating UUIDs:
+// https://www.uuidgenerator.net/
+
+#define SERVICE_UUID "6E400001-B5A3-F393-E0A9-E50E24DCCA9E" // UART service UUID
+#define CHARACTERISTIC_UUID_RX "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
+#define CHARACTERISTIC_UUID_TX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
+
+class MyServerCallbacks : public BLEServerCallbacks
+{
+    void onConnect(BLEServer *pServer)
+    {
+        deviceConnected = true;
+    };
+
+    void onDisconnect(BLEServer *pServer)
+    {
+        deviceConnected = false;
+    }
+};
+
+class MyCallbacks : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *pCharacteristic)
+    {
+        std::string rxValue = pCharacteristic->getValue();
+
+        if (rxValue.length() > 0)
+        {
+
+            for (int i = 0; i < rxValue.length(); i++)
+                Serial.print(rxValue[i]);
+            Serial.println();
+        }
+    }
+};
 
 // const int BLE_BUFFER_SIZE = 1024;
 
@@ -21,24 +65,26 @@ void TASK_DATA_to_BLE(void *pvParameters)
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
 
-    while (1)
-    {
-        xResult = xTaskNotifyWait(0x00,                 // 在运行前这个命令之前，先清除这几位
-                                  0x00,                 // 运行后，重置所有的bits 0x00 or ULONG_MAX or 0xFFFFFFFF
-                                  &ulNotificationValue, // 重置前的notification value
-                                  portMAX_DELAY);       // 一直等待
-        if (xResult == pdTRUE)
-        {
-            if (xQueueReceive(queue_data_to_BLE, &BLE_DATA_Buffer, timeOut) == pdPASS)
-            { // 从接收QueueCMD 接收指令
-#if defined(DEBUG_MODE)
-                Serial.write(BLE_DATA_Buffer, BLE_BUFFER_SIZE);
-#endif
-                SerialBLE.write(BLE_DATA_Buffer, BLE_BUFFER_SIZE);
-                vTaskDelay(20);
-            }
-        }
-    }
+//     while (1)
+//     {
+//         xResult = xTaskNotifyWait(0x00,                 // 在运行前这个命令之前，先清除这几位
+//                                   0x00,                 // 运行后，重置所有的bits 0x00 or ULONG_MAX or 0xFFFFFFFF
+//                                   &ulNotificationValue, // 重置前的notification value
+//                                   portMAX_DELAY);       // 一直等待
+//         if (xResult == pdTRUE)
+//         {
+//             if (xQueueReceive(queue_data_to_BLE, &BLE_DATA_Buffer, timeOut) == pdPASS)
+//             { // 从接收QueueCMD 接收指令
+// #if defined(DEBUG_MODE)
+//                 Serial.println(String((char *)BLE_DATA_Buffer));
+// #endif
+//                 // SerialBLE.write(BLE_DATA_Buffer, BLE_BUFFER_SIZE);
+//                 SerialBLE.println(String((char *)BLE_DATA_Buffer));
+
+//                 vTaskDelay(20);
+//             }
+//         }
+//     }
 }
 
 // void TASK_CMD_From_BLE(void *pvParameters)

@@ -67,8 +67,8 @@ void setup()
 // #endif
 
     // Init BLE Serial
-    SerialBLE.begin(ap_name, false, -1); // FOR ESP32C3 SuperMini board
-    SerialBLE.setTimeout(10);
+    // SerialBLE.begin(ap_name, false, -1); // FOR ESP32C3 SuperMini board
+    // SerialBLE.setTimeout(10);
 
 #if defined(DEBUG_MODE)
     Serial.printf("\nStart BLE serial...");
@@ -219,6 +219,40 @@ void setup()
     // tuner.setLoopInterval(pid_parm.pid_CT * uS_TO_S_FACTOR);
     // tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
     // tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
+
+
+    // Create the BLE Device
+    BLEDevice::init(ap_name);
+
+    // Create the BLE Server
+    pServer = BLEDevice::createServer();
+    pServer->setCallbacks(new MyServerCallbacks());
+
+    // Create the BLE Service
+    BLEService *pService = pServer->createService(SERVICE_UUID);
+
+    // Create a BLE Characteristic
+    pTxCharacteristic = pService->createCharacteristic(
+        CHARACTERISTIC_UUID_TX,
+        BLECharacteristic::PROPERTY_NOTIFY);
+
+    pTxCharacteristic->addDescriptor(new BLE2902());
+
+    BLECharacteristic *pRxCharacteristic = pService->createCharacteristic(
+        CHARACTERISTIC_UUID_RX,
+        BLECharacteristic::PROPERTY_WRITE);
+
+    pRxCharacteristic->setCallbacks(new MyCallbacks());
+
+    // Start the service
+    pService->start();
+
+    // Start advertising
+    pServer->getAdvertising()->start();
+    Serial.println("Waiting a client connection to notify...");
+
+
+
 }
 
 void loop()
