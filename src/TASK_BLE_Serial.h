@@ -9,12 +9,9 @@
 #include <driver/rtc_io.h>
 #include "soc/rtc_wdt.h"
 
-
 BleSerial SerialBLE;
 
-//const int BLE_BUFFER_SIZE = 1024;
-
-
+// const int BLE_BUFFER_SIZE = 1024;
 
 void TASK_DATA_to_BLE(void *pvParameters)
 {
@@ -34,6 +31,9 @@ void TASK_DATA_to_BLE(void *pvParameters)
         {
             if (xQueueReceive(queue_data_to_BLE, &BLE_DATA_Buffer, timeOut) == pdPASS)
             { // 从接收QueueCMD 接收指令
+#if defined(DEBUG_MODE)
+                Serial.write(BLE_DATA_Buffer, BLE_BUFFER_SIZE);
+#endif
                 SerialBLE.write(BLE_DATA_Buffer, BLE_BUFFER_SIZE);
                 vTaskDelay(20);
             }
@@ -57,8 +57,6 @@ void TASK_DATA_to_BLE(void *pvParameters)
 //         vTaskDelay(20);
 //     }
 // }
-
-
 
 // void TASK_BLE_CMD_handle(void *pvParameters)
 // {
@@ -113,6 +111,5 @@ void TASK_DATA_to_BLE(void *pvParameters)
 //         }
 //     }
 // }
-
 
 #endif

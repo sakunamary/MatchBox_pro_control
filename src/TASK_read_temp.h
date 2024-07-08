@@ -4,11 +4,11 @@
 #include <Arduino.h>
 #include <config.h>
 #include <Wire.h>
-#include <ModbusIP_ESP8266.h>
+// #include <ModbusIP_ESP8266.h>
 #include <MCP3424.h>
 #include "DFRobot_AHT20.h"
 
-ModbusIP mb; // declear object
+// ModbusIP mb; // declear object
 
 double BT_TEMP;
 double ET_TEMP;
@@ -27,10 +27,10 @@ DFRobot_AHT20 aht20;
 // TypeK temp_K_cal;
 
 // Modbus Registers Offsets
-const uint16_t BT_HREG = 3001;
-const uint16_t ET_HREG = 3002;
-const uint16_t AMB_RH_HREG = 3007;
-const uint16_t AMB_TEMP_HREG = 3008;
+// const uint16_t BT_HREG = 3001;
+// const uint16_t ET_HREG = 3002;
+// const uint16_t AMB_RH_HREG = 3007;
+// const uint16_t AMB_TEMP_HREG = 3008;
 
 extern pid_setting_t pid_parm;
 
@@ -40,7 +40,7 @@ void Task_Thermo_get_data(void *pvParameters)
     /* Variable Definition */
     (void)pvParameters;
     TickType_t xLastWakeTime;
-    char   temp_data_buffer_ble[BLE_BUFFER_SIZE];
+    char temp_data_buffer_ble[BLE_BUFFER_SIZE];
     uint8_t TEMP_DATA_Buffer[HMI_BUFFER_SIZE];
     const TickType_t xIntervel = (pid_parm.pid_CT * 1000) / portTICK_PERIOD_MS;
     /* Task Setup and Initialize */
@@ -58,7 +58,9 @@ void Task_Thermo_get_data(void *pvParameters)
             {
                 AMB_TEMP = aht20.getTemperature_C();
                 AMB_RH = aht20.getHumidity_RH();
-                Serial.printf("raw data:AMB_TEMP:%4.2f\n",AMB_TEMP);
+#if defined(DEBUG_MODE)
+                Serial.printf("raw data:AMB_TEMP:%4.2f\n", AMB_TEMP);
+#endif
             }
             vTaskDelay(200);
             MCP.Configuration(1, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
@@ -72,11 +74,11 @@ void Task_Thermo_get_data(void *pvParameters)
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
 
-        // update  Hreg data
-        mb.Hreg(BT_HREG, int(round(BT_TEMP * 10)));        // 初始化赋值
-        mb.Hreg(ET_HREG, int(round(ET_TEMP * 10)));        // 初始化赋值
-        mb.Hreg(AMB_RH_HREG, int(round(AMB_RH * 10)));     // 初始化赋值
-        mb.Hreg(AMB_TEMP_HREG, int(round(AMB_TEMP * 10))); // 初始化赋值
+        // // update  Hreg data
+        // mb.Hreg(BT_HREG, int(round(BT_TEMP * 10)));        // 初始化赋值
+        // mb.Hreg(ET_HREG, int(round(ET_TEMP * 10)));        // 初始化赋值
+        // mb.Hreg(AMB_RH_HREG, int(round(AMB_RH * 10)));     // 初始化赋值
+        // mb.Hreg(AMB_TEMP_HREG, int(round(AMB_TEMP * 10))); // 初始化赋值
 
         // // 封装HMI 协议
         // make_frame_head(TEMP_DATA_Buffer, 1);
@@ -88,8 +90,10 @@ void Task_Thermo_get_data(void *pvParameters)
         // 封装BLE 协议
         // ambient,chan1,chan2,chan3,chan4
 
-        sprintf(temp_data_buffer_ble, "%4.2f,%4.2f,%4.2f,0.00\n\r", AMB_TEMP, BT_TEMP, ET_TEMP);
+        sprintf(temp_data_buffer_ble, "%4.2f,%4.2f,%4.2f,0.00\n", AMB_TEMP, BT_TEMP, ET_TEMP);
+#if defined(DEBUG_MODE)        
         Serial.println(temp_data_buffer_ble);
+#endif        
         xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel / 3);
         xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
     }

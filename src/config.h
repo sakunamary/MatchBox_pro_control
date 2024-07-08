@@ -6,7 +6,6 @@
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
-#define HMI_BAUDRATE 57600
 
 #define DEBUG_MODE
 #define BLE_BUFFER_SIZE 64
@@ -49,103 +48,103 @@ typedef struct eeprom_settings
 
 // publc funciton
 
-uint8_t make_frame_head(uint8_t data_array[HMI_BUFFER_SIZE], int cmd_type)
-// pagkage the data frame end .cmd_type:1/data_frame;2/run_status;3/HMI_cmd
-{
-    data_array[0] = 0x69; // frame head
-    data_array[1] = 0xff; // frame head
+// uint8_t make_frame_head(uint8_t data_array[HMI_BUFFER_SIZE], int cmd_type)
+// // pagkage the data frame end .cmd_type:1/data_frame;2/run_status;3/HMI_cmd
+// {
+//     data_array[0] = 0x69; // frame head
+//     data_array[1] = 0xff; // frame head
 
-    switch (cmd_type)
-    {
-    case 1:                   // data_frame
-        data_array[2] = 0x01; // data type
-        break;
-    case 2:                   // run_status
-        data_array[2] = 0x02; // data type
-        break;
-    case 3:                   // run_status
-        data_array[2] = 0x03; // data type
-        break;
-    case 4:                   // run_status
-        data_array[2] = 0x04; // data type
-        break;
-    default:
-        break;
-    }
-    return data_array[HMI_BUFFER_SIZE];
-}
+//     switch (cmd_type)
+//     {
+//     case 1:                   // data_frame
+//         data_array[2] = 0x01; // data type
+//         break;
+//     case 2:                   // run_status
+//         data_array[2] = 0x02; // data type
+//         break;
+//     case 3:                   // run_status
+//         data_array[2] = 0x03; // data type
+//         break;
+//     case 4:                   // run_status
+//         data_array[2] = 0x04; // data type
+//         break;
+//     default:
+//         break;
+//     }
+//     return data_array[HMI_BUFFER_SIZE];
+// }
 
-uint8_t make_frame_end(uint8_t data_array[HMI_BUFFER_SIZE], int cmd_type)
-// pagkage the data frame end .cmd_type:1/data_frame;2/run_status;3/HMI_cmd
-{
+// uint8_t make_frame_end(uint8_t data_array[HMI_BUFFER_SIZE], int cmd_type)
+// // pagkage the data frame end .cmd_type:1/data_frame;2/run_status;3/HMI_cmd
+// {
 
-    switch (cmd_type)
-    {
-    case 1: // data_frame
+//     switch (cmd_type)
+//     {
+//     case 1: // data_frame
 
-        data_array[9] = 0xff;  // frame end
-        data_array[10] = 0xff; // frame end
-        data_array[11] = 0xff; // frame end
-        break;
-    case 2:                    // run_status
-        data_array[9] = 0xff;  // frame end
-        data_array[10] = 0xff; // frame end
-        data_array[11] = 0xff; // frame end
-        break;
-    case 3:                    // run_status
-        data_array[9] = 0xff;  // frame end
-        data_array[10] = 0xff; // frame end
-        data_array[11] = 0xff; // frame end
-        break;
-    case 4:   
-        data_array[7] = 0x00;  // frame end
-        data_array[8] = 0x00; // frame end
-        data_array[9] = 0xff;  // frame end
-        data_array[10] = 0xff; // frame end
-        data_array[11] = 0xff; // frame end
-        break;
-    default:
-        break;
-    }
-    return data_array[HMI_BUFFER_SIZE];
-}
+//         data_array[9] = 0xff;  // frame end
+//         data_array[10] = 0xff; // frame end
+//         data_array[11] = 0xff; // frame end
+//         break;
+//     case 2:                    // run_status
+//         data_array[9] = 0xff;  // frame end
+//         data_array[10] = 0xff; // frame end
+//         data_array[11] = 0xff; // frame end
+//         break;
+//     case 3:                    // run_status
+//         data_array[9] = 0xff;  // frame end
+//         data_array[10] = 0xff; // frame end
+//         data_array[11] = 0xff; // frame end
+//         break;
+//     case 4:   
+//         data_array[7] = 0x00;  // frame end
+//         data_array[8] = 0x00; // frame end
+//         data_array[9] = 0xff;  // frame end
+//         data_array[10] = 0xff; // frame end
+//         data_array[11] = 0xff; // frame end
+//         break;
+//     default:
+//         break;
+//     }
+//     return data_array[HMI_BUFFER_SIZE];
+// }
 
-uint8_t make_frame_data(uint8_t data_array[HMI_BUFFER_SIZE], int cmd_type, uint16_t in_val, int uBit)
-// pagkage the data frame.cmd_type:1/data_frame;2/run_status;3/HMI_cmd
-{
-    uint8_t high = highByte(in_val);
-    uint8_t low = lowByte(in_val);
-    switch (cmd_type)
-    {
-    case 1:
-        if (uBit > 2 && uBit < 7)
-        {
-            data_array[uBit] = low;      // frame end
-            data_array[uBit + 1] = high; // frame end
-        }
+// uint8_t make_frame_data(uint8_t data_array[HMI_BUFFER_SIZE], int cmd_type, uint16_t in_val, int uBit)
+// // pagkage the data frame.cmd_type:1/data_frame;2/run_status;3/HMI_cmd
+// {
+//     uint8_t high = highByte(in_val);
+//     uint8_t low = lowByte(in_val);
+//     switch (cmd_type)
+//     {
+//     case 1:
+//         if (uBit > 2 && uBit < 7)
+//         {
+//             data_array[uBit] = low;      // frame end
+//             data_array[uBit + 1] = high; // frame end
+//         }
 
-        break;
-    case 2:
-        if (uBit > 2 && uBit < 9)
-        {
-            data_array[uBit] = low;      // frame end
-            data_array[uBit + 1] = high; // frame end
-        }
-        break;
-    case 3:
-        if (uBit > 2 && uBit < 9)
-        {
-            data_array[uBit] = low;      // frame end
-            data_array[uBit + 1] = high; // frame end
-        }
-        break;
+//         break;
+//     case 2:
+//         if (uBit > 2 && uBit < 9)
+//         {
+//             data_array[uBit] = low;      // frame end
+//             data_array[uBit + 1] = high; // frame end
+//         }
+//         break;
+//     case 3:
+//         if (uBit > 2 && uBit < 9)
+//         {
+//             data_array[uBit] = low;      // frame end
+//             data_array[uBit + 1] = high; // frame end
+//         }
+//         break;
 
-    default:
+//     default:
 
-        break;
-    }
-    return data_array[HMI_BUFFER_SIZE];
-}
+//         break;
+//     }
+//     return data_array[HMI_BUFFER_SIZE];
+// }
 
 // HMI --> MatchBox的数据帧 FrameLenght = 12
 // 帧头: 69 FF
