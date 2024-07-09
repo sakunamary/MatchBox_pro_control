@@ -13,11 +13,17 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
+#include <StringTokenizer.h>
+#include <cmndreader.h>
+
 BLEServer *pServer = NULL;
 BLECharacteristic *pTxCharacteristic;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 extern char ap_name[16];
+
+CmndInterp ci(DELIM); // command interpreter object
+
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
 
@@ -143,6 +149,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
     TickType_t xLastWakeTime;
     const TickType_t xIntervel = 500 / portTICK_PERIOD_MS;
     uint16_t temp_pwr = 0;
+    String TC4_data_String;
     while (1)
     {
 
