@@ -185,7 +185,7 @@ typedef struct eeprom_settings
 // static TaskHandle_t xTASK_HMI_CMD_handle = NULL;
  static TaskHandle_t xTASK_data_to_BLE = NULL;
 // static TaskHandle_t xTASK_CMD_BLE = NULL;
-// static TaskHandle_t xTASK_BLE_CMD_handle = NULL;
+static TaskHandle_t xTASK_BLE_CMD_handle = NULL;
 
 SemaphoreHandle_t xThermoDataMutex = NULL;
 SemaphoreHandle_t xSerialReadBufferMutex = NULL;

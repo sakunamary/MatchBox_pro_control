@@ -35,39 +35,6 @@ DFRobot_AHT20 aht20;
 extern pid_setting_t pid_parm;
 
 
-class MyServerCallbacks: public BLEServerCallbacks {
-    void onConnect(BLEServer* pServer) {
-      deviceConnected = true;
-    };
-
-    void onDisconnect(BLEServer* pServer) {
-      deviceConnected = false;
-    }
-};
-
-class MyCallbacks: public BLECharacteristicCallbacks {
-    void onWrite(BLECharacteristic *pCharacteristic) {
-      std::string rxValue = pCharacteristic->getValue();
-
-      if (rxValue.length() > 0) {
-        Serial.println("*********");
-        Serial.print("Received Value: ");
-        for (int i = 0; i < rxValue.length(); i++)
-          Serial.print(rxValue[i]);
-
-        Serial.println();
-        Serial.println("*********");
-      }
-    }
-};
-
-
-
-
-
-
-
-
 void Task_Thermo_get_data(void *pvParameters)
 { // function
 
