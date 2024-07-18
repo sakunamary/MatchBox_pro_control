@@ -78,7 +78,7 @@ void TASK_DATA_to_BLE(void *pvParameters)
 
             { // 从接收QueueCMD 接收指令
 #if defined(DEBUG_MODE)
-                Serial.println(String((char *)BLE_DATA_Buffer));
+                //Serial.println(String((char *)BLE_DATA_Buffer));
 #endif
                 if (deviceConnected)
                 {
