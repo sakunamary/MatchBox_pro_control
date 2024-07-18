@@ -1,5 +1,3 @@
-#include <cmndproc.h>
-
 // cmndreader.cpp
 //----------------
 
@@ -40,20 +38,6 @@
 // Version 1.10
 
 #include "cmndreader.h"
-#include "config.h"
-
-int heat_level_to_artisan = 0;
-int fan_level_to_artisan = 0;
-bool pid_status = false;
-
-double PID_output;
-double pid_sv = 0;
-double pid_tune_output;
-
-const uint32_t frequency = PWM_FREQ;
-const byte resolution = PWM_RESOLUTION;
-const byte pwm_fan_out = PWM_FAN;
-const byte pwm_heat_out = PWM_HEAT;
 
 // define command objects (all are derived from CmndBase)
 

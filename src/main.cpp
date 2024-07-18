@@ -6,39 +6,44 @@
 #include <cmndreader.h>
 // #include <pidautotuner.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
-
+#include "ArduPID.h"
 #include <TASK_read_temp.h>
 #include <TASK_BLE_Serial.h>
 // #include <TASK_modbus_handle.h>
 //  #include <TASK_HMI_Serial.h>
 
 String local_IP;
-
+ExternalEEPROM I2C_EEPROM;
+Pwm pwm = Pwm();
 extern bool loopTaskWDTEnabled;
 extern TaskHandle_t loopTaskHandle;
-extern  bool PID_output;
-extern double pid_sv;
-extern double pid_tune_output;
 
-extern const uint32_t frequency ;
-extern const byte resolution;
-extern const byte pwm_fan_out ;
-extern const byte pwm_heat_out ;
-extern double BT_TEMP;
+int heat_level_to_artisan = 0;
+int fan_level_to_artisan = 0;
+bool pid_status = false;
+
+double PID_output = 0;
+double pid_sv = 0;
+double pid_tune_output;
+
+const uint32_t frequency = PWM_FREQ;
+const byte resolution = PWM_RESOLUTION;
+const byte pwm_fan_out = PWM_FAN;
+const byte pwm_heat_out = PWM_HEAT;
+
 char ap_name[16];
 uint8_t macAddr[6];
 
 pid_setting_t pid_parm = {
-    2,    // uint16_t pid_CT;
-    2.0,  // double p ;
-    0.12, // double i ;
-    5.0,  // double d ;
-    0.0,  // uint16_t BT_tempfix;
-    0.0   // uint16_t ET_tempfix;
+    .pid_CT = 2,       // uint16_t pid_CT;
+    .p = 2.0,          // double p ;
+    .i = 0.12,         // double i ;
+    .d = 5.0,          // double d ;
+    .BT_tempfix = 0.0, // uint16_t BT_tempfix;
+    .ET_tempfix = 0.0  // uint16_t ET_tempfix;
 };
 
-Pwm pwm = Pwm();
-
+ArduPID Heat_pid_controller;
 
 void setup()
 {
@@ -98,7 +103,6 @@ void setup()
     pService->start();
     // Start advertising
     pServer->getAdvertising()->start();
-
 
     /*---------- Task Definition ---------------------*/
     // Setup tasks to run independently.
@@ -231,13 +235,13 @@ void setup()
     //     mb.Hreg(AMB_RH_HREG, 0);   // 初始化赋值
     //     mb.Hreg(AMB_TEMP_HREG, 0); // 初始化赋值
 
-    //     // init PID
-        Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);
-        Heat_pid_controller.setSampleTime(pid_parm.pid_CT * 1000); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
-        Heat_pid_controller.setOutputLimits(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
-        Heat_pid_controller.setBias(255.0 / 2.0);
-        Heat_pid_controller.setWindUpLimits(-3, 0); // Groth bounds for the integral term to prevent integral wind-up
-        Heat_pid_controller.start();
+    // init PID
+    Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);
+    Heat_pid_controller.setSampleTime(pid_parm.pid_CT * 1000); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
+    Heat_pid_controller.setOutputLimits(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
+    Heat_pid_controller.setBias(255.0 / 2.0);
+    Heat_pid_controller.setWindUpLimits(-3, 0); // Groth bounds for the integral term to prevent integral wind-up
+    Heat_pid_controller.start();
 
     // INIT PID AUTOTUNE
 

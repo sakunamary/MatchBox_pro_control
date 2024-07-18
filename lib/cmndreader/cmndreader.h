@@ -41,11 +41,30 @@
 #define CMNDREADER_H
 
 #include "cmndproc.h"
+#include <pwmWrite.h>
 
 // ----------------------- commands
 #define PID_CMD "PID" // turn PID ON or OFF
 #define IO3_CMD "IO3" // 0 to 100 percent PWM 5V output on IO3
 #define OT1_CMD "OT1" // 0 to 100 percent PWM 5V output on IO3
+
+// pwm setting
+#define PWM_FAN 5
+#define PWM_HEAT 2
+#define PWM_FREQ 3922
+#define PWM_RESOLUTION 10 // 0-1024
+
+extern int heat_level_to_artisan;
+extern int fan_level_to_artisan extern bool pid_status;
+
+extern double PID_output;
+extern double pid_sv;
+extern double pid_tune_output;
+
+extern const uint32_t frequency;
+extern const byte resolution;
+extern const byte pwm_fan_out;
+extern const byte pwm_heat_out;
 
 // forward declarations
 class pidCmnd;
@@ -53,17 +72,11 @@ class io3Cmnd;
 class ot1Cmnd;
 
 // external declarations of class objects
-
+extern Pwm pwm;
 // extern ModbusIP mb;
 extern pidCmnd pid;
 extern io3Cmnd io3;
 extern ot1Cmnd ot1;
-
-
-// extern declarations for functions, variables in the main program
-extern bool pid_on_status;
-
-
 
 // class declarations for commands
 
