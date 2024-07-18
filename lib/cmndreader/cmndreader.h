@@ -55,7 +55,8 @@
 #define PWM_RESOLUTION 10 // 0-1024
 
 extern int heat_level_to_artisan;
-extern int fan_level_to_artisan extern bool pid_status;
+extern int fan_level_to_artisan;
+extern bool pid_status;
 
 extern double PID_output;
 extern double pid_sv;
