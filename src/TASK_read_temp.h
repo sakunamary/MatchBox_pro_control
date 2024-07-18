@@ -15,8 +15,6 @@ double ET_TEMP;
 double AMB_RH;
 double AMB_TEMP;
 
-
-
 // Need this for the lower level access to set them up.
 uint8_t address = 0x68;
 long Voltage; // Array used to store results
@@ -35,7 +33,6 @@ DFRobot_AHT20 aht20;
 // const uint16_t AMB_TEMP_HREG = 3008;
 
 extern pid_setting_t pid_parm;
-
 
 void Task_Thermo_get_data(void *pvParameters)
 { // function
@@ -61,9 +58,9 @@ void Task_Thermo_get_data(void *pvParameters)
             {
                 AMB_TEMP = aht20.getTemperature_C();
                 AMB_RH = aht20.getHumidity_RH();
-// #if defined(DEBUG_MODE)
-//                 Serial.printf("raw data:AMB_TEMP:%4.2f\n", AMB_TEMP);
-// #endif
+                // #if defined(DEBUG_MODE)
+                //                 Serial.printf("raw data:AMB_TEMP:%4.2f\n", AMB_TEMP);
+                // #endif
             }
             vTaskDelay(200);
             MCP.Configuration(1, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
@@ -92,13 +89,16 @@ void Task_Thermo_get_data(void *pvParameters)
         // xTaskNotify(xTASK_data_to_HMI, 0, eIncrement);
         // 封装BLE 协议
         // ambient,chan1,chan2,chan3,chan4
-
-        sprintf(temp_data_buffer_ble, "%4.2f,%4.2f,%4.2f,0.00\n", AMB_TEMP, BT_TEMP, ET_TEMP);
-#if defined(DEBUG_MODE)        
-        Serial.println(temp_data_buffer_ble);
-#endif        
-        xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel / 3);
-        xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
+        if (xSemaphoreTake(xSerialReadBufferMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
+        {
+            sprintf(temp_data_buffer_ble, "%4.2f,%4.2f,%4.2f,0.00\n", AMB_TEMP, BT_TEMP, ET_TEMP);
+#if defined(DEBUG_MODE)
+            // Serial.println(temp_data_buffer_ble);
+#endif
+            xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel / 3);
+            xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
+            xSemaphoreGive(xSerialReadBufferMutex); // end of lock mutex
+        }
     }
 
 } // function
