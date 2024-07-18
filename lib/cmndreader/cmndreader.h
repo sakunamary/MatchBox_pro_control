@@ -41,7 +41,6 @@
 #define CMNDREADER_H
 
 #include "cmndproc.h"
-#include <ModbusIP_ESP8266.h>
 
 // ----------------------- commands
 #define PID_CMD "PID" // turn PID ON or OFF
@@ -55,7 +54,7 @@ class ot1Cmnd;
 
 // external declarations of class objects
 
-extern ModbusIP mb;
+// extern ModbusIP mb;
 extern pidCmnd pid;
 extern io3Cmnd io3;
 extern ot1Cmnd ot1;

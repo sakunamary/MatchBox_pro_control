@@ -2,20 +2,22 @@
 #include <config.h>
 #include <WiFi.h>
 #include <pwmWrite.h>
+#include <StringTokenizer.h>
+#include <cmndreader.h>
 // #include <pidautotuner.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 
 #include <TASK_read_temp.h>
 #include <TASK_BLE_Serial.h>
 // #include <TASK_modbus_handle.h>
-
-// #include <TASK_LCD.h>
 //  #include <TASK_HMI_Serial.h>
 
 String local_IP;
 
 extern bool loopTaskWDTEnabled;
 extern TaskHandle_t loopTaskHandle;
+
+CmndInterp ci(DELIM); // command interpreter object
 
 extern double BT_TEMP;
 char ap_name[16];
@@ -35,8 +37,6 @@ const uint32_t frequency = PWM_FREQ;
 const byte resolution = PWM_RESOLUTION;
 const byte pwm_fan_out = PWM_FAN;
 const byte pwm_heat_out = PWM_HEAT;
-
-
 
 void setup()
 {
@@ -74,6 +74,29 @@ void setup()
     // #if defined(DEBUG_MODE)
     //     Serial.printf("\nStart WIFI...");
     // #endif
+
+    // Create the BLE Device
+    BLEDevice::init(ap_name);
+    // Create the BLE Server
+    pServer = BLEDevice::createServer();
+    pServer->setCallbacks(new MyServerCallbacks());
+    // Create the BLE Service
+    BLEService *pService = pServer->createService(SERVICE_UUID);
+    // Create a BLE Characteristic
+    pTxCharacteristic = pService->createCharacteristic(
+        CHARACTERISTIC_UUID_TX,
+        BLECharacteristic::PROPERTY_NOTIFY);
+    pTxCharacteristic->addDescriptor(new BLE2902());
+
+    BLECharacteristic *pRxCharacteristic = pService->createCharacteristic(
+        CHARACTERISTIC_UUID_RX,
+        BLECharacteristic::PROPERTY_WRITE);
+    pRxCharacteristic->setCallbacks(new MyCallbacks());
+    // Start the service
+    pService->start();
+    // Start advertising
+    pServer->getAdvertising()->start();
+    
 
     /*---------- Task Definition ---------------------*/
     // Setup tasks to run independently.
@@ -168,18 +191,18 @@ void setup()
     //     Serial.printf("\nTASK7:TASK_CMD_From_BLE...\n");
     // #endif
 
-        xTaskCreate(
-            TASK_BLE_CMD_handle, "TASK_BLE_CMD_handle" // 获取HB数据
-            ,
-            1024 * 6 // This stack size can be checked & adjusted by reading the Stack Highwater
-            ,
-            NULL, 1 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-            ,
-            &xTASK_BLE_CMD_handle // Running Core decided by FreeRTOS,let core0 run wifi and BT
-        );
-    #if defined(DEBUG_MODE)
-        Serial.printf("\nTASK8:TASK_BLE_CMD_handle...\n");
-    #endif
+    xTaskCreate(
+        TASK_BLE_CMD_handle, "TASK_BLE_CMD_handle" // 获取HB数据
+        ,
+        1024 * 6 // This stack size can be checked & adjusted by reading the Stack Highwater
+        ,
+        NULL, 1 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+        ,
+        &xTASK_BLE_CMD_handle // Running Core decided by FreeRTOS,let core0 run wifi and BT
+    );
+#if defined(DEBUG_MODE)
+    Serial.printf("\nTASK8:TASK_BLE_CMD_handle...\n");
+#endif
 
     // Init Modbus-TCP
     // #if defined(DEBUG_MODE)
@@ -220,6 +243,10 @@ void setup()
     // tuner.setLoopInterval(pid_parm.pid_CT * uS_TO_S_FACTOR);
     // tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
     // tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
+
+    ci.addCommand(&pid);
+    ci.addCommand(&io3);
+    ci.addCommand(&ot1);
 }
 
 void loop()

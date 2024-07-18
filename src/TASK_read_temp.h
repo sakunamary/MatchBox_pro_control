@@ -15,6 +15,8 @@ double ET_TEMP;
 double AMB_RH;
 double AMB_TEMP;
 
+
+
 // Need this for the lower level access to set them up.
 uint8_t address = 0x68;
 long Voltage; // Array used to store results

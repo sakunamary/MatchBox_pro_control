@@ -13,23 +13,12 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
-#include <StringTokenizer.h>
-#include <cmndreader.h>
-
 BLEServer *pServer = NULL;
 BLECharacteristic *pTxCharacteristic;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 extern char ap_name[16];
 
-CmndInterp ci(DELIM); // command interpreter object
-
-// See the following for generating UUIDs:
-// https://www.uuidgenerator.net/
-
-#define SERVICE_UUID "6E400001-B5A3-F393-E0A9-E50E24DCCA9E" // UART service UUID
-#define CHARACTERISTIC_UUID_RX "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
-#define CHARACTERISTIC_UUID_TX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
 
 class MyServerCallbacks : public BLEServerCallbacks
 {
@@ -73,27 +62,6 @@ void TASK_DATA_to_BLE(void *pvParameters)
     const TickType_t timeOut = 500;
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
-    // Create the BLE Device
-    BLEDevice::init(ap_name);
-    // Create the BLE Server
-    pServer = BLEDevice::createServer();
-    pServer->setCallbacks(new MyServerCallbacks());
-    // Create the BLE Service
-    BLEService *pService = pServer->createService(SERVICE_UUID);
-    // Create a BLE Characteristic
-    pTxCharacteristic = pService->createCharacteristic(
-        CHARACTERISTIC_UUID_TX,
-        BLECharacteristic::PROPERTY_NOTIFY);
-    pTxCharacteristic->addDescriptor(new BLE2902());
-
-    BLECharacteristic *pRxCharacteristic = pService->createCharacteristic(
-        CHARACTERISTIC_UUID_RX,
-        BLECharacteristic::PROPERTY_WRITE);
-    pRxCharacteristic->setCallbacks(new MyCallbacks());
-    // Start the service
-    pService->start();
-    // Start advertising
-    pServer->getAdvertising()->start();
 
     while (1)
     {
@@ -162,37 +130,38 @@ void TASK_BLE_CMD_handle(void *pvParameters)
             if (xQueueReceive(queueCMD_BLE, &BLE_CMD_Buffer, timeOut) == pdPASS)
             { // 从接收QueueCMD 接收指令
 
+                if (xSemaphoreTake(xserialReadBufferMutex, xIntervel) == pdPASS)
+                {
+                    TC4_data_String = String((char *)serialReadBuffer);
 #if defined(DEBUG_MODE)
-                Serial.println(String((char *)BLE_CMD_Buffer));
+                    Serial.println(TC4_data_String);
 #endif
+                }
+                xSemaphoreGive(xserialReadBufferMutex);
 
-                // // HMI_CMD_Buffer[5] //火力开关
-                // if (BLE_CMD_Buffer[5] != digitalRead(HEAT_RLY))
-                // {
-                //     if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 整合数据帧到HMI
-                //     {
-                //         mb.Hreg(HEAT_HREG, HMI_CMD_Buffer[5]);
-                //         digitalWrite(HEAT_RLY, !digitalRead(HEAT_RLY)); // 将artisan的控制值控制开关
-                //     }
-                //     xSemaphoreGive(xThermoDataMutex); // end of lock mutex
-                // }
-                // // HMI_CMD_Buffer[7] //冷却开关
-                // if (HMI_CMD_Buffer[7] != digitalRead(FAN_RLY))
-                // {
-                //     if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 整合数据帧到HMI
-                //     {
-                //         mb.Hreg(FAN_HREG, HMI_CMD_Buffer[7]);
-                //         digitalWrite(FAN_RLY, !digitalRead(FAN_RLY)); // 将artisan的控制值控制开关
-                //     }
-                //     xSemaphoreGive(xThermoDataMutex); // end of lock mutex
-                // }
-                // // HMI_CMD_Buffer[3]   //火力数据
-                // if (HMI_CMD_Buffer[3] != last_PWR)
-                // {
-                //     last_PWR = HMI_CMD_Buffer[3];
-                //     mb.Hreg(PWR_HREG, last_PWR);                                                 // last 火力pwr数据更新
-                //     pwm_heat.write(HEAT_OUT_PIN, map(last_PWR, 0, 100, 230, 850), frequency, resolution); // 输出新火力pwr到SSRÍ
-                // }
+                if (!TC4_data_String.startsWith("#"))
+                { //
+                    StringTokenizer TC4_Data(TC4_data_String, ",");
+                    while (TC4_Data.hasNext())
+                    {
+                        Data[i] = TC4_Data.nextToken().toDouble(); // prints the next token in the string
+                        i++;
+                    }
+                    // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
+                    // if ((mb.Hreg(PID_HREG) == 1) && (xSemaphoreTake(xserialReadBufferMutex, xIntervel) == pdPASS))
+                    // {
+                    //     mb.Hreg(HEAT_HREG, Data[3]); // 获取赋值
+                    // }
+                    xSemaphoreGive(xserialReadBufferMutex);
+                    //
+                    i = 0;
+                }
+                else
+                {
+                    //TC4_data_String.replace("#DATA_OUT,", "");
+                    ci.checkCmnd(TC4_data_String);
+                }
+
                 vTaskDelay(20);
             }
         }

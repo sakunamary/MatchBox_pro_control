@@ -11,7 +11,7 @@
 #define BLE_BUFFER_SIZE 64
 #define HMI_BUFFER_SIZE 16
 
-#define VERSION "1.0.5"
+#define VERSION "1.0.6"
 
 #define SPI_SCK 8
 #define SPI_MISO 9
@@ -45,6 +45,13 @@ typedef struct eeprom_settings
     double BT_tempfix;
     double ET_tempfix;
 } pid_setting_t;
+
+
+// See the following for generating UUIDs:
+// https://www.uuidgenerator.net/
+#define SERVICE_UUID "6E400001-B5A3-F393-E0A9-E50E24DCCA9E" // UART service UUID
+#define CHARACTERISTIC_UUID_RX "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
+#define CHARACTERISTIC_UUID_TX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
 
 // publc funciton
 
