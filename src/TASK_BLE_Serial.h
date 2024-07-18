@@ -13,6 +13,9 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
+CmndInterp ci(DELIM); // command interpreter object
+
+
 BLEServer *pServer = NULL;
 BLECharacteristic *pTxCharacteristic;
 bool deviceConnected = false;
@@ -117,6 +120,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
     TickType_t xLastWakeTime;
     const TickType_t xIntervel = 500 / portTICK_PERIOD_MS;
     uint16_t temp_pwr = 0;
+    int i;
     String TC4_data_String;
     while (1)
     {
@@ -130,29 +134,30 @@ void TASK_BLE_CMD_handle(void *pvParameters)
             if (xQueueReceive(queueCMD_BLE, &BLE_CMD_Buffer, timeOut) == pdPASS)
             { // 从接收QueueCMD 接收指令
 
-                if (xSemaphoreTake(xserialReadBufferMutex, xIntervel) == pdPASS)
+                if (xSemaphoreTake(xSerialReadBufferMutex, xIntervel) == pdPASS)
                 {
-                    TC4_data_String = String((char *)serialReadBuffer);
+                    TC4_data_String = String((char *)BLE_CMD_Buffer);
 #if defined(DEBUG_MODE)
                     Serial.println(TC4_data_String);
 #endif
                 }
-                xSemaphoreGive(xserialReadBufferMutex);
+
+                xSemaphoreGive(xSerialReadBufferMutex);
 
                 if (!TC4_data_String.startsWith("#"))
                 { //
                     StringTokenizer TC4_Data(TC4_data_String, ",");
-                    while (TC4_Data.hasNext())
-                    {
-                        Data[i] = TC4_Data.nextToken().toDouble(); // prints the next token in the string
-                        i++;
-                    }
+                    // while (TC4_Data.hasNext())
+                    // {
+                    //     Data[i] = TC4_Data.nextToken().toDouble(); // prints the next token in the string
+                    //     i++;
+                    // }
                     // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
                     // if ((mb.Hreg(PID_HREG) == 1) && (xSemaphoreTake(xserialReadBufferMutex, xIntervel) == pdPASS))
                     // {
                     //     mb.Hreg(HEAT_HREG, Data[3]); // 获取赋值
                     // }
-                    xSemaphoreGive(xserialReadBufferMutex);
+                    xSemaphoreGive(xSerialReadBufferMutex);
                     //
                     i = 0;
                 }

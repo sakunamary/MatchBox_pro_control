@@ -16,9 +16,14 @@ String local_IP;
 
 extern bool loopTaskWDTEnabled;
 extern TaskHandle_t loopTaskHandle;
+extern  bool PID_output;
+extern double pid_sv;
+extern double pid_tune_output;
 
-CmndInterp ci(DELIM); // command interpreter object
-
+extern const uint32_t frequency ;
+extern const byte resolution;
+extern const byte pwm_fan_out ;
+extern const byte pwm_heat_out ;
 extern double BT_TEMP;
 char ap_name[16];
 uint8_t macAddr[6];
@@ -33,10 +38,7 @@ pid_setting_t pid_parm = {
 };
 
 Pwm pwm = Pwm();
-const uint32_t frequency = PWM_FREQ;
-const byte resolution = PWM_RESOLUTION;
-const byte pwm_fan_out = PWM_FAN;
-const byte pwm_heat_out = PWM_HEAT;
+
 
 void setup()
 {
@@ -96,7 +98,7 @@ void setup()
     pService->start();
     // Start advertising
     pServer->getAdvertising()->start();
-    
+
 
     /*---------- Task Definition ---------------------*/
     // Setup tasks to run independently.
@@ -230,12 +232,12 @@ void setup()
     //     mb.Hreg(AMB_TEMP_HREG, 0); // 初始化赋值
 
     //     // init PID
-    //     Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);
-    //     Heat_pid_controller.setSampleTime(pid_parm.pid_CT * 1000); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
-    //     Heat_pid_controller.setOutputLimits(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
-    //     Heat_pid_controller.setBias(255.0 / 2.0);
-    //     Heat_pid_controller.setWindUpLimits(-3, 0); // Groth bounds for the integral term to prevent integral wind-up
-    //     Heat_pid_controller.start();
+        Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);
+        Heat_pid_controller.setSampleTime(pid_parm.pid_CT * 1000); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
+        Heat_pid_controller.setOutputLimits(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
+        Heat_pid_controller.setBias(255.0 / 2.0);
+        Heat_pid_controller.setWindUpLimits(-3, 0); // Groth bounds for the integral term to prevent integral wind-up
+        Heat_pid_controller.start();
 
     // INIT PID AUTOTUNE
 

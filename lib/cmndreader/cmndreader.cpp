@@ -40,6 +40,20 @@
 // Version 1.10
 
 #include "cmndreader.h"
+#include "config.h"
+
+int heat_level_to_artisan = 0;
+int fan_level_to_artisan = 0;
+bool pid_status = false;
+
+double PID_output;
+double pid_sv = 0;
+double pid_tune_output;
+
+const uint32_t frequency = PWM_FREQ;
+const byte resolution = PWM_RESOLUTION;
+const byte pwm_fan_out = PWM_FAN;
+const byte pwm_heat_out = PWM_HEAT;
 
 // define command objects (all are derived from CmndBase)
 
@@ -164,7 +178,8 @@ boolean io3Cmnd::doCommand(CmndParser *pars)
 
     if (strcmp(keyword, pars->cmndName()) == 0)
     {
-        // uint16_t FAN_OUT = atoi(pars->paramStr(1));
+        uint16_t fan_level_to_artisan = atoi(pars->paramStr(1));
+        pwm.write(pwm_fan_out, map(fan_level_to_artisan, 10, 100, 750, 1000), frequency, resolution);
         // mb.Hreg(FAN_HREG, FAN_OUT);
         return true;
     }
@@ -188,8 +203,9 @@ boolean ot1Cmnd::doCommand(CmndParser *pars)
 
     if (strcmp(keyword, pars->cmndName()) == 0)
     {
-        uint16_t HEAT_OUT = atoi(pars->paramStr(1));
+        uint16_t heat_level_to_artisan = atoi(pars->paramStr(1));
         // mb.Hreg(HEAT_HREG, HEAT_OUT);
+        pwm.write(pwm_heat_out, map(heat_level_to_artisan, 1, 100, 230, 950), frequency, resolution);
         return true;
     }
     else
