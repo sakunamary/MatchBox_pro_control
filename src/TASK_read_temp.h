@@ -14,6 +14,8 @@ double BT_TEMP;
 double ET_TEMP;
 double AMB_RH;
 double AMB_TEMP;
+extern int levelOT1;
+extern int levelIO3;
 
 // Need this for the lower level access to set them up.
 uint8_t address = 0x68;
@@ -83,22 +85,20 @@ void Task_Thermo_get_data(void *pvParameters)
         // // 封装HMI 协议
         // make_frame_head(TEMP_DATA_Buffer, 1);
         // make_frame_end(TEMP_DATA_Buffer, 1);
-        // make_frame_data(TEMP_DATA_Buffer, 1, int(round(BT_TEMP * 10)), 3);
+        // make_frame_data(TEMP_DATA_Buffer, 1,   int(round(BT_TEMP * 10)), 3);
         // make_frame_data(TEMP_DATA_Buffer, 1, int(round(ET_TEMP * 10)), 5);
         // xQueueSend(queue_data_to_HMI, &TEMP_DATA_Buffer, xIntervel / 3);
         // xTaskNotify(xTASK_data_to_HMI, 0, eIncrement);
         // 封装BLE 协议
-        // ambient,chan1,chan2,chan3,chan4
+        // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
         if (xSemaphoreTake(xSerialReadBufferMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
-            sprintf(temp_data_buffer_ble, "%4.2f,%4.2f,%4.2f,0.00\n", AMB_TEMP, BT_TEMP, ET_TEMP);
-#if defined(DEBUG_MODE)
-            // Serial.println(temp_data_buffer_ble);
-#endif
-            xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel / 3);
-            xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
+                sprintf(temp_data_buffer_ble, "%4.2f,%4.2f,%4.2f,%d,%d,0.0\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3);
+                xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
+                xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
+            }
             xSemaphoreGive(xSerialReadBufferMutex); // end of lock mutex
-        }
+        
     }
 
 } // function

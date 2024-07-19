@@ -15,13 +15,11 @@
 
 CmndInterp ci(DELIM); // command interpreter object
 
-
 BLEServer *pServer = NULL;
 BLECharacteristic *pTxCharacteristic;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 extern char ap_name[16];
-
 
 class MyServerCallbacks : public BLEServerCallbacks
 {
@@ -41,18 +39,27 @@ class MyCallbacks : public BLECharacteristicCallbacks
     void onWrite(BLECharacteristic *pCharacteristic)
     {
         std::string rxValue = pCharacteristic->getValue();
-
-        if (rxValue.length() > 0)
+        uint8_t BLE_DATA_Buffer[BLE_BUFFER_SIZE];
+        int i = 0;
+        while (i < rxValue.length() && rxValue.length() > 0)
         {
-
-            for (int i = 0; i < rxValue.length(); i++)
+            Serial.print(rxValue[i]);
+            if (rxValue[i] == 0x0A)
             {
-                Serial.print(rxValue[i]);
+                BLE_DATA_Buffer[i] = rxValue[i];                  // copy value
+                xQueueSend(queueCMD_BLE, &BLE_DATA_Buffer, 100);  // 串口数据发送至队列
+                xTaskNotify(xTASK_BLE_CMD_handle, 0, eIncrement); // 通知处理任务干活
+                memset(&BLE_DATA_Buffer, '\0', BLE_BUFFER_SIZE);
+                i = 0; // clearing
+                break; // 跳出循环
             }
-            xQueueSend(queueCMD_BLE, &rxValue, 500);          // 串口数据发送至队列
-            xTaskNotify(xTASK_BLE_CMD_handle, 0, eIncrement); // 通知处理任务干活
-            vTaskDelay(10);
+            else
+            {
+                BLE_DATA_Buffer[i] = rxValue[i];
+                i++;
+            }
         }
+        vTaskDelay(50);
     }
 };
 
@@ -62,7 +69,7 @@ void TASK_DATA_to_BLE(void *pvParameters)
 {
     (void)pvParameters;
     uint8_t BLE_DATA_Buffer[BLE_BUFFER_SIZE];
-    const TickType_t timeOut = 500;
+    const TickType_t timeOut = 150;
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
 
@@ -77,17 +84,16 @@ void TASK_DATA_to_BLE(void *pvParameters)
             if (xQueueReceive(queue_data_to_BLE, &BLE_DATA_Buffer, timeOut) == pdPASS)
 
             { // 从接收QueueCMD 接收指令
-#if defined(DEBUG_MODE)
+              // #if defined(DEBUG_MODE)
                 Serial.println(String((char *)BLE_DATA_Buffer));
-#endif
+                // #endif
                 if (deviceConnected)
                 {
                     pTxCharacteristic->setValue(BLE_DATA_Buffer, sizeof(BLE_DATA_Buffer));
                     pTxCharacteristic->notify();
-                    delay(10); // bluetooth stack will go into congestion, if too many packets are sent
                 }
-                // data frame:30.29,3924.16,3924.16,0.00
-                vTaskDelay(20);
+                // data frame:PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
+                vTaskDelay(50);
             }
         }
     }
@@ -114,11 +120,11 @@ void TASK_BLE_CMD_handle(void *pvParameters)
 {
     (void)pvParameters;
     uint8_t BLE_CMD_Buffer[BLE_BUFFER_SIZE];
-    const TickType_t timeOut = 1000;
+    const TickType_t timeOut = 150;
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
     TickType_t xLastWakeTime;
-    const TickType_t xIntervel = 500 / portTICK_PERIOD_MS;
+    const TickType_t xIntervel = 150 / portTICK_PERIOD_MS;
     uint16_t temp_pwr = 0;
     int i;
     String TC4_data_String;
@@ -137,37 +143,37 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                 if (xSemaphoreTake(xSerialReadBufferMutex, xIntervel) == pdPASS)
                 {
                     TC4_data_String = String((char *)BLE_CMD_Buffer);
-#if defined(DEBUG_MODE)
-                    Serial.println(TC4_data_String);
-#endif
+                    // #if defined(DEBUG_MODE)
+                    // Serial.println(TC4_data_String);
+                    // #endif
+                    xSemaphoreGive(xSerialReadBufferMutex);
                 }
-
-                xSemaphoreGive(xSerialReadBufferMutex);
 
                 if (!TC4_data_String.startsWith("#"))
                 { //
-                    StringTokenizer TC4_Data(TC4_data_String, ",");
-                    // while (TC4_Data.hasNext())
-                    // {
-                    //     Data[i] = TC4_Data.nextToken().toDouble(); // prints the next token in the string
-                    //     i++;
-                    // }
-                    // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
-                    // if ((mb.Hreg(PID_HREG) == 1) && (xSemaphoreTake(xserialReadBufferMutex, xIntervel) == pdPASS))
-                    // {
-                    //     mb.Hreg(HEAT_HREG, Data[3]); // 获取赋值
-                    // }
-                    xSemaphoreGive(xSerialReadBufferMutex);
-                    //
-                    i = 0;
+                  // StringTokenizer TC4_Data(TC4_data_String, ",");
+                  // while (TC4_Data.hasNext())
+                  // {
+                  //     Data[i] = TC4_Data.nextToken().toDouble(); // prints the next token in the string
+                  //     i++;
+                  // }
+                  // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
+                  // if ((mb.Hreg(PID_HREG) == 1) && (xSemaphoreTake(xserialReadBufferMutex, xIntervel) == pdPASS))
+                  // {
+                  //     mb.Hreg(HEAT_HREG, Data[3]); // 获取赋值
+                  // }
+                  // xSemaphoreGive(xSerialReadBufferMutex);
+                  //
+                  // i = 0;
+                    ci.checkCmnd(TC4_data_String);
                 }
                 else
                 {
-                    //TC4_data_String.replace("#DATA_OUT,", "");
-                    ci.checkCmnd(TC4_data_String);
+                    // TC4_data_String.replace("#DATA_OUT,", "");
+                    // ci.checkCmnd(TC4_data_String);
                 }
 
-                vTaskDelay(20);
+                vTaskDelay(50);
             }
         }
     }

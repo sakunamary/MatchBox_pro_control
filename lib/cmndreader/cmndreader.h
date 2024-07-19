@@ -42,11 +42,30 @@
 
 #include "cmndproc.h"
 #include <pwmWrite.h>
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
+#include <BLE2902.h>
+
 
 // ----------------------- commands
 #define PID_CMD "PID" // turn PID ON or OFF
 #define IO3_CMD "IO3" // 0 to 100 percent PWM 5V output on IO3
 #define OT1_CMD "OT1" // 0 to 100 percent PWM 5V output on IO3
+
+// -------------------------- slew rate limitations for fan control
+#define MAX_SLEW 25                                           // percent per second
+#define SLEW_STEP 3                                           // increase in steps of 5% for smooth transition
+#define SLEW_STEP_TIME (uint32_t)(SLEW_STEP * 500 / MAX_SLEW) // min ms delay between steps
+#define DUTY_STEP 1                                           // Use 1, 2, 4, 5, or 10.
+
+////////////////////
+// Heater and Fan Limits/Options
+#define MIN_OT1 0   // Set output % for lower limit for OT1.  0% power will always be available
+#define MAX_OT1 100 // Set output % for upper limit for OT1
+
+#define MIN_IO3 30  // Set output % for lower limit for IO3.  0% power will always be available
+#define MAX_IO3 100 // Set output % for upper limit for IO3
 
 // pwm setting
 #define PWM_FAN 5
@@ -54,8 +73,8 @@
 #define PWM_FREQ 3922
 #define PWM_RESOLUTION 10 // 0-1024
 
-extern int heat_level_to_artisan;
-extern int fan_level_to_artisan;
+extern int levelOT1;
+extern int levelIO3;
 extern bool pid_status;
 
 extern double PID_output;
@@ -66,6 +85,13 @@ extern const uint32_t frequency;
 extern const byte resolution;
 extern const byte pwm_fan_out;
 extern const byte pwm_heat_out;
+
+extern uint8_t BLE_data_buffer_uint8[64];
+extern char BLE_data_buffer_char[64];
+const TickType_t xIntervel = 150 / portTICK_PERIOD_MS;
+
+extern bool deviceConnected;
+extern SemaphoreHandle_t xContrlDataMutex;
 
 // forward declarations
 class pidCmnd;
@@ -78,7 +104,7 @@ extern Pwm pwm;
 extern pidCmnd pid;
 extern io3Cmnd io3;
 extern ot1Cmnd ot1;
-
+extern BLECharacteristic *pTxCharacteristic;
 // class declarations for commands
 
 class pidCmnd : public CmndBase

@@ -72,11 +72,14 @@ boolean pidCmnd::doCommand(CmndParser *pars)
         if (strcmp(pars->paramStr(1), "ON") == 0)
         {
             // mb.Hreg(PID_HREG, 1); // Hreg 设置为1
+            pid_status = true;
+
             return true;
         }
         else if (strcmp(pars->paramStr(1), "OFF") == 0)
         {
             // mb.Hreg(PID_HREG, 0); // Hreg 设置为1
+            pid_status = false;
             return true;
         }
         else if (strcmp(pars->paramStr(1), "OUT") == 0)
@@ -84,6 +87,7 @@ boolean pidCmnd::doCommand(CmndParser *pars)
             // uint16_t CHAN_TEMP = atoi(pars->paramStr(2));
             // uint16_t PID_OUT_PWR = atoi(pars->paramStr(3));
             // mb.Hreg(HEAT_HREG, PID_OUT_PWR);
+
             return true;
         }
         else if (strcmp(pars->paramStr(1), "SV") == 0)
@@ -91,6 +95,7 @@ boolean pidCmnd::doCommand(CmndParser *pars)
             // 持续发送sv数据，TC4输出：#DATA_OUT，PID，SV，val
             // uint8_t PID_SV = atoi(pars->paramStr(2));
             // mb.Hreg(SV_HREG, PID_SV * 10);
+
             return true;
         }
         /*
@@ -162,11 +167,82 @@ boolean io3Cmnd::doCommand(CmndParser *pars)
 
     if (strcmp(keyword, pars->cmndName()) == 0)
     {
-        uint16_t fan_level_to_artisan = atoi(pars->paramStr(1));
-        pwm.write(pwm_fan_out, map(fan_level_to_artisan, 10, 100, 750, 1000), frequency, resolution);
-        // mb.Hreg(FAN_HREG, FAN_OUT);
-        return true;
-    }
+        if (strcmp(pars->paramStr(1), "UP") == 0)
+        {
+                levelIO3 = levelIO3 + DUTY_STEP;
+                if (levelIO3 > MAX_IO3)
+                    levelIO3 = MAX_IO3; // don't allow OT1 to exceed maximum
+                if (levelIO3 < MIN_IO3)
+                    levelIO3 = MIN_IO3; // don't allow OT1 to turn on less than minimum
+                pwm.write(pwm_fan_out, map(levelIO3, MIN_IO3, MAX_IO3, 750, 1000), frequency, resolution);
+                // Serial.printf("FAN:%d\n", levelIO3);
+                sprintf(BLE_data_buffer_char, "#DATA_OUT,OT3,%d\n", levelIO3);
+                memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
+                // //格式转换
+                // for (int i = 0; i < 64; i++)
+                // {
+                //     BLE_data_buffer_uint8[i] = BLE_data_buffer_char[i];
+                // }
+                // // #endif
+                if (deviceConnected)
+                {
+                    pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
+                    pTxCharacteristic->notify();
+
+            }
+            return true;
+        }
+        else if (strcmp(pars->paramStr(1), "DOWN") == 0)
+        {
+                levelIO3 = levelIO3 - DUTY_STEP;
+                if (levelIO3 < MIN_IO3 & levelIO3 != 0)
+                    levelIO3 = 0; // turn ot1 off if trying to go below minimum. or use levelOT1 = MIN_HTR ?
+                pwm.write(pwm_fan_out, map(levelIO3, MIN_IO3, MAX_IO3, 750, 1000), frequency, resolution);
+                sprintf(BLE_data_buffer_char, "#DATA_OUT,OT3,%d\n", levelIO3);
+                memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
+                // 格式转换
+                // for (int i = 0; i <64; i++)
+                // {
+                //     BLE_data_buffer_uint8[i] = BLE_data_buffer_char[i];
+                // }
+                if (deviceConnected)
+                {
+                    pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
+                    pTxCharacteristic->notify();
+                }
+
+            }
+            return true;
+        }
+        else
+        {
+            uint8_t len = strlen(pars->paramStr(1));
+            if (len > 0)
+            {
+                    levelIO3 = atoi(pars->paramStr(1));
+                    if (levelIO3 > MAX_IO3)
+                        levelIO3 = MAX_IO3; // don't allow OT1 to exceed maximum
+                    if (levelIO3 < MIN_IO3 & levelIO3 != 0)
+                        levelIO3 = MIN_IO3; // don't allow to set less than minimum unless setting to zero
+                    pwm.write(pwm_fan_out, map(levelIO3, MIN_IO3, MAX_IO3, 750, 1000), frequency, resolution);
+
+                    sprintf(BLE_data_buffer_char, "#DATA_OUT,OT3,%d\n", levelIO3);
+                    memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
+                    // 格式转换
+                    // for (int i = 0; i < 64; i++)
+                    // {
+                    //     BLE_data_buffer_uint8[i] = BLE_data_buffer_char[i];
+                    // }
+                    if (deviceConnected)
+                    {
+                        pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
+                        pTxCharacteristic->notify();
+                    }
+                }
+                return true;
+            }
+        
+    
     else
     {
         return false;
@@ -187,10 +263,47 @@ boolean ot1Cmnd::doCommand(CmndParser *pars)
 
     if (strcmp(keyword, pars->cmndName()) == 0)
     {
-        uint16_t heat_level_to_artisan = atoi(pars->paramStr(1));
-        // mb.Hreg(HEAT_HREG, HEAT_OUT);
-        pwm.write(pwm_heat_out, map(heat_level_to_artisan, 1, 100, 230, 950), frequency, resolution);
-        return true;
+        if (strcmp(pars->paramStr(1), "UP") == 0)
+        {
+            levelOT1 = levelOT1 + DUTY_STEP;
+            if (levelOT1 > MAX_OT1)
+                levelOT1 = MAX_OT1; // don't allow OT1 to exceed maximum
+            if (levelOT1 < MIN_OT1)
+                levelOT1 = MIN_OT1; // don't allow OT1 to turn on less than minimum
+            pwm.write(pwm_heat_out, map(levelOT1, 1, 100, 230, 950), frequency, resolution);
+            Serial.printf("HEAT:%d\n", levelOT1);
+            // Serial.print(F("#DATA_OUT,OT1,"));
+            // Serial.println(levelOT1);
+            return true;
+        }
+        else if (strcmp(pars->paramStr(1), "DOWN") == 0)
+        {
+            levelOT1 = levelOT1 - DUTY_STEP;
+            if (levelOT1 < MIN_OT1 & levelOT1 != 0)
+                levelOT1 = 0; // turn ot1 off if trying to go below minimum. or use levelOT1 = MIN_HTR ?
+            pwm.write(pwm_heat_out, map(levelOT1, 1, 100, 230, 950), frequency, resolution);
+            Serial.printf("HEAT:%d\n", levelOT1);
+            // Serial.print(F("#DATA_OUT,OT3,"));
+            // Serial.println(levelOT3);
+            return true;
+        }
+        else
+        {
+            uint8_t len = strlen(pars->paramStr(1));
+            if (len > 0)
+            {
+                levelOT1 = atoi(pars->paramStr(1));
+                if (levelOT1 > MAX_OT1)
+                    levelOT1 = MAX_OT1; // don't allow OT1 to exceed maximum
+                if (levelOT1 < MIN_OT1 & levelOT1 != 0)
+                    levelOT1 = MIN_OT1; // don't allow to set less than minimum unless setting to zero
+                pwm.write(pwm_heat_out, map(levelOT1, 1, 100, 230, 950), frequency, resolution);
+                Serial.printf("HEAT:%d\n", levelOT1);
+                // Serial.print(F("#DATA_OUT,OT3,"));
+                // Serial.println(levelOT1);
+            }
+            return true;
+        }
     }
     else
     {

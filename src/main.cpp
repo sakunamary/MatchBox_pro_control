@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <config.h>
+
 #include <WiFi.h>
 #include <pwmWrite.h>
 #include <StringTokenizer.h>
@@ -18,8 +19,10 @@ Pwm pwm = Pwm();
 extern bool loopTaskWDTEnabled;
 extern TaskHandle_t loopTaskHandle;
 
-int heat_level_to_artisan = 0;
-int fan_level_to_artisan = 0;
+uint8_t BLE_data_buffer_uint8[64];
+char BLE_data_buffer_char[64];
+int levelOT1 = 0;
+int levelIO3 = 30;
 bool pid_status = false;
 
 double PID_output = 0;
@@ -51,6 +54,7 @@ void setup()
     loopTaskWDTEnabled = true;
     xThermoDataMutex = xSemaphoreCreateMutex();
     xSerialReadBufferMutex = xSemaphoreCreateMutex();
+
 
     // read pid data from EEPROM
 
