@@ -73,13 +73,15 @@ boolean pidCmnd::doCommand(CmndParser *pars)
         {
             // mb.Hreg(PID_HREG, 1); // Hreg 设置为1
             pid_status = true;
-
+            Heat_pid_controller.start();
             return true;
         }
         else if (strcmp(pars->paramStr(1), "OFF") == 0)
         {
             // mb.Hreg(PID_HREG, 0); // Hreg 设置为1
+            Heat_pid_controller.stop();
             pid_status = false;
+            pid_sv = 0;
             return true;
         }
         // else if (strcmp(pars->paramStr(1), "OUT") == 0)
@@ -97,16 +99,16 @@ boolean pidCmnd::doCommand(CmndParser *pars)
             if (pid_status == true)
             {
                 pid_sv = PID_SV_FROM_BLE;
-                sprintf(BLE_data_buffer_char, "#DATA_OUT,PID,SV,%4.2f\n", pid_sv);
-                // Serial.print(BLE_data_buffer_char);
-                // 格式转换
-                memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
+                // sprintf(BLE_data_buffer_char, "#DATA_OUT,PID,SV,%4.2f\n", pid_sv);
+                // // Serial.print(BLE_data_buffer_char);
+                // // 格式转换
+                // memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
 
-                if (deviceConnected)
-                {
-                    pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
-                    pTxCharacteristic->notify();
-                }
+                // if (deviceConnected)
+                // {
+                //     pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
+                //     pTxCharacteristic->notify();
+                // }
             }
 
             // mb.Hreg(SV_HREG, PID_SV * 10);
