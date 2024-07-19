@@ -58,9 +58,8 @@ void setup()
     // read pid data from EEPROM
 
     // start Serial
-    Serial.begin(BAUDRATE);
-
 #if defined(DEBUG_MODE)
+    Serial.begin(BAUDRATE);
     Serial.printf("\nStart Task...");
 #endif
     aht20.begin();
@@ -230,7 +229,7 @@ void setup()
     Heat_pid_controller.setSampleTime(pid_parm.pid_CT * 1000); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
     Heat_pid_controller.setOutputLimits(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
     Heat_pid_controller.setBias(255.0 / 2.0);
-    Heat_pid_controller.setWindUpLimits(-3, 0); // Groth bounds for the integral term to prevent integral wind-up
+    Heat_pid_controller.setWindUpLimits(2, 2); // Groth bounds for the integral term to prevent integral wind-up
     Heat_pid_controller.start();
 
     // INIT PID AUTOTUNE

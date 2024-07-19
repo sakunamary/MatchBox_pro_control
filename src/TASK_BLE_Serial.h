@@ -43,7 +43,7 @@ class MyCallbacks : public BLECharacteristicCallbacks
         int i = 0;
         while (i < rxValue.length() && rxValue.length() > 0)
         {
-            Serial.print(rxValue[i]);
+            //Serial.print(rxValue[i]);
             if (rxValue[i] == 0x0A)
             {
                 BLE_DATA_Buffer[i] = rxValue[i];                  // copy value

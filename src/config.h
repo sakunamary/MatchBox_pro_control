@@ -11,7 +11,7 @@
 #define BLE_BUFFER_SIZE 64
 #define HMI_BUFFER_SIZE 16
 
-#define VERSION "1.0.6"
+#define VERSION "1.0.7"
 
 #define SPI_SCK 8
 #define SPI_MISO 9
@@ -33,7 +33,7 @@
 #define PWM_RESOLUTION 10 // 0-1024
 
 #define PID_MAX_OUT 80
-#define PID_MIN_OUT 30
+#define PID_MIN_OUT 0
 
 //
 typedef struct eeprom_settings
