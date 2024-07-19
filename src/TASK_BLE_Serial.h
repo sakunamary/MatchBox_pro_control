@@ -146,32 +146,33 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     // #if defined(DEBUG_MODE)
                     // Serial.println(TC4_data_String);
                     // #endif
+                    ci.checkCmnd(TC4_data_String);
                     xSemaphoreGive(xSerialReadBufferMutex);
                 }
 
-                if (!TC4_data_String.startsWith("#"))
-                { //
-                  // StringTokenizer TC4_Data(TC4_data_String, ",");
-                  // while (TC4_Data.hasNext())
-                  // {
-                  //     Data[i] = TC4_Data.nextToken().toDouble(); // prints the next token in the string
-                  //     i++;
-                  // }
-                  // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
-                  // if ((mb.Hreg(PID_HREG) == 1) && (xSemaphoreTake(xserialReadBufferMutex, xIntervel) == pdPASS))
-                  // {
-                  //     mb.Hreg(HEAT_HREG, Data[3]); // 获取赋值
-                  // }
-                  // xSemaphoreGive(xSerialReadBufferMutex);
-                  //
-                  // i = 0;
-                    ci.checkCmnd(TC4_data_String);
-                }
-                else
-                {
-                    // TC4_data_String.replace("#DATA_OUT,", "");
-                    // ci.checkCmnd(TC4_data_String);
-                }
+                // if (!TC4_data_String.startsWith("#"))
+                // { //
+                //   // StringTokenizer TC4_Data(TC4_data_String, ",");
+                //   // while (TC4_Data.hasNext())
+                //   // {
+                //   //     Data[i] = TC4_Data.nextToken().toDouble(); // prints the next token in the string
+                //   //     i++;
+                //   // }
+                //   // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
+                //   // if ((mb.Hreg(PID_HREG) == 1) && (xSemaphoreTake(xserialReadBufferMutex, xIntervel) == pdPASS))
+                //   // {
+                //   //     mb.Hreg(HEAT_HREG, Data[3]); // 获取赋值
+                //   // }
+                //   // xSemaphoreGive(xSerialReadBufferMutex);
+                //   //
+                //   // i = 0;
+                //     ci.checkCmnd(TC4_data_String);
+                // }
+                // else
+                // {
+                //     // TC4_data_String.replace("#DATA_OUT,", "");
+                //     // ci.checkCmnd(TC4_data_String);
+                // }
 
                 vTaskDelay(50);
             }

@@ -82,14 +82,14 @@ boolean pidCmnd::doCommand(CmndParser *pars)
             pid_status = false;
             return true;
         }
-        else if (strcmp(pars->paramStr(1), "OUT") == 0)
-        {
-            // uint16_t CHAN_TEMP = atoi(pars->paramStr(2));
-            // uint16_t PID_OUT_PWR = atoi(pars->paramStr(3));
-            // mb.Hreg(HEAT_HREG, PID_OUT_PWR);
+        // else if (strcmp(pars->paramStr(1), "OUT") == 0)
+        // {
+        //     // uint16_t CHAN_TEMP = atoi(pars->paramStr(2));
+        //     // uint16_t PID_OUT_PWR = atoi(pars->paramStr(3));
+        //     // mb.Hreg(HEAT_HREG, PID_OUT_PWR);
 
-            return true;
-        }
+        //     return true;
+        // }
         else if (strcmp(pars->paramStr(1), "SV") == 0)
         {
             // 持续发送sv数据，TC4输出：#DATA_OUT，PID，SV，val
@@ -262,15 +262,15 @@ boolean ot1Cmnd::doCommand(CmndParser *pars)
             if (levelOT1 < MIN_OT1)
                 levelOT1 = MIN_OT1; // don't allow OT1 to turn on less than minimum
             pwm.write(pwm_heat_out, map(levelOT1, 1, 100, 230, 950), frequency, resolution);
-            sprintf(BLE_data_buffer_char, "#DATA_OUT,OT1,%d\n", levelIO3);
-            // Serial.print(BLE_data_buffer_char);
-            memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
-            // 格式转换
-            if (deviceConnected)
-            {
-                pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
-                pTxCharacteristic->notify();
-            }
+            // sprintf(BLE_data_buffer_char, "#DATA_OUT,OT1,%d\n", levelOT1);
+            // // Serial.print(BLE_data_buffer_char);
+            // memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
+            // // 格式转换
+            // if (deviceConnected)
+            // {
+            //     pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
+            //     pTxCharacteristic->notify();
+            // }
             return true;
         }
         else if (strcmp(pars->paramStr(1), "DOWN") == 0)
@@ -279,15 +279,15 @@ boolean ot1Cmnd::doCommand(CmndParser *pars)
             if (levelOT1 < MIN_OT1 & levelOT1 != 0)
                 levelOT1 = 0; // turn ot1 off if trying to go below minimum. or use levelOT1 = MIN_HTR ?
             pwm.write(pwm_heat_out, map(levelOT1, 1, 100, 230, 950), frequency, resolution);
-            sprintf(BLE_data_buffer_char, "#DATA_OUT,OT1,%d\n", levelIO3);
-            // Serial.print(BLE_data_buffer_char);
-            memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
-            // 格式转换
-            if (deviceConnected)
-            {
-                pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
-                pTxCharacteristic->notify();
-            }
+            // sprintf(BLE_data_buffer_char, "#DATA_OUT,OT1,%d\n", levelOT1);
+            // // Serial.print(BLE_data_buffer_char);
+            // memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
+            // // 格式转换
+            // if (deviceConnected)
+            // {
+            //     pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
+            //     pTxCharacteristic->notify();
+            // }
             return true;
         }
         else
@@ -301,15 +301,15 @@ boolean ot1Cmnd::doCommand(CmndParser *pars)
                 if (levelOT1 < MIN_OT1 & levelOT1 != 0)
                     levelOT1 = MIN_OT1; // don't allow to set less than minimum unless setting to zero
                 pwm.write(pwm_heat_out, map(levelOT1, 1, 100, 230, 950), frequency, resolution);
-                sprintf(BLE_data_buffer_char, "#DATA_OUT,OT1,%d\n", levelIO3);
-                // Serial.print(BLE_data_buffer_char);
-                memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
-                // 格式转换
-                if (deviceConnected)
-                {
-                    pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
-                    pTxCharacteristic->notify();
-                }
+                // sprintf(BLE_data_buffer_char, "#DATA_OUT,OT1,%d\n", levelOT1);
+                // // Serial.print(BLE_data_buffer_char);
+                // memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
+                // // 格式转换
+                // if (deviceConnected)
+                // {
+                //     pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
+                //     pTxCharacteristic->notify();
+                // }
             }
             return true;
         }
