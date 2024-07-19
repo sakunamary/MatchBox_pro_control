@@ -93,7 +93,22 @@ boolean pidCmnd::doCommand(CmndParser *pars)
         else if (strcmp(pars->paramStr(1), "SV") == 0)
         {
             // 持续发送sv数据，TC4输出：#DATA_OUT，PID，SV，val
-            // uint8_t PID_SV = atoi(pars->paramStr(2));
+            uint8_t PID_SV_FROM_BLE = atoi(pars->paramStr(2));
+            if (pid_status == true)
+            {
+                pid_sv = PID_SV_FROM_BLE;
+                sprintf(BLE_data_buffer_char, "#DATA_OUT,PID,SV,%4.2f\n", pid_sv);
+                // Serial.print(BLE_data_buffer_char);
+                // 格式转换
+                memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
+
+                if (deviceConnected)
+                {
+                    pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
+                    pTxCharacteristic->notify();
+                }
+            }
+
             // mb.Hreg(SV_HREG, PID_SV * 10);
 
             return true;

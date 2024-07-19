@@ -55,7 +55,6 @@ void setup()
     xThermoDataMutex = xSemaphoreCreateMutex();
     xSerialReadBufferMutex = xSemaphoreCreateMutex();
 
-
     // read pid data from EEPROM
 
     // start Serial
@@ -187,19 +186,6 @@ void setup()
 #if defined(DEBUG_MODE)
     Serial.printf("\nTASK6:TASK_DATA_to_BLE...");
 #endif
-
-    //     xTaskCreate(
-    //         TASK_CMD_From_BLE, "TASK_CMD_From_BLE" // 获取HB数据
-    //         ,
-    //         1024 * 2 // This stack size can be checked & adjusted by reading the Stack Highwater
-    //         ,
-    //         NULL, 3 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    //         ,
-    //         &xTASK_CMD_BLE // Running Core decided by FreeRTOS,let core0 run wifi and BT
-    //     );
-    // #if defined(DEBUG_MODE)
-    //     Serial.printf("\nTASK7:TASK_CMD_From_BLE...\n");
-    // #endif
 
     xTaskCreate(
         TASK_BLE_CMD_handle, "TASK_BLE_CMD_handle" // 获取HB数据

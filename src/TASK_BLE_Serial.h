@@ -99,22 +99,6 @@ void TASK_DATA_to_BLE(void *pvParameters)
     }
 }
 
-// void TASK_CMD_From_BLE(void *pvParameters)
-// {
-//     (void)pvParameters;
-//     uint8_t BLE_ReadBuffer[BLE_BUFFER_SIZE];
-//     const TickType_t timeOut = 500;
-//     while (true)
-//     {
-//         if (SerialBLE.available())
-//         {
-//             auto count = SerialBLE.readBytes(BLE_ReadBuffer, BLE_BUFFER_SIZE);
-//             xQueueSend(queueCMD_BLE, &BLE_ReadBuffer, timeOut);   // 串口数据发送至队列
-//             xTaskNotify(xTASK_BLE_CMD_handle, 0, eIncrement); // 通知处理任务干活
-//         }
-//         vTaskDelay(20);
-//     }
-// }
 
 void TASK_BLE_CMD_handle(void *pvParameters)
 {
