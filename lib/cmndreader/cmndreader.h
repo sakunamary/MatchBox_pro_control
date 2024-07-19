@@ -42,6 +42,7 @@
 
 #include "cmndproc.h"
 #include <pwmWrite.h>
+#include "ArduPID.h"
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLEUtils.h>
@@ -105,6 +106,7 @@ extern pidCmnd pid;
 extern io3Cmnd io3;
 extern ot1Cmnd ot1;
 extern BLECharacteristic *pTxCharacteristic;
+extern ArduPID Heat_pid_controller;
 // class declarations for commands
 
 class pidCmnd : public CmndBase

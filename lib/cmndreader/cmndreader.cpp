@@ -98,7 +98,14 @@ boolean pidCmnd::doCommand(CmndParser *pars)
             uint8_t PID_SV_FROM_BLE = atoi(pars->paramStr(2));
             if (pid_status == true)
             {
-                pid_sv = PID_SV_FROM_BLE;
+                pid_sv = PID_SV_FROM_BLE*100/100;
+                if (pid_status == true)
+                {
+                    Heat_pid_controller.compute();
+                    levelOT1=map(PID_output-2, 0, 255, 0, 100);
+                    pwm.write(pwm_heat_out, map(levelOT1, 1, 100, 230, 950), frequency, resolution);
+                }
+
                 // sprintf(BLE_data_buffer_char, "#DATA_OUT,PID,SV,%4.2f\n", pid_sv);
                 // // Serial.print(BLE_data_buffer_char);
                 // // 格式转换
