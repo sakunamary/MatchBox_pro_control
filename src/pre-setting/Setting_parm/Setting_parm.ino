@@ -22,19 +22,17 @@ long Voltage;  // Array used to store results
 
 double BT_TEMP;
 double ET_TEMP;
-double INLET_TEMP;
-double EX_TEMP;
 double AMB_TEMP;
 
 MCP3424 ADC_MCP3424(address);  // Declaration of MCP3424 A2=0 A1=1 A0=0
 DFRobot_AHT20 aht20;
 pid_setting_t pid_parm = {
-    .pid_CT = 2,       // uint16_t pid_CT;
-    .p = 2.0,          // double p ;
-    .i = 0.12,         // double i ;
-    .d = 5.0,          // double d ;
-    .BT_tempfix = 0.0, // uint16_t BT_tempfix;
-    .ET_tempfix = 0.0  // uint16_t ET_tempfix;
+  .pid_CT = 2,        // uint16_t pid_CT;
+  .p = 2.0,           // double p ;
+  .i = 0.12,          // double i ;
+  .d = 5.0,           // double d ;
+  .BT_tempfix = 0.0,  // uint16_t BT_tempfix;
+  .ET_tempfix = 0.0   // uint16_t ET_tempfix;
 };
 
 
@@ -64,23 +62,22 @@ void setup() {
   Serial.println("Pharse II:cal temp fix data in 3s ....\n");
   vTaskDelay(3000);
   Serial.println("Temp raw Reading ....\n");
-  vTaskDelay(50);
-  ADC_MCP3424.Configuration(1, ADC_BIT, 1, 1);
-  Voltage = ADC_MCP3424.Measure();
-  INL_TEMP = ((Voltage / 1000 * RNOMINAL) / ((3.3 * 1000) - Voltage / 1000) - RREF) / (RREF * 0.0039083);  // CH1  0.0039083
-  vTaskDelay(50);
-  ADC_MCP3424.Configuration(2, ADC_BIT, 1, 1);
-  Voltage = ADC_MCP3424.Measure();
-  BT_TEMP = ((Voltage / 1000 * RNOMINAL) / ((3.3 * 1000) - Voltage / 1000) - RREF) / (RREF * 0.0039083);  // CH2
+  vTaskDelay(200);
+  ADC_MCP3424.Configuration(1, 16, 1, 1);  // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
+  Voltage = ADC_MCP3424.Measure();         // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
+  BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+  vTaskDelay(200);
+  ADC_MCP3424.Configuration(2, 16, 1, 1);  // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
+  Voltage = ADC_MCP3424.Measure();         // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
+  ET_TEMP = pid_parm.ET_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
 
-  Serial.printf("Temp raw:: AMB_TEMP:%4.2f;BT:%4.2f; INLET:%4.2f\n", AMB_TEMP, BT_TEMP, INLET_TEMP);
+  Serial.printf("Temp raw:: AMB_TEMP:%4.2f;BT:%4.2f; ET:%4.2f\n", AMB_TEMP, BT_TEMP, ET_TEMP);
 
   pid_parm.BT_tempfix = AMB_TEMP - BT_TEMP;
+  pid_parm.ET_tempfix = AMB_TEMP - ET_TEMP;
 
-  pid_parm.EX_tempfix = AMB_TEMP - EX_TEMP;
 
-
-  Serial.printf("Temp fix::BT fix:%4.2f; inlet fix:%4.2f; ex fix:%4.2f\n", pid_parm.BT_tempfix, pid_parm.inlet_tempfix, pid_parm.EX_tempfix);
+  Serial.printf("Temp fix::BT fix:%4.2f; ET fix:%4.2f\n", pid_parm.BT_tempfix, pid_parm.ET_tempfix);
   Serial.println("Pharse II:Done\n");
 
   Serial.println("Pharse III: Write data into EEPROM...\n");
@@ -105,8 +102,6 @@ void setup() {
     Serial.printf("PID kd:%4.2f\n", pid_parm.d);
     Serial.printf("BT fix:%4.2f\n", pid_parm.BT_tempfix);
     Serial.printf("ET fix:%4.2f\n", pid_parm.ET_tempfix);
-    Serial.printf("Inlet fix:%4.2f\n", pid_parm.inlet_tempfix);
-    Serial.printf("EX fix:%4.2f\n", pid_parm.EX_tempfix);
   }
 }
 

@@ -35,6 +35,11 @@
 #define PID_MAX_OUT 80
 #define PID_MIN_OUT 0
 
+
+#define ADC_BIT 16
+#define LOCATION_SETTINGS 0
+#define R0 100
+#define Rref 1000
 //
 typedef struct eeprom_settings
 {
