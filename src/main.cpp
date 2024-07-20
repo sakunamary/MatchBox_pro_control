@@ -26,7 +26,7 @@ int levelIO3 = 30;
 bool pid_status = false;
 
 double PID_output = 0;
-double pid_sv = 0;
+double pid_sv;
 double pid_tune_output;
 
 const uint32_t frequency = PWM_FREQ;

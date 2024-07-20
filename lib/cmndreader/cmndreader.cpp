@@ -95,14 +95,15 @@ boolean pidCmnd::doCommand(CmndParser *pars)
         else if (strcmp(pars->paramStr(1), "SV") == 0)
         {
             // 持续发送sv数据，TC4输出：#DATA_OUT，PID，SV，val
-            uint8_t PID_SV_FROM_BLE = atoi(pars->paramStr(2));
+
+            // uint8_t PID_SV_FROM_BLE = atoi(pars->paramStr(2));
+             pid_sv = atof(pars->paramStr(2));
             if (pid_status == true)
             {
-                pid_sv = PID_SV_FROM_BLE*100/100;
                 if (pid_status == true)
                 {
                     Heat_pid_controller.compute();
-                    levelOT1=map(PID_output-2, 0, 255, 0, 100);
+                    levelOT1 = map(PID_output - 2, 0, 255, 0, 100);
                     pwm.write(pwm_heat_out, map(levelOT1, 1, 100, 230, 950), frequency, resolution);
                 }
 
@@ -221,11 +222,6 @@ boolean io3Cmnd::doCommand(CmndParser *pars)
             sprintf(BLE_data_buffer_char, "#DATA_OUT,OT3,%d\n", levelIO3);
             // Serial.print(BLE_data_buffer_char);
             memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
-            // 格式转换
-            // for (int i = 0; i <64; i++)
-            // {
-            //     BLE_data_buffer_uint8[i] = BLE_data_buffer_char[i];
-            // }
             if (deviceConnected)
             {
                 pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));

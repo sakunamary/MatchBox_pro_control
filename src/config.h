@@ -32,8 +32,8 @@
 #define PWM_FREQ 3922
 #define PWM_RESOLUTION 10 // 0-1024
 
-#define PID_MAX_OUT 80
-#define PID_MIN_OUT 0
+#define PID_MAX_OUT 100
+#define PID_MIN_OUT 10
 
 //
 typedef struct eeprom_settings
