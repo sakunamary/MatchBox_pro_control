@@ -9,6 +9,7 @@
 #include "config.h"
 #include "Wire.h"
 #include <MCP3424.h>
+#include <pwmWrite.h>
 // #include "TypeK.h"
 #include "DFRobot_AHT20.h"
 #include "SparkFun_External_EEPROM.h"  // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
@@ -24,8 +25,15 @@ double BT_TEMP;
 double ET_TEMP;
 double AMB_TEMP;
 
+const int HEAT_OUT_PIN = PWM_HEAT; // GPIO26
+const int FAN_OUT_PIN = PWM_FAN;
+const uint32_t frequency = PWM_FREQ;
+const byte resolution = PWM_RESOLUTION; // pwm -0-1023
+
 MCP3424 ADC_MCP3424(address);  // Declaration of MCP3424 A2=0 A1=1 A0=0
 DFRobot_AHT20 aht20;
+Pwm pwm_heat = Pwm();
+
 pid_setting_t pid_parm = {
   .pid_CT = 2,        // uint16_t pid_CT;
   .p = 2.0,           // double p ;
@@ -42,11 +50,18 @@ ExternalEEPROM I2C_EEPROM;
 void loadUserSettings();
 
 void setup() {
-  delay(5000);
+      //  Init pwm output
+    pwm_heat.pause();
+    pwm_heat.write(HEAT_OUT_PIN, 0, frequency, resolution);
+    pwm_heat.write(FAN_OUT_PIN, 750, frequency, resolution); // 此处要根据100g豆子初始化吹动的风力来确定。数值为0-1024
+    pwm_heat.resume();
+  vTaskDelay(30000);
   // Prepare working .....
   Serial.begin(BAUDRATE);
   Wire.begin();
   I2C_EEPROM.setMemoryType(64);
+
+
 
   Serial.println("start...\n");
 
