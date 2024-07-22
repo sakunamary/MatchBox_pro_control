@@ -4,7 +4,7 @@
 #include <WiFi.h>
 #include <pwmWrite.h>
 #include <StringTokenizer.h>
-#include <cmndreader.h>
+// #include <cmndreader.h>
 // #include <pidautotuner.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 #include "ArduPID.h"
@@ -19,8 +19,7 @@ Pwm pwm = Pwm();
 extern bool loopTaskWDTEnabled;
 extern TaskHandle_t loopTaskHandle;
 
-uint8_t BLE_data_buffer_uint8[64];
-char BLE_data_buffer_char[64];
+
 int levelOT1 = 0;
 int levelIO3 = 30;
 bool pid_status = false;
@@ -57,9 +56,10 @@ void setup()
 
     // read pid data from EEPROM
 
+    Serial.begin(BAUDRATE);
+
     // start Serial
 #if defined(DEBUG_MODE)
-    Serial.begin(BAUDRATE);
     Serial.printf("\nStart Task...");
 #endif
     aht20.begin();
@@ -239,9 +239,9 @@ void setup()
     // tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
     // tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
 
-    ci.addCommand(&pid);
-    ci.addCommand(&io3);
-    ci.addCommand(&ot1);
+    // ci.addCommand(&pid);
+    // ci.addCommand(&io3);
+    // ci.addCommand(&ot1);
 }
 
 void loop()

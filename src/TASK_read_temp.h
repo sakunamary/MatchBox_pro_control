@@ -94,7 +94,7 @@ void Task_Thermo_get_data(void *pvParameters)
         // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
         if (xSemaphoreTake(xSerialReadBufferMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
-                sprintf(temp_data_buffer_ble, "%4.2f,%4.2f,%4.2f,%d,%d,%4.2f\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3,pid_sv);
+                sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3,pid_sv);
                 xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
                 xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
             }

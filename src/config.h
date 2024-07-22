@@ -7,11 +7,11 @@
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
 
-//#define DEBUG_MODE
+#define DEBUG_MODE
 #define BLE_BUFFER_SIZE 64
 #define HMI_BUFFER_SIZE 16
 
-#define VERSION "1.0.7"
+#define VERSION "1.0.8"
 
 #define SPI_SCK 8
 #define SPI_MISO 9
@@ -34,6 +34,20 @@
 
 #define PID_MAX_OUT 100
 #define PID_MIN_OUT 10
+
+// -------------------------- slew rate limitations for fan control
+#define MAX_SLEW 25                                           // percent per second
+#define SLEW_STEP 3                                           // increase in steps of 5% for smooth transition
+#define SLEW_STEP_TIME (uint32_t)(SLEW_STEP * 500 / MAX_SLEW) // min ms delay between steps
+#define DUTY_STEP 1                                           // Use 1, 2, 4, 5, or 10.
+
+////////////////////
+// Heater and Fan Limits/Options
+#define MIN_OT1 0   // Set output % for lower limit for OT1.  0% power will always be available
+#define MAX_OT1 100 // Set output % for upper limit for OT1
+
+#define MIN_IO3 30  // Set output % for lower limit for IO3.  0% power will always be available
+#define MAX_IO3 100 // Set output % for upper limit for IO3
 
 //
 typedef struct eeprom_settings
