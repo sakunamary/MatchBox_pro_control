@@ -216,7 +216,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         pwm.write(pwm_fan_out, map(levelIO3, MIN_IO3, MAX_IO3, 750, 1000), frequency, resolution);
 #if defined(DEBUG_MODE)
                         Serial.printf("FAN:%d\n", levelIO3);//for debug
-#if defined(DEBUG_MODE)
+#endif
                         sprintf(BLE_data_buffer_char, "#DATA_OUT,OT3,%d\n", levelIO3);
                         memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
                         if (deviceConnected)
@@ -238,7 +238,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             pwm.write(pwm_fan_out, map(levelIO3, MIN_IO3, MAX_IO3, 750, 1000), frequency, resolution);
 #if defined(DEBUG_MODE)
                             Serial.printf("FAN:%d\n", levelIO3);//for debug
-#if defined(DEBUG_MODE)
+#endif
                             sprintf(BLE_data_buffer_char, "#DATA_OUT,OT3,%d\n", levelIO3);
                             memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
                             // 格式转换
@@ -263,7 +263,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         pwm.write(pwm_heat_out, map(levelOT1, 1, 100, 230, 950), frequency, resolution);
 #if defined(DEBUG_MODE)
                         Serial.printf("HEAT:%d\n", levelOT1);//for debug
-#if defined(DEBUG_MODE)
+#endif
                         // sprintf(BLE_data_buffer_char, "#DATA_OUT,OT1,%d\n", levelOT1);
                         // // Serial.print(BLE_data_buffer_char);
                         // memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
@@ -282,7 +282,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         pwm.write(pwm_heat_out, map(levelOT1, 1, 100, 230, 950), frequency, resolution);
 #if defined(DEBUG_MODE)
                         Serial.printf("HEAT:%d\n", levelOT1);//for debug
-#if defined(DEBUG_MODE)
+#endif
                         // sprintf(BLE_data_buffer_char, "#DATA_OUT,OT1,%d\n", levelOT1);
                         // // Serial.print(BLE_data_buffer_char);
                         // memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
@@ -306,7 +306,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             pwm.write(pwm_heat_out, map(levelOT1, 1, 100, 230, 950), frequency, resolution);
 #if defined(DEBUG_MODE)
                             Serial.printf("HEAT:%d\n", levelOT1);//for debug
-#if defined(DEBUG_MODE)
+#endif
                             // sprintf(BLE_data_buffer_char, "#DATA_OUT,OT1,%d\n", levelOT1);
                             // // Serial.print(BLE_data_buffer_char);
                             // memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
@@ -327,14 +327,14 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         Heat_pid_controller.start();
 #if defined(DEBUG_MODE)
                         Serial.printf("PID is ON\n");//for debug
-#if defined(DEBUG_MODE)
+#endif
                     }
                     else if (CMD_Data[1] == "OFF")
                     {
                         Heat_pid_controller.stop();
 #if defined(DEBUG_MODE)
                         Serial.printf("PID is OFF\n");//for debug
-#if defined(DEBUG_MODE)
+#endif
                         pid_status = false;
                         pid_sv = 0;
                     }
@@ -346,13 +346,13 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             pid_sv = CMD_Data[2].toFloat();
 #if defined(DEBUG_MODE)
                             Serial.printf("PID set SV:%4.2f\n", pid_sv);//for debug
-#if defined(DEBUG_MODE)
+#endif
                             Heat_pid_controller.compute();
                             levelOT1 = map(PID_output - 2, 0, 255, 0, 100);
                             pwm.write(pwm_heat_out, map(levelOT1, 1, 100, 230, 950), frequency, resolution);
 #if defined(DEBUG_MODE)
                             Serial.printf("HEAT PID set :%d\n", levelOT1);//for debug
-#if defined(DEBUG_MODE)
+#endif
                         }
                     }
                 }
