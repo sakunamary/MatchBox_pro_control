@@ -8,10 +8,10 @@
 #define BAUDRATE 115200        // serial port baudrate
 
 //#define DEBUG_MODE
-#define BLE_BUFFER_SIZE 64
+#define BLE_BUFFER_SIZE 128
 #define HMI_BUFFER_SIZE 16
 
-#define VERSION "1.0.7"
+#define VERSION "1.0.8"
 
 #define SPI_SCK 8
 #define SPI_MISO 9

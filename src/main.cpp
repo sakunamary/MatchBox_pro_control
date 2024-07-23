@@ -55,18 +55,18 @@ void setup()
     xSerialReadBufferMutex = xSemaphoreCreateMutex();
 
     // read pid data from EEPROM
-
+#if defined(DEBUG_MODE)
     Serial.begin(BAUDRATE);
 
     // start Serial
-#if defined(DEBUG_MODE)
+
     Serial.printf("\nStart Task...");
 #endif
     aht20.begin();
     MCP.NewConversion(); // New conversion is initiated
 
     pwm.pause();
-    pwm.write(pwm_fan_out, 750, frequency, resolution);
+    pwm.write(pwm_fan_out, 800, frequency, resolution);
     pwm.write(pwm_heat_out, 0, frequency, resolution);
     pwm.resume();
     // pwm.printDebug();
