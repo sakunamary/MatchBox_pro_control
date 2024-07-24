@@ -78,7 +78,7 @@ class MyCallbacks : public BLECharacteristicCallbacks
                 i++;
             }
         }
-        vTaskDelay(50);
+        delay(50);
     }
 };
 
@@ -112,7 +112,7 @@ void TASK_DATA_to_BLE(void *pvParameters)
                     pTxCharacteristic->notify();
                 }
                 // data frame:PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
-                vTaskDelay(50);
+                delay(50);
             }
         }
     }
@@ -357,7 +357,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     }
                 }
                 // END of  big handle case switch
-                vTaskDelay(50);
+                delay(50);
             }
         }
     }
