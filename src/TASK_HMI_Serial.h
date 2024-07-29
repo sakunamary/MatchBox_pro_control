@@ -59,13 +59,9 @@ void TASK_CMD_FROM_HMI(void *pvParameters)
     {
         if (Serial_HMI.available())
         {
-            if (xSemaphoreTake(xSerialReadBufferMutex, timeOut) == pdPASS)
-            {
                 Serial_HMI.readBytes(HMI_ReadBuffer, HMI_BUFFER_SIZE);
                 xQueueSend(queueCMD_HMI, &HMI_ReadBuffer, timeOut); // 串口数据发送至队列
                 xTaskNotify(xTASK_HMI_CMD_handle, 0, eIncrement);   // 通知处理任务干活
-            }
-            xSemaphoreGive(xSerialReadBufferMutex);
         }
         vTaskDelay(20);
     }

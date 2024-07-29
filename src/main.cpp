@@ -97,7 +97,7 @@ void setup()
 
     loopTaskWDTEnabled = true;
     xThermoDataMutex = xSemaphoreCreateMutex();
-    xSerialReadBufferMutex = xSemaphoreCreateMutex();
+    xBLE_DATA_Mutex = xSemaphoreCreateMutex();
 
     Serial.begin(BAUDRATE);
     // Serial_HMI.setBuffer();
