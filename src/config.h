@@ -8,10 +8,10 @@
 #define BAUDRATE 115200        // serial port baudrate
 
 #define DEBUG_MODE
-#define BLE_BUFFER_SIZE 64
-#define HMI_BUFFER_SIZE 16
+#define BLE_BUFFER_SIZE 128
+#define HMI_BUFFER_SIZE 17
 
-#define VERSION "1.1.0"
+#define VERSION "1.1.3"
 
 #define SPI_SCK 8
 #define SPI_MISO 9
@@ -66,6 +66,25 @@ typedef struct eeprom_settings
 #define SERVICE_UUID "6E400001-B5A3-F393-E0A9-E50E24DCCA9E" // UART service UUID
 #define CHARACTERISTIC_UUID_RX "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
 #define CHARACTERISTIC_UUID_TX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
+
+
+
+static TaskHandle_t xTASK_data_to_HMI = NULL;
+static TaskHandle_t xTASK_CMD_HMI = NULL;
+static TaskHandle_t xTASK_HMI_CMD_handle = NULL;
+ static TaskHandle_t xTASK_data_to_BLE = NULL;
+static TaskHandle_t xTASK_BLE_CMD_handle = NULL;
+
+SemaphoreHandle_t xThermoDataMutex = NULL;
+SemaphoreHandle_t xBLE_DATA_Mutex = NULL;
+SemaphoreHandle_t xHMI_DATA_Mutex = NULL;
+
+
+QueueHandle_t queue_data_to_HMI = xQueueCreate(15, sizeof(uint8_t[HMI_BUFFER_SIZE])); // 发送到HMI的数据 hex格式化数据
+QueueHandle_t queueCMD_HMI = xQueueCreate(15, sizeof(uint8_t[HMI_BUFFER_SIZE]));      // 从HMI接收到的Hex格式命令
+QueueHandle_t queueCMD_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
+QueueHandle_t queue_data_to_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
+
 
 // publc funciton
 
@@ -200,25 +219,6 @@ typedef struct eeprom_settings
 // PID TUNE : 00
 // NULL : 00 00
 // 帧尾:FF FF FF
-
-// static TaskHandle_t xTASK_data_to_HMI = NULL;
-// static TaskHandle_t xTASK_CMD_HMI = NULL;
-// static TaskHandle_t xTASK_HMI_CMD_handle = NULL;
- static TaskHandle_t xTASK_data_to_BLE = NULL;
-// static TaskHandle_t xTASK_CMD_BLE = NULL;
-static TaskHandle_t xTASK_BLE_CMD_handle = NULL;
-
-SemaphoreHandle_t xThermoDataMutex = NULL;
-SemaphoreHandle_t xSerialReadBufferMutex = NULL;
-SemaphoreHandle_t xContrlDataMutex = NULL;
-
-
-// QueueHandle_t queue_data_to_HMI = xQueueCreate(15, sizeof(uint8_t[HMI_BUFFER_SIZE])); // 发送到HMI的数据 hex格式化数据
-// QueueHandle_t queueCMD_HMI = xQueueCreate(15, sizeof(uint8_t[HMI_BUFFER_SIZE]));      // 从HMI接收到的Hex格式命令
-QueueHandle_t queueCMD_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
-QueueHandle_t queue_data_to_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
-
-
 
 
 #endif

@@ -1,9 +1,12 @@
 #include <Arduino.h>
-#include <config.h>
+#include "config.h"
 
 #include <WiFi.h>
 #include <pwmWrite.h>
 #include <StringTokenizer.h>
+#include <WiFiClient.h>
+#include <WebServer.h>
+#include <ElegantOTA.h>
 // #include <cmndreader.h>
 // #include <pidautotuner.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
@@ -11,14 +14,16 @@
 #include <TASK_read_temp.h>
 #include <TASK_BLE_Serial.h>
 // #include <TASK_modbus_handle.h>
-//  #include <TASK_HMI_Serial.h>
+#include <TASK_HMI_Serial.h>
 
+WebServer server(80);
 String local_IP;
 ExternalEEPROM I2C_EEPROM;
 Pwm pwm = Pwm();
+ArduPID Heat_pid_controller;
+
 extern bool loopTaskWDTEnabled;
 extern TaskHandle_t loopTaskHandle;
-
 
 int levelOT1 = 0;
 int levelIO3 = 30;
@@ -35,6 +40,7 @@ const byte pwm_heat_out = PWM_HEAT;
 
 char ap_name[16];
 uint8_t macAddr[6];
+byte tries;
 
 pid_setting_t pid_parm = {
     .pid_CT = 2,       // uint16_t pid_CT;
@@ -45,7 +51,46 @@ pid_setting_t pid_parm = {
     .ET_tempfix = 0.0  // uint16_t ET_tempfix;
 };
 
-ArduPID Heat_pid_controller;
+unsigned long ota_progress_millis = 0;
+
+void onOTAStart()
+{
+    // Log when OTA has started
+    Serial.println("OTA update started!");
+    // <Add your own code here>
+}
+
+void onOTAProgress(size_t current, size_t final)
+{
+    // Log every 1 second
+    if (millis() - ota_progress_millis > 1000)
+    {
+        ota_progress_millis = millis();
+        Serial.printf("OTA Progress Current: %u bytes, Final: %u bytes\n", current, final);
+    }
+}
+
+void onOTAEnd(bool success)
+{
+    // Log when OTA has finished
+    if (success)
+    {
+        Serial.println("OTA update finished successfully!");
+    }
+    else
+    {
+        Serial.println("There was an error during OTA update!");
+    }
+    // <Add your own code here>
+}
+
+String IpAddressToString(const IPAddress &ipAddress)
+{
+    return String(ipAddress[0]) + String(".") +
+           String(ipAddress[1]) + String(".") +
+           String(ipAddress[2]) + String(".") +
+           String(ipAddress[3]);
+}
 
 void setup()
 {
@@ -54,9 +99,11 @@ void setup()
     xThermoDataMutex = xSemaphoreCreateMutex();
     xSerialReadBufferMutex = xSemaphoreCreateMutex();
 
-    // read pid data from EEPROM
-#if defined(DEBUG_MODE)
     Serial.begin(BAUDRATE);
+    // Serial_HMI.setBuffer();
+    Serial_HMI.begin(BAUDRATE, SERIAL_8N1, RXD_HMI, TXD_HMI);
+
+#if defined(DEBUG_MODE)
 
     // start Serial
 
@@ -79,10 +126,34 @@ void setup()
     WiFi.macAddress(macAddr);
     // WiFi.mode(WIFI_AP);
     sprintf(ap_name, "MATCHBOX_%02X%02X%02X", macAddr[3], macAddr[4], macAddr[5]);
-    //     WiFi.softAP(ap_name, "12345678"); // defualt IP address :192.168.4.1 password min 8 digis
-    // #if defined(DEBUG_MODE)
-    //     Serial.printf("\nStart WIFI...");
-    // #endif
+#
+    while (WiFi.status() != WL_CONNECTED)
+    {
+
+        delay(1000);
+        Serial.println("wifi not ready");
+
+        if (tries++ > 2)
+        {
+            // init wifi
+            Serial.println("WiFi.mode(AP):");
+            WiFi.mode(WIFI_AP);
+            WiFi.softAP(ap_name, "88888888"); // defualt IP address :192.168.4.1 password min 8 digis
+            break;
+        }
+    }
+    // show AP's IP
+    Serial.printf("IP:");
+    if (WiFi.getMode() == 2) // 1:STA mode 2:AP mode
+    {
+        Serial.println(IpAddressToString(WiFi.softAPIP()));
+        local_IP = IpAddressToString(WiFi.softAPIP());
+    }
+    else
+    {
+        Serial.println(IpAddressToString(WiFi.localIP()));
+        local_IP = IpAddressToString(WiFi.localIP());
+    }
 
     // Create the BLE Device
     BLEDevice::init(ap_name);
@@ -239,15 +310,23 @@ void setup()
     // tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
     // tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
 
-    // ci.addCommand(&pid);
-    // ci.addCommand(&io3);
-    // ci.addCommand(&ot1);
+    server.on("/", []()
+              { server.send(200, "text/plain", "Hi! This is ElegantOTA Demo."); });
+
+    ElegantOTA.begin(&server); // Start ElegantOTA
+    // ElegantOTA callbacks
+    ElegantOTA.onStart(onOTAStart);
+    ElegantOTA.onProgress(onOTAProgress);
+    ElegantOTA.onEnd(onOTAEnd);
+
+    server.begin();
+    Serial.println("HTTP server started");
 }
 
 void loop()
 {
-    // mb.task();
-
+    server.handleClient();
+    ElegantOTA.loop();
     // disconnecting
     if (!deviceConnected && oldDeviceConnected)
     {

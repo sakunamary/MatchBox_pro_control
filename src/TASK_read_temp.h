@@ -44,7 +44,7 @@ void Task_Thermo_get_data(void *pvParameters)
     (void)pvParameters;
     TickType_t xLastWakeTime;
     char temp_data_buffer_ble[BLE_BUFFER_SIZE];
-    uint8_t TEMP_DATA_Buffer[HMI_BUFFER_SIZE];
+    uint8_t temp_data_buffer_hmi[HMI_BUFFER_SIZE];
     const TickType_t xIntervel = (pid_parm.pid_CT * 1000) / portTICK_PERIOD_MS;
     /* Task Setup and Initialize */
     // Initial the xLastWakeTime variable with the current time.
@@ -67,8 +67,7 @@ void Task_Thermo_get_data(void *pvParameters)
             }
             delay(200);
             MCP.Configuration(1, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
-            Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
-            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+            Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
             delay(200);
             MCP.Configuration(2, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
             Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
@@ -92,13 +91,34 @@ void Task_Thermo_get_data(void *pvParameters)
         // xTaskNotify(xTASK_data_to_HMI, 0, eIncrement);
         // 封装BLE 协议
         // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
-        if (xSemaphoreTake(xSerialReadBufferMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
+        if (xSemaphoreTake(xBLE_DATA_Mutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
                 sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3,pid_sv);
                 xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
                 xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
             }
-            xSemaphoreGive(xSerialReadBufferMutex); // end of lock mutex
+            xSemaphoreGive(xBLE_DATA_Mutex); // end of lock mutex
+
+temp_data_buffer_hmi[0]= 0x69;
+temp_data_buffer_hmi[1]= 0xff;
+temp_data_buffer_hmi[2]= 0x01;
+temp_data_buffer_hmi[3]= 0x69;
+temp_data_buffer_hmi[4]= 0x69;
+temp_data_buffer_hmi[5]= 0x69;
+temp_data_buffer_hmi[6]= 0x69;
+temp_data_buffer_hmi[7]= 0x69;
+temp_data_buffer_hmi[8]= 0x69;
+temp_data_buffer_hmi[9]= 0x69;
+temp_data_buffer_hmi[10]= 0x69;
+temp_data_buffer_hmi[11]= 0x00;
+temp_data_buffer_hmi[12]= 0x00;
+temp_data_buffer_hmi[13]= 0x00;
+temp_data_buffer_hmi[14]= 0xff;
+temp_data_buffer_hmi[15]= 0xff;
+temp_data_buffer_hmi[16]= 0xff;
+
+
+
         
     }
 
@@ -106,35 +126,25 @@ void Task_Thermo_get_data(void *pvParameters)
 
 #endif
 
-// HMI --> MatchBox的数据帧 FrameLenght = 12
+// HMI --> MatchBox的数据帧 FrameLenght = 17
 // 帧头: 69 FF
 // 类型: 01 温度数据
+// 环境温： 00 00 //uint16
 // 温度1: 00 00 // uint16
 // 温度2: 00 00 // uint16
+// PID SV: 00 00 // uint16
 // 火力 : 00
 // 风力 : 00
+// PID RUN: 00
 // 帧尾:FF FF FF
 
-// HMI --> MatchBox的数据帧 FrameLenght = 12
+// HMI --> MatchBox的数据帧 FrameLenght = 17
 // 帧头: 69 FF
 // 类型: 02 PID设定
+// BT fix: 00 00 // uint16
+// ET fix: 00 00 // uint16
 // P: 00 00 // uint16
 // I: 00 00 // uint16
 // D: 00 00 // uint16
-// 帧尾:FF FF FF
-
-// HMI --> MatchBox的数据帧 FrameLenght = 12
-// 帧头: 69 FF
-// 类型: 03 参数设定
-// PID ct: 00 00 // uint16
-// BT fix: 00 00 // uint16
-// ET fix: 00 00 // uint16
-// 帧尾:FF FF FF
-
-// HMI --> MatchBox的数据帧 FrameLenght = 12
-// 帧头: 69 FF
-// 类型: 04 PID run
-// PID SV: 00 00 // uint16
-// PID STATUS: 00
-// NULL :00 00 00
+// PID ct: 00
 // 帧尾:FF FF FF
