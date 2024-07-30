@@ -1,5 +1,5 @@
-dlloydev/ESP32 ESP32S2 AnalogWrite@^5.0.2
-dfrobot/DFRobot_AHT20@^1.0.0
-sparkfun/SparkFun External EEPROM Arduino Library@^3.2.8
-powerbroker2/ArduPID@^0.2.1
 ayushsharma82/ElegantOTA @ ^3.1.3
+dfrobot/DFRobot_BME280@^1.0.2
+sparkfun/SparkFun External EEPROM Arduino Library@^3.2.8
+dlloydev/ESP32 ESP32S2 AnalogWrite@^5.0.2
+powerbroker2/ArduPID@^0.2.1
