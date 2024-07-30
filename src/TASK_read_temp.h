@@ -17,6 +17,7 @@ double AMB_TEMP;
 extern int levelOT1;
 extern int levelIO3;
 extern double pid_sv;
+extern bool pid_status;
 
 // Need this for the lower level access to set them up.
 uint8_t address = 0x68;
@@ -36,6 +37,7 @@ DFRobot_AHT20 aht20;
 // const uint16_t AMB_TEMP_HREG = 3008;
 
 extern pid_setting_t pid_parm;
+extern HardwareSerial Serial_HMI;
 
 void Task_Thermo_get_data(void *pvParameters)
 { // function
@@ -75,56 +77,55 @@ void Task_Thermo_get_data(void *pvParameters)
 
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
-
-        // // update  Hreg data
-        // mb.Hreg(BT_HREG, int(round(BT_TEMP * 10)));        // 初始化赋值
-        // mb.Hreg(ET_HREG, int(round(ET_TEMP * 10)));        // 初始化赋值
-        // mb.Hreg(AMB_RH_HREG, int(round(AMB_RH * 10)));     // 初始化赋值
-        // mb.Hreg(AMB_TEMP_HREG, int(round(AMB_TEMP * 10))); // 初始化赋值
-
-        // // 封装HMI 协议
-        // make_frame_head(TEMP_DATA_Buffer, 1);
-        // make_frame_end(TEMP_DATA_Buffer, 1);
-        // make_frame_data(TEMP_DATA_Buffer, 1,   int(round(BT_TEMP * 10)), 3);
-        // make_frame_data(TEMP_DATA_Buffer, 1, int(round(ET_TEMP * 10)), 5);
-        // xQueueSend(queue_data_to_HMI, &TEMP_DATA_Buffer, xIntervel / 3);
-        // xTaskNotify(xTASK_data_to_HMI, 0, eIncrement);
-        // 封装BLE 协议
         // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
-        if (xSemaphoreTake(xBLE_DATA_Mutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
+        if (xSemaphoreTake(xBLE_DATA_Mutex, 250 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
-                sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3,pid_sv);
-                xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
-                xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
+            // 封装BLE 协议
+            sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
+            xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
+
+            // 封装HMI 协议
+            temp_data_buffer_hmi[0] = 0x69;
+            temp_data_buffer_hmi[1] = 0xff;
+            temp_data_buffer_hmi[2] = 0x01;
+            temp_data_buffer_hmi[3] = lowByte(int(round(AMB_TEMP * 10)));
+            temp_data_buffer_hmi[4] = highByte(int(round(AMB_TEMP * 10)));
+            temp_data_buffer_hmi[5] = lowByte(int(round(ET_TEMP * 10)));
+            temp_data_buffer_hmi[6] = highByte(int(round(ET_TEMP * 10)));
+            temp_data_buffer_hmi[7] = lowByte(int(round(BT_TEMP * 10)));
+            temp_data_buffer_hmi[8] = highByte(int(round(BT_TEMP * 10)));
+            temp_data_buffer_hmi[9] = lowByte(int(round(pid_sv * 10)));
+            temp_data_buffer_hmi[10] = highByte(int(round(pid_sv * 10)));
+            temp_data_buffer_hmi[11] = levelOT1;
+            temp_data_buffer_hmi[12] = levelIO3;
+            if (pid_status)
+            {
+                temp_data_buffer_hmi[13] = 0x01;
             }
+            else
+            {
+                temp_data_buffer_hmi[13] = 0x00;
+            }
+            temp_data_buffer_hmi[14] = 0xff;
+            temp_data_buffer_hmi[15] = 0xff;
+            temp_data_buffer_hmi[16] = 0xff;
+
+            xQueueSend(queue_data_to_HMI, &temp_data_buffer_hmi, xIntervel);
+
+            memset(temp_data_buffer_hmi, '\0', HMI_BUFFER_SIZE);
+
             xSemaphoreGive(xBLE_DATA_Mutex); // end of lock mutex
-
-temp_data_buffer_hmi[0]= 0x69;
-temp_data_buffer_hmi[1]= 0xff;
-temp_data_buffer_hmi[2]= 0x01;
-temp_data_buffer_hmi[3]= 0x69;
-temp_data_buffer_hmi[4]= 0x69;
-temp_data_buffer_hmi[5]= 0x69;
-temp_data_buffer_hmi[6]= 0x69;
-temp_data_buffer_hmi[7]= 0x69;
-temp_data_buffer_hmi[8]= 0x69;
-temp_data_buffer_hmi[9]= 0x69;
-temp_data_buffer_hmi[10]= 0x69;
-temp_data_buffer_hmi[11]= 0x00;
-temp_data_buffer_hmi[12]= 0x00;
-temp_data_buffer_hmi[13]= 0x00;
-temp_data_buffer_hmi[14]= 0xff;
-temp_data_buffer_hmi[15]= 0xff;
-temp_data_buffer_hmi[16]= 0xff;
-
-
-
-        
+        }
+        xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
+        xTaskNotify(xTASK_data_to_HMI, 0, eIncrement); // send notify to TASK_data_to_HMIÍ
     }
 
 } // function
 
 #endif
+
+// printh 00 00 00 ff ff ff 88 ff ff ff//输出上电信息到串口
+// 69 ff 00 ff ff ff 69 69 69 67 67 67 ff ff ff ff ff //握手协议
 
 // HMI --> MatchBox的数据帧 FrameLenght = 17
 // 帧头: 69 FF
