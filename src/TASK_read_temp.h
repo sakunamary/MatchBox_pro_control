@@ -6,7 +6,8 @@
 #include <Wire.h>
 // #include <ModbusIP_ESP8266.h>
 #include <MCP3424.h>
-#include "DFRobot_AHT20.h"
+// #include "DFRobot_AHT20.h"
+#include "DFRobot_BME280.h"
 
 // ModbusIP mb; // declear object
 
@@ -14,6 +15,7 @@ double BT_TEMP;
 double ET_TEMP;
 double AMB_RH;
 double AMB_TEMP;
+uint32_t AMB_PRESS;
 extern int levelOT1;
 extern int levelIO3;
 extern double pid_sv;
@@ -23,12 +25,20 @@ extern bool pid_status;
 uint8_t address = 0x68;
 long Voltage; // Array used to store results
 
+typedef DFRobot_BME280_IIC BME; // ******** use abbreviations instead of full names ********
+
+/**IIC address is 0x77 when pin SDO is high */
+/**IIC address is 0x76 when pin SDO is low */
+BME bme(&Wire, 0x76); // select TwoWire peripheral and set sensor address
+
+#define SEA_LEVEL_PRESSURE 1015.0f
+
 #define R0 100
 #define Rref 1000
 
 MCP3424 MCP(address); // Declaration of MCP3424 A2=0 A1=1 A0=0
-DFRobot_AHT20 aht20;
-// TypeK temp_K_cal;
+// DFRobot_AHT20 aht20;
+//  TypeK temp_K_cal;
 
 // Modbus Registers Offsets
 // const uint16_t BT_HREG = 3001;
@@ -59,17 +69,19 @@ void Task_Thermo_get_data(void *pvParameters)
         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
 
-            if (aht20.startMeasurementReady(/* crcEn = */ true))
-            {
-                AMB_TEMP = aht20.getTemperature_C();
-                AMB_RH = aht20.getHumidity_RH();
-                // #if defined(DEBUG_MODE)
-                //                 Serial.printf("raw data:AMB_TEMP:%4.2f\n", AMB_TEMP);
-                // #endif
-            }
+            // if (aht20.startMeasurementReady(/* crcEn = */ true))
+            // {
+            AMB_TEMP = bme.getTemperature();
+            AMB_PRESS = bme.getPressure();
+            AMB_RH = bme.getHumidity();
+            // #if defined(DEBUG_MODE)
+            //                 Serial.printf("raw data:AMB_TEMP:%4.2f\n", AMB_TEMP);
+            // #endif
+            // }
             delay(200);
             MCP.Configuration(1, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
             Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
             delay(200);
             MCP.Configuration(2, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
             Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
@@ -82,6 +94,8 @@ void Task_Thermo_get_data(void *pvParameters)
         {
             // 封装BLE 协议
             sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
+            //Serial.print(temp_data_buffer_ble);
+
             xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
 
             // 封装HMI 协议
