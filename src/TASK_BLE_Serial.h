@@ -145,7 +145,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
             if (xQueueReceive(queueCMD_BLE, &BLE_CMD_Buffer, timeOut) == pdPASS)
             { // 从接收QueueCMD 接收指令
 
-                if (xSemaphoreTake(xBLE_DATA_Mutex, xIntervel) == pdPASS)
+                if (xSemaphoreTake(xDATA_OUT_Mutex, xIntervel) == pdPASS)
                 {
                     // cmd from BLE cleaning
                     TC4_data_String = String((char *)BLE_CMD_Buffer);
@@ -183,7 +183,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     }
                     i = 0;
                     CMD_String = "";
-                    xSemaphoreGive(xBLE_DATA_Mutex);
+                    xSemaphoreGive(xDATA_OUT_Mutex);
                 }
                 // big handle case switch
                 if (CMD_Data[0] == "IO3")

@@ -97,7 +97,7 @@ void setup()
 
     loopTaskWDTEnabled = true;
     xThermoDataMutex = xSemaphoreCreateMutex();
-    xBLE_DATA_Mutex = xSemaphoreCreateMutex();
+    xDATA_OUT_Mutex = xSemaphoreCreateMutex();
 
 
     Serial.begin(HMI_BAUDRATE);
@@ -222,7 +222,7 @@ void setup()
         Serial.printf("\nTASK5:TASK_HMI_CMD_handle...\n");
     #endif
 
-    
+
         xTaskCreate(
             TASK_CMD_FROM_HMI, "TASK_CMD_FROM_HMI" // 获取HB数据
             ,

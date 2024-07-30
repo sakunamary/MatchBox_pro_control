@@ -77,8 +77,8 @@ static TaskHandle_t xTASK_HMI_CMD_handle = NULL;
 static TaskHandle_t xTASK_BLE_CMD_handle = NULL;
 
 SemaphoreHandle_t xThermoDataMutex = NULL;
-SemaphoreHandle_t xBLE_DATA_Mutex = NULL;
-SemaphoreHandle_t xHMI_DATA_Mutex = NULL;
+SemaphoreHandle_t xDATA_OUT_Mutex = NULL;
+//SemaphoreHandle_t xHMI_DATA_Mutex = NULL;
 
 
 QueueHandle_t queue_data_to_HMI = xQueueCreate(15, HMI_BUFFER_SIZE); // 发送到HMI的数据 hex格式化数据

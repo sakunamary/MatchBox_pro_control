@@ -78,7 +78,7 @@ void Task_Thermo_get_data(void *pvParameters)
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
         // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
-        if (xSemaphoreTake(xBLE_DATA_Mutex, 250 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
+        if (xSemaphoreTake(xDATA_OUT_Mutex, 250 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
             // 封装BLE 协议
             sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
@@ -114,7 +114,7 @@ void Task_Thermo_get_data(void *pvParameters)
 
             memset(temp_data_buffer_hmi, '\0', HMI_BUFFER_SIZE);
 
-            xSemaphoreGive(xBLE_DATA_Mutex); // end of lock mutex
+            xSemaphoreGive(xDATA_OUT_Mutex); // end of lock mutex
         }
         xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
         xTaskNotify(xTASK_data_to_HMI, 0, eIncrement); // send notify to TASK_data_to_HMIÍ
