@@ -145,7 +145,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
             if (xQueueReceive(queueCMD_BLE, &BLE_CMD_Buffer, timeOut) == pdPASS)
             { // 从接收QueueCMD 接收指令
 
-                if (xSemaphoreTake(xSerialReadBufferMutex, xIntervel) == pdPASS)
+                if (xSemaphoreTake(xDATA_OUT_Mutex, xIntervel) == pdPASS)
                 {
                     // cmd from BLE cleaning
                     TC4_data_String = String((char *)BLE_CMD_Buffer);
@@ -183,7 +183,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     }
                     i = 0;
                     CMD_String = "";
-                    xSemaphoreGive(xSerialReadBufferMutex);
+                    xSemaphoreGive(xDATA_OUT_Mutex);
                 }
                 // big handle case switch
                 if (CMD_Data[0] == "IO3")
@@ -199,14 +199,14 @@ void TASK_BLE_CMD_handle(void *pvParameters)
 // #if defined(DEBUG_MODE)
 //                         Serial.printf("FAN:%d\n", levelIO3);//for debug
 // #endif
-                        sprintf(BLE_data_buffer_char, "#DATA_OUT,OT3,%d\n", levelIO3);
-                        // 格式转换
-                        memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
-                        if (deviceConnected)
-                        {
-                            pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
-                            pTxCharacteristic->notify();
-                        }
+                        // sprintf(BLE_data_buffer_char, "#DATA_OUT,OT3,%d\n", levelIO3);
+                        // // 格式转换
+                        // memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
+                        // if (deviceConnected)
+                        // {
+                        //     pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
+                        //     pTxCharacteristic->notify();
+                        // }
                     }
                     else if (CMD_Data[1] == "DOWN")
                     {
@@ -217,13 +217,13 @@ void TASK_BLE_CMD_handle(void *pvParameters)
 // #if defined(DEBUG_MODE)
 //                         Serial.printf("FAN:%d\n", levelIO3);//for debug
 // #endif
-                        sprintf(BLE_data_buffer_char, "#DATA_OUT,OT3,%d\n", levelIO3);
-                        memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
-                        if (deviceConnected)
-                        {
-                            pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
-                            pTxCharacteristic->notify();
-                        }
+                        // sprintf(BLE_data_buffer_char, "#DATA_OUT,OT3,%d\n", levelIO3);
+                        // memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
+                        // if (deviceConnected)
+                        // {
+                        //     pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
+                        //     pTxCharacteristic->notify();
+                        // }
                     }
                     else
                     {
@@ -239,14 +239,14 @@ void TASK_BLE_CMD_handle(void *pvParameters)
 // #if defined(DEBUG_MODE)
 //                             Serial.printf("FAN:%d\n", levelIO3);//for debug
 // #endif
-                            sprintf(BLE_data_buffer_char, "#DATA_OUT,OT3,%d\n", levelIO3);
-                            memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
-                            // 格式转换
-                            if (deviceConnected)
-                            {
-                                pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
-                                pTxCharacteristic->notify();
-                            }
+                            // sprintf(BLE_data_buffer_char, "#DATA_OUT,OT3,%d\n", levelIO3);
+                            // memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
+                            // // 格式转换
+                            // if (deviceConnected)
+                            // {
+                            //     pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
+                            //     pTxCharacteristic->notify();
+                            // }
                         }
                     }
                 }
