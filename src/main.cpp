@@ -188,11 +188,12 @@ void setup()
         ,
         NULL, 4 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
         ,
-        NULL // Running Core decided by FreeRTOS,let core0 run wifi and BT
+        &xTask_Thermo_get_data // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
     Serial.printf("\nTASK1:Task_Thermo_get_data...");
 #endif
+//vTaskSuspend(xTask_Thermo_get_data);
 
     xTaskCreate(
         TASK_data_to_HMI, "TASK_data_to_HMI" // 获取HB数据
