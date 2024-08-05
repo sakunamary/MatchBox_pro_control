@@ -333,8 +333,7 @@ void setup()
     // tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
     // tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
 
-    server.on("/", []()
-              { server.send(200, "text/plain", "Hi! This is ElegantOTA Demo."); });
+    server.on("/", handle_root);
 
     ElegantOTA.begin(&server); // Start ElegantOTA
     // ElegantOTA callbacks

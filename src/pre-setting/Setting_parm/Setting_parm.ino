@@ -35,7 +35,7 @@ DFRobot_AHT20 aht20;
 Pwm pwm_heat = Pwm();
 
 pid_setting_t pid_parm = {
-  .pid_CT =2.0,      // double pid_CT;
+  .pid_CT =1.5,      // double pid_CT;
   .p = 3.2,           // double p ;
   .i = 0.17,          // double i ;
   .d = 8.0,           // double d ;
@@ -115,7 +115,7 @@ void setup() {
     delay(3000);
     loadUserSettings();
     Serial.printf("\nEEPROM value check ...\n");
-    Serial.printf("pid_CT:%d\n", pid_parm.pid_CT);
+    Serial.printf("pid_CT:%4.2f\n", pid_parm.pid_CT);
     Serial.printf("PID kp:%4.2f\n", pid_parm.p);
     Serial.printf("PID ki:%4.2f\n", pid_parm.i);
     Serial.printf("PID kd:%4.2f\n", pid_parm.d);
