@@ -52,7 +52,7 @@
 //
 typedef struct eeprom_settings
 {
-    int pid_CT;
+    double pid_CT;
     double p;
     double i;
     double d;

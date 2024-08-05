@@ -25,22 +25,22 @@ double BT_TEMP;
 double ET_TEMP;
 double AMB_TEMP;
 
-const int HEAT_OUT_PIN = PWM_HEAT; // GPIO26
+const int HEAT_OUT_PIN = PWM_HEAT;  // GPIO26
 const int FAN_OUT_PIN = PWM_FAN;
 const uint32_t frequency = PWM_FREQ;
-const byte resolution = PWM_RESOLUTION; // pwm -0-1023
+const byte resolution = PWM_RESOLUTION;  // pwm -0-1023
 
 MCP3424 ADC_MCP3424(address);  // Declaration of MCP3424 A2=0 A1=1 A0=0
 DFRobot_AHT20 aht20;
 Pwm pwm_heat = Pwm();
 
 pid_setting_t pid_parm = {
-  .pid_CT = 2,        // uint16_t pid_CT;
-  .p = 2.0,           // double p ;
-  .i = 0.12,          // double i ;
-  .d = 5.0,           // double d ;
-  .BT_tempfix = 0.0,  // uint16_t BT_tempfix;
-  .ET_tempfix = 0.0   // uint16_t ET_tempfix;
+  .pid_CT =2.0,      // double pid_CT;
+  .p = 3.2,           // double p ;
+  .i = 0.17,          // double i ;
+  .d = 8.0,           // double d ;
+  .BT_tempfix = 0.0,  // double BT_tempfix;
+  .ET_tempfix = 0.0   // double ET_tempfix;
 };
 
 
@@ -50,20 +50,24 @@ ExternalEEPROM I2C_EEPROM;
 void loadUserSettings();
 
 void setup() {
-      //  Init pwm output
-    pwm_heat.pause();
-    pwm_heat.write(HEAT_OUT_PIN, 0, frequency, resolution);
-    pwm_heat.write(FAN_OUT_PIN, 750, frequency, resolution); // 此处要根据100g豆子初始化吹动的风力来确定。数值为0-1024
-    pwm_heat.resume();
-  vTaskDelay(30000);
-  // Prepare working .....
+
   Serial.begin(BAUDRATE);
+
+  Serial.println("start...\n");
+  Serial.println("INIT PWM...\n");
+  vTaskDelay(30000);
+  //  Init pwm output
+  pwm_heat.pause();
+  pwm_heat.write(HEAT_OUT_PIN, 0, frequency, resolution);
+  pwm_heat.write(FAN_OUT_PIN, 750, frequency, resolution);  // 此处要根据100g豆子初始化吹动的风力来确定。数值为0-1024
+  pwm_heat.resume();
+  pwm_heat.printDebug();
+  Serial.println("INIT AHT20 and EEPROM...\n");
+  // Prepare working .....
   Wire.begin();
   I2C_EEPROM.setMemoryType(64);
 
 
-
-  Serial.println("start...\n");
 
   ADC_MCP3424.NewConversion();  // New conversion is initiated
   aht20.begin();

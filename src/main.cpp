@@ -44,7 +44,7 @@ char ap_name[16];
 uint8_t macAddr[6];
 
 pid_setting_t pid_parm = {
-    .pid_CT = 2,       // uint16_t pid_CT;
+    .pid_CT = 1.5,       // uint16_t pid_CT;
     .p = 2.0,          // double p ;
     .i = 0.12,         // double i ;
     .d = 5.0,          // double d ;
@@ -84,6 +84,30 @@ void onOTAEnd(bool success)
         Serial.println("There was an error during OTA update!");
     }
     // <Add your own code here>
+}
+
+
+// Handle root url (/)
+void handle_root()
+{
+    char index_html[2048];
+    String ver = VERSION;
+    snprintf(index_html, 2048,
+             "<html>\
+<head>\
+<title>MATCH BOX SETUP</title>\
+    </head> \
+    <body>\
+        <main>\
+        <h1 align='center'>BLE version:%s</h1>\
+        <div align='center'><a href='/update' target='_blank'>FIRMWARE UPDATE</a>\
+        </main>\
+        </div>\
+    </body>\
+</html>\
+",
+             ver);
+    server.send(200, "text/html", index_html);
 }
 
 String IpAddressToString(const IPAddress &ipAddress)
@@ -325,7 +349,8 @@ void setup()
 void loop()
 {
     // mb.task();
-
+    server.handleClient();
+    ElegantOTA.loop();
     // disconnecting
     if (!deviceConnected && oldDeviceConnected)
     {

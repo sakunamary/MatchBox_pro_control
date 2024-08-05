@@ -11,7 +11,7 @@
 #define BLE_BUFFER_SIZE 128
 #define HMI_BUFFER_SIZE 16
 
-#define VERSION "1.0.8"
+#define VERSION "1.1.0"
 
 #define SPI_SCK 8
 #define SPI_MISO 9
@@ -43,7 +43,7 @@
 //
 typedef struct eeprom_settings
 {
-    int pid_CT;
+    double pid_CT;
     double p;
     double i;
     double d;
@@ -195,9 +195,9 @@ typedef struct eeprom_settings
 // static TaskHandle_t xTASK_data_to_HMI = NULL;
 // static TaskHandle_t xTASK_CMD_HMI = NULL;
 // static TaskHandle_t xTASK_HMI_CMD_handle = NULL;
- static TaskHandle_t xTASK_data_to_BLE = NULL;
+ //static TaskHandle_t xTASK_data_to_BLE = NULL;
 // static TaskHandle_t xTASK_CMD_BLE = NULL;
-static TaskHandle_t xTASK_BLE_CMD_handle = NULL;
+//static TaskHandle_t xTASK_BLE_CMD_handle = NULL;
 
 SemaphoreHandle_t xThermoDataMutex = NULL;
 SemaphoreHandle_t xSerialReadBufferMutex = NULL;
