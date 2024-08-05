@@ -84,6 +84,32 @@ void onOTAEnd(bool success)
     // <Add your own code here>
 }
 
+
+// Handle root url (/)
+void handle_root()
+{
+    char index_html[2048];
+    String ver = VERSION;
+    snprintf(index_html, 2048,
+             "<html>\
+<head>\
+<title>MATCH BOX PRO SETUP</title>\
+    </head> \
+    <body>\
+        <main>\
+        <h1 align='center'> ver:%s</h1>\
+        <div align='center'><a href='/update' target='_blank'>FIRMWARE UPDATE</a>\
+        </main>\
+        </div>\
+    </body>\
+</html>\
+",
+             ver);
+    server.send(200, "text/html", index_html);
+}
+
+
+
 String IpAddressToString(const IPAddress &ipAddress)
 {
     return String(ipAddress[0]) + String(".") +
@@ -300,8 +326,7 @@ void setup()
     // tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
     // tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
 
-    server.on("/", []()
-              { server.send(200, "text/plain", "Hi! This is ElegantOTA Demo."); });
+    server.on("/", handle_root);
 
     ElegantOTA.begin(&server); // Start ElegantOTA
     // ElegantOTA callbacks
