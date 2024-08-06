@@ -350,7 +350,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
 //                             Serial.printf("PID set SV:%4.2f\n", pid_sv);//for debug
 // #endif
                             Heat_pid_controller.compute();
-                            levelOT1 = map(PID_output - 2, 0, 255, 0, 100);
+                            levelOT1 = map(PID_output, 0, 255, 0, 100);
                             pwm_heat.writeScaled(map(levelOT1, 1, 100, 0, 1));
 // #if defined(DEBUG_MODE)
 //                             Serial.printf("HEAT PID set :%d\n", levelOT1);//for debug
