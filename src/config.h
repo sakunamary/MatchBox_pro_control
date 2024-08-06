@@ -45,10 +45,10 @@
 ////////////////////
 // Heater and Fan Limits/Options
 #define MIN_OT1 0   // Set output % for lower limit for OT1.  0% power will always be available
-#define MAX_OT1 95 // Set output % for upper limit for OT1
+#define MAX_OT1 100 // Set output % for upper limit for OT1
 
 #define MIN_IO3 30  // Set output % for lower limit for IO3.  0% power will always be available
-#define MAX_IO3 95 // Set output % for upper limit for IO3
+#define MAX_IO3 100 // Set output % for upper limit for IO3
 
 //
 typedef struct eeprom_settings
