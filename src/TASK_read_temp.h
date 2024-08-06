@@ -4,11 +4,9 @@
 #include <Arduino.h>
 #include <config.h>
 #include <Wire.h>
-// #include <ModbusIP_ESP8266.h>
 #include <MCP3424.h>
 #include "DFRobot_AHT20.h"
 
-// ModbusIP mb; // declear object
 
 double BT_TEMP;
 double ET_TEMP;
@@ -28,12 +26,6 @@ long Voltage; // Array used to store results
 MCP3424 MCP(address); // Declaration of MCP3424 A2=0 A1=1 A0=0
 DFRobot_AHT20 aht20;
 // TypeK temp_K_cal;
-
-// Modbus Registers Offsets
-// const uint16_t BT_HREG = 3001;
-// const uint16_t ET_HREG = 3002;
-// const uint16_t AMB_RH_HREG = 3007;
-// const uint16_t AMB_TEMP_HREG = 3008;
 
 extern pid_setting_t pid_parm;
 
@@ -77,19 +69,6 @@ void Task_Thermo_get_data(void *pvParameters)
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
 
-        // // update  Hreg data
-        // mb.Hreg(BT_HREG, int(round(BT_TEMP * 10)));        // 初始化赋值
-        // mb.Hreg(ET_HREG, int(round(ET_TEMP * 10)));        // 初始化赋值
-        // mb.Hreg(AMB_RH_HREG, int(round(AMB_RH * 10)));     // 初始化赋值
-        // mb.Hreg(AMB_TEMP_HREG, int(round(AMB_TEMP * 10))); // 初始化赋值
-
-        // // 封装HMI 协议
-        // make_frame_head(TEMP_DATA_Buffer, 1);
-        // make_frame_end(TEMP_DATA_Buffer, 1);
-        // make_frame_data(TEMP_DATA_Buffer, 1,   int(round(BT_TEMP * 10)), 3);
-        // make_frame_data(TEMP_DATA_Buffer, 1, int(round(ET_TEMP * 10)), 5);
-        // xQueueSend(queue_data_to_HMI, &TEMP_DATA_Buffer, xIntervel / 3);
-        // xTaskNotify(xTASK_data_to_HMI, 0, eIncrement);
         // 封装BLE 协议
         // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
         if (xSemaphoreTake(xSerialReadBufferMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
