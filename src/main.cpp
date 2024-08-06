@@ -137,7 +137,7 @@ void setup()
     MCP.NewConversion(); // New conversion is initiated
 
     pwm.pause();
-    pwm.write(pwm_fan_out, 800, frequency, resolution);
+    pwm.write(pwm_fan_out, 500, frequency, resolution);
     pwm.write(pwm_heat_out, 0, frequency, resolution);
     pwm.resume();
     // pwm.printDebug();
