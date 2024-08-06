@@ -2,7 +2,7 @@
 #include "config.h"
 
 #include <WiFi.h>
-#include <pwmWrite.h>
+#include <ESP32Servo.h>
 #include <StringTokenizer.h>
 #include <WiFiClient.h>
 #include <WebServer.h>
@@ -19,7 +19,9 @@
 WebServer server(80);
 String local_IP;
 ExternalEEPROM I2C_EEPROM;
-Pwm pwm = Pwm();
+ESP32PWM pwm_heat;
+ESP32PWM pwm_fan;
+
 ArduPID Heat_pid_controller;
 
 extern bool loopTaskWDTEnabled;
@@ -28,7 +30,7 @@ extern TaskHandle_t loopTaskHandle;
 int levelOT1 = 0;
 int levelIO3 = 30;
 bool pid_status = false;
-
+byte tries;
 double PID_output = 0;
 double pid_sv;
 double pid_tune_output;
@@ -43,7 +45,7 @@ uint8_t macAddr[6];
 byte tries;
 
 pid_setting_t pid_parm = {
-    .pid_CT = 2,       // uint16_t pid_CT;
+    .pid_CT = 1.5,     // uint16_t pid_CT;
     .p = 2.0,          // double p ;
     .i = 0.12,         // double i ;
     .d = 5.0,          // double d ;
@@ -84,7 +86,6 @@ void onOTAEnd(bool success)
     // <Add your own code here>
 }
 
-
 // Handle root url (/)
 void handle_root()
 {
@@ -108,8 +109,6 @@ void handle_root()
     server.send(200, "text/html", index_html);
 }
 
-
-
 String IpAddressToString(const IPAddress &ipAddress)
 {
     return String(ipAddress[0]) + String(".") +
@@ -125,7 +124,12 @@ void setup()
     xThermoDataMutex = xSemaphoreCreateMutex();
     xDATA_OUT_Mutex = xSemaphoreCreateMutex();
 
+    ESP32PWM::allocateTimer(0);
+    ESP32PWM::allocateTimer(1);
+    ESP32PWM::allocateTimer(2);
+    ESP32PWM::allocateTimer(3);
     Serial.begin(HMI_BAUDRATE);
+
     // Serial_HMI.setBuffer();
     Serial_HMI.begin(HMI_BAUDRATE, SERIAL_8N1, RXD_HMI, TXD_HMI);
 
@@ -136,18 +140,16 @@ void setup()
     Serial.printf("\nStart Task...");
 #endif
     bme.begin();
-    //aht20.begin();
+    // aht20.begin();
     MCP.NewConversion(); // New conversion is initiated
 
-    pwm.pause();
-    pwm.write(pwm_fan_out, 800, frequency, resolution);
-    pwm.write(pwm_heat_out, 0, frequency, resolution);
-    pwm.resume();
-    // pwm.printDebug();
-
-    // #if defined(DEBUG_MODE)
-    //     Serial.printf("\nStart PWM...");
-    // #endif
+#if defined(DEBUG_MODE)
+    Serial.printf("\nStart PWM...");
+#endif
+    pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
+    pwm_fan.attachPin(pwm_fan_out, frequency, resolution);   // 1KHz 8 bit
+    pwm_heat.writeScaled(0.0);
+    pwm_fan.writeScaled(0.3);
 
     // 初始化网络服务
     WiFi.macAddress(macAddr);
@@ -219,7 +221,7 @@ void setup()
 #if defined(DEBUG_MODE)
     Serial.printf("\nTASK1:Task_Thermo_get_data...");
 #endif
-//vTaskSuspend(xTask_Thermo_get_data);
+    // vTaskSuspend(xTask_Thermo_get_data);
 
     xTaskCreate(
         TASK_data_to_HMI, "TASK_data_to_HMI" // 获取HB数据
@@ -285,31 +287,6 @@ void setup()
 #if defined(DEBUG_MODE)
     Serial.printf("\nTASK8:TASK_BLE_CMD_handle...\n");
 #endif
-
-    // Init Modbus-TCP
-    // #if defined(DEBUG_MODE)
-    //     Serial.printf("\nStart Modbus-TCP   service...");
-    // #endif
-    //     mb.server(502); // Start Modbus IP //default port :502
-    //     mb.addHreg(BT_HREG);
-    //     mb.addHreg(ET_HREG);
-    //     mb.addHreg(HEAT_HREG);
-    //     mb.addHreg(FAN_HREG);
-    //     mb.addHreg(AMB_RH_HREG);
-    //     mb.addHreg(AMB_TEMP_HREG);
-
-    //     mb.addHreg(PID_STATUS_HREG);
-    //     mb.addHreg(PID_SV_HREG);
-
-    //     mb.Hreg(BT_HREG, 0);         // 初始化赋值
-    //     mb.Hreg(ET_HREG, 0);         // 初始化赋值
-    //     mb.Hreg(HEAT_HREG, 0);       // 初始化赋值
-    //     mb.Hreg(FAN_HREG, 10);       // 初始化赋值
-    //     mb.Hreg(PID_STATUS_HREG, 0); // 初始化赋值
-    //     mb.Hreg(PID_SV_HREG, 0);     // 初始化赋值
-
-    //     mb.Hreg(AMB_RH_HREG, 0);   // 初始化赋值
-    //     mb.Hreg(AMB_TEMP_HREG, 0); // 初始化赋值
 
     // init PID
     Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);

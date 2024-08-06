@@ -4,12 +4,8 @@
 #include <Arduino.h>
 #include <config.h>
 #include <Wire.h>
-// #include <ModbusIP_ESP8266.h>
 #include <MCP3424.h>
-// #include "DFRobot_AHT20.h"
 #include "DFRobot_BME280.h"
-
-// ModbusIP mb; // declear object
 
 double BT_TEMP;
 double ET_TEMP;
@@ -39,12 +35,6 @@ BME bme(&Wire, 0x76); // select TwoWire peripheral and set sensor address
 MCP3424 MCP(address); // Declaration of MCP3424 A2=0 A1=1 A0=0
 // DFRobot_AHT20 aht20;
 //  TypeK temp_K_cal;
-
-// Modbus Registers Offsets
-// const uint16_t BT_HREG = 3001;
-// const uint16_t ET_HREG = 3002;
-// const uint16_t AMB_RH_HREG = 3007;
-// const uint16_t AMB_TEMP_HREG = 3008;
 
 extern pid_setting_t pid_parm;
 extern HardwareSerial Serial_HMI;
