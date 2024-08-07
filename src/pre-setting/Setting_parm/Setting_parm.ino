@@ -38,9 +38,9 @@ ESP32PWM pwm_fan;
 
 pid_setting_t pid_parm = {
     .pid_CT = 1.5,     // double pid_CT;
-    .p = 3.2,          // double p ;
-    .i = 0.17,         // double i ;
-    .d = 8.0,          // double d ;
+    .p = 2.01,         // double p ;
+    .i = 0.12,         // double i ;
+    .d = 5.0,          // double d ;
     .BT_tempfix = 0.0, // double BT_tempfix;
     .ET_tempfix = 0.0  // double ET_tempfix;
 };
@@ -53,10 +53,10 @@ void loadUserSettings();
 void setup()
 {
 
-    ESP32PWM::allocateTimer(0);
-    ESP32PWM::allocateTimer(1);
-    ESP32PWM::allocateTimer(2);
-    ESP32PWM::allocateTimer(3);
+    // ESP32PWM::allocateTimer(0);
+    // ESP32PWM::allocateTimer(1);
+    // ESP32PWM::allocateTimer(2);
+    //  ESP32PWM::allocateTimer(3);
 
     Serial.begin(BAUDRATE);
 

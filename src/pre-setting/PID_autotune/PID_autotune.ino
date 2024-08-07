@@ -67,13 +67,12 @@ void setup()
     xThermoDataMutex = xSemaphoreCreateMutex();
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);
-    ESP32PWM::allocateTimer(2);
-    ESP32PWM::allocateTimer(3);
+
 
     pwm_heat.attachPin(HEAT_OUT_PIN, frequency, resolution); // 1KHz 8 bit
     pwm_fan.attachPin(FAN_OUT_PIN, frequency, resolution);   // 1KHz 8 bit
-    pwm_heat.writeScaled(0.0);
-    pwm_fan.writeScaled(0.3);
+    pwm_heat.write(0);
+    pwm_fan.write(230);
 
     vTaskDelay(30000);
 
@@ -218,7 +217,7 @@ void Task_PID_autotune(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
-                            pwm_heat.writeScaled(map(pid_tune_output, 0, 255, 0, 1));
+                            pwm_heat.write(map(pid_tune_output, 0, 255, 0, 1000));
                             xSemaphoreGive(xThermoDataMutex);                                                            // end of lock mutex
                         }
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
@@ -258,7 +257,7 @@ void Task_PID_autotune(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
-                            pwm_heat.writeScaled(map(pid_tune_output, 0, 255, 0, 1)); // 输出新火力pwr到SSRÍ
+                            pwm_heat.write(map(pid_tune_output, 0, 255, 0, 1000)); // 输出新火力pwr到SSRÍ
                             xSemaphoreGive(xThermoDataMutex);                                                            // end of lock mutex
                         }
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
@@ -298,7 +297,7 @@ void Task_PID_autotune(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
-                            pwm_heat.writeScaled(map(pid_tune_output, 0, 255, 0, 1));  // 输出新火力pwr到SSRÍ
+                            pwm_heat.write(map(pid_tune_output, 0, 255, 0, 1000));  // 输出新火力pwr到SSRÍ
                             xSemaphoreGive(xThermoDataMutex);                                                            // end of lock mutex
                         }
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
