@@ -9,7 +9,7 @@
 #include <Arduino.h>
 #include "config.h"
 #include <MCP3424.h>
-#include "DFRobot_AHT20.h"
+#include "DFRobot_BME280.h"
 #include <ESP32Servo.h>
 #include <pidautotuner.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
@@ -22,6 +22,14 @@ const int HEAT_OUT_PIN = PWM_HEAT; // GPIO26
 const int FAN_OUT_PIN = PWM_FAN;
 const uint32_t frequency = PWM_FREQ;
 const byte resolution = PWM_RESOLUTION; // pwm -0-1023
+
+
+/**IIC address is 0x77 when pin SDO is high */
+/**IIC address is 0x76 when pin SDO is low */
+BME bme(&Wire, 0x76); // select TwoWire peripheral and set sensor address
+
+#define SEA_LEVEL_PRESSURE 1015.0f
+
 
 #define LOCATION_SETTINGS 0
 
@@ -48,11 +56,8 @@ pid_setting_t pid_parm = {
 static TaskHandle_t xTask_PID_autotune = NULL;
 static TaskHandle_t xTask_Thermo_get_data = NULL;
 
-Pwm pwm_heat = Pwm();
-
 PIDAutotuner tuner = PIDAutotuner();
 ExternalEEPROM I2C_EEPROM;
-DFRobot_AHT20 aht20;
 MCP3424 ADC_MCP3424(MCP3424_address); // Declaration of MCP3424 A2=0 A1=1 A0=0
 ESP32PWM pwm_heat;
 ESP32PWM pwm_fan;
@@ -67,8 +72,7 @@ void setup()
     xThermoDataMutex = xSemaphoreCreateMutex();
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);
-    ESP32PWM::allocateTimer(2);
-    ESP32PWM::allocateTimer(3);
+
 
     pwm_heat.attachPin(HEAT_OUT_PIN, frequency, resolution); // 1KHz 8 bit
     pwm_fan.attachPin(FAN_OUT_PIN, frequency, resolution);   // 1KHz 8 bit
@@ -218,7 +222,7 @@ void Task_PID_autotune(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
-                            pwm_heat.writeScaled(map(pid_tune_output, 0, 255, 0, 1));
+                            pwm_heat.write(map(pid_tune_output, 0, 255, 0, 1000));
                             xSemaphoreGive(xThermoDataMutex);                                                            // end of lock mutex
                         }
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
@@ -258,7 +262,7 @@ void Task_PID_autotune(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
-                            pwm_heat.writeScaled(map(pid_tune_output, 0, 255, 0, 1)); // 输出新火力pwr到SSRÍ
+                            pwm_heat.write(map(pid_tune_output, 0, 255, 0, 1000)); // 输出新火力pwr到SSRÍ
                             xSemaphoreGive(xThermoDataMutex);                                                            // end of lock mutex
                         }
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
@@ -298,7 +302,7 @@ void Task_PID_autotune(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
-                            pwm_heat.writeScaled(map(pid_tune_output, 0, 255, 0, 1));  // 输出新火力pwr到SSRÍ
+                            pwm_heat.write(map(pid_tune_output, 0, 255, 0, 1000));  // 输出新火力pwr到SSRÍ
                             xSemaphoreGive(xThermoDataMutex);                                                            // end of lock mutex
                         }
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
