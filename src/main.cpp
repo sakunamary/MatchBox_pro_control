@@ -144,8 +144,8 @@ void setup()
 #endif
     pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
     pwm_fan.attachPin(pwm_fan_out, frequency, resolution);   // 1KHz 8 bit
-    pwm_heat.writeScaled(0.0);
-    pwm_fan.writeScaled(0.3);
+    pwm_heat.write(0);
+    pwm_fan.write(300);
     // 初始化网络服务
     WiFi.macAddress(macAddr);
     // WiFi.mode(WIFI_AP);
