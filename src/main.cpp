@@ -42,7 +42,7 @@ const byte pwm_heat_out = PWM_HEAT;
 
 char ap_name[16];
 uint8_t macAddr[6];
-byte tries;
+
 
 pid_setting_t pid_parm = {
     .pid_CT = 1.5,     // uint16_t pid_CT;
@@ -126,8 +126,8 @@ void setup()
 
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);
-    ESP32PWM::allocateTimer(2);
-    ESP32PWM::allocateTimer(3);
+    // ESP32PWM::allocateTimer(2);
+    // ESP32PWM::allocateTimer(3);
     Serial.begin(HMI_BAUDRATE);
 
     // Serial_HMI.setBuffer();
@@ -148,8 +148,8 @@ void setup()
 #endif
     pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
     pwm_fan.attachPin(pwm_fan_out, frequency, resolution);   // 1KHz 8 bit
-    pwm_heat.writeScaled(0.0);
-    pwm_fan.writeScaled(0.3);
+    pwm_heat.write(0);
+    pwm_fan.write(230);
 
     // 初始化网络服务
     WiFi.macAddress(macAddr);
