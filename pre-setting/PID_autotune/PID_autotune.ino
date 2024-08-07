@@ -135,7 +135,6 @@ void setup()
 
     // INIT PID AUTOTUNE
     // read pid data from EEPROM
-    tuner.begin(&BT_TEMP, &pid_tune_output, &PID_TUNE_SV, pid_parm.p, pid_parm.i, pid_parm.d);
     tuner.setTuningCycles(5);
     tuner.setLoopInterval(pid_parm.pid_CT * uS_TO_S_FACTOR);                                  // interval in uS
     tuner.setOutputRange(map(pid_out_min, 0, 100, 0, 255), map(pid_out_max, 0, 100, 0, 255)); // 取值范围转换为（0-255）-> (76-205)
