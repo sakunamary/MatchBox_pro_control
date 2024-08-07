@@ -50,6 +50,10 @@
 #define MIN_IO3 30  // Set output % for lower limit for IO3.  0% power will always be available
 #define MAX_IO3 100 // Set output % for upper limit for IO3
 
+#define PID_TUNE_SV_3 200
+#define PID_TUNE_SV_2 190
+#define PID_TUNE_SV_1 160
+
 //
 typedef struct eeprom_settings
 {

@@ -144,6 +144,29 @@ void setup()
     MCP.NewConversion(); // New conversion is initiated
 
 #if defined(DEBUG_MODE)
+    Serial.println("start Reading EEPROM setting ...");
+#endif
+    if (!I2C_EEPROM.begin())
+    {
+        Serial.println("failed to initialise EEPROM");
+        delay(1000);
+    }
+    else
+    {
+        I2C_EEPROM.get(0, pid_parm);
+#if defined(DEBUG_MODE)
+        Serial.printf("\nEEPROM value check ...\n");
+        Serial.printf("pid_CT:%d\n", pid_parm.pid_CT);
+        Serial.printf("PID kp:%4.2f\n", pid_parm.p);
+        Serial.printf("PID ki:%4.2f\n", pid_parm.i);
+        Serial.printf("PID kd:%4.2f\n", pid_parm.d);
+        Serial.printf("BT fix:%4.2f\n", pid_parm.BT_tempfix);
+        Serial.printf("ET fix:%4.2f\n", pid_parm.ET_tempfix);
+#endif
+    }
+
+
+#if defined(DEBUG_MODE)
     Serial.printf("\nStart PWM...");
 #endif
     pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
