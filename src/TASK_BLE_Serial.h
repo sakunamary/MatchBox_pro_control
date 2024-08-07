@@ -23,6 +23,7 @@ BLECharacteristic *pTxCharacteristic;
 
 extern ESP32PWM pwm_heat;
 extern ESP32PWM pwm_fan;
+extern ExternalEEPROM I2C_EEPROM;
 extern ArduPID Heat_pid_controller;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
@@ -337,6 +338,8 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         // #if defined(DEBUG_MODE)
                         //                         Serial.printf("PID is OFF\n");//for debug
                         // #endif
+                        I2C_EEPROM.get(0, pid_parm);
+                        Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
                         pid_status = false;
                         pid_sv = 0;
                     }

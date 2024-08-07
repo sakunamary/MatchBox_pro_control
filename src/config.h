@@ -41,6 +41,10 @@
 #define SLEW_STEP_TIME (uint32_t)(SLEW_STEP * 500 / MAX_SLEW) // min ms delay between steps
 #define DUTY_STEP 2                                         // Use 1, 2, 4, 5, or 10.
 
+#define PID_TUNE_SV_1 150
+#define PID_TUNE_SV_2 170
+#define PID_TUNE_SV_3 190
+
 ////////////////////
 // Heater and Fan Limits/Options
 #define MIN_OT1 0   // Set output % for lower limit for OT1.  0% power will always be available

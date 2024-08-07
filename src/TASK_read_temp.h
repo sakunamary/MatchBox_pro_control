@@ -15,6 +15,9 @@ double AMB_TEMP;
 extern int levelOT1;
 extern int levelIO3;
 extern double pid_sv;
+extern bool pid_status;
+extern pid_setting_t pid_parm;
+
 
 // Need this for the lower level access to set them up.
 uint8_t address = 0x68;
@@ -26,8 +29,8 @@ long Voltage; // Array used to store results
 MCP3424 MCP(address); // Declaration of MCP3424 A2=0 A1=1 A0=0
 DFRobot_AHT20 aht20;
 // TypeK temp_K_cal;
-
-extern pid_setting_t pid_parm;
+extern ExternalEEPROM I2C_EEPROM;
+extern ArduPID Heat_pid_controller;
 
 void Task_Thermo_get_data(void *pvParameters)
 { // function
@@ -69,12 +72,26 @@ void Task_Thermo_get_data(void *pvParameters)
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
 
+        if (pid_status)
+        {
+            if(BT_TEMP >= PID_TUNE_SV_1 )  {
+                 I2C_EEPROM.get(1, pid_parm);
+                 Heat_pid_controller.setCoefficients(pid_parm.p,pid_parm.i,pid_parm.d);
+
+
+            }else  if(BT_TEMP >= PID_TUNE_SV_2 ) {
+                I2C_EEPROM.get(2, pid_parm);
+                Heat_pid_controller.setCoefficients(pid_parm.p,pid_parm.i,pid_parm.d);
+            }
+        }
+
+
         // 封装BLE 协议
         // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
         if (xSemaphoreTake(xSerialReadBufferMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
             sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
-            Serial.print(temp_data_buffer_ble);
+           // Serial.print(temp_data_buffer_ble);
             xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
             xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
         }
