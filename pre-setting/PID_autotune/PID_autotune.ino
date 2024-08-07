@@ -23,13 +23,13 @@ const int FAN_OUT_PIN = PWM_FAN;
 const uint32_t frequency = PWM_FREQ;
 const byte resolution = PWM_RESOLUTION; // pwm -0-1023
 
-
 /**IIC address is 0x77 when pin SDO is high */
 /**IIC address is 0x76 when pin SDO is low */
+typedef DFRobot_BME280_IIC BME; // ******** use abbreviations instead of full names ********
+
 BME bme(&Wire, 0x76); // select TwoWire peripheral and set sensor address
 
 #define SEA_LEVEL_PRESSURE 1015.0f
-
 
 #define LOCATION_SETTINGS 0
 
@@ -73,7 +73,6 @@ void setup()
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);
 
-
     pwm_heat.attachPin(HEAT_OUT_PIN, frequency, resolution); // 1KHz 8 bit
     pwm_fan.attachPin(FAN_OUT_PIN, frequency, resolution);   // 1KHz 8 bit
     pwm_heat.writeScaled(0.0);
@@ -82,7 +81,7 @@ void setup()
     vTaskDelay(30000);
 
     Serial.begin(BAUDRATE);
-    aht20.begin();
+    bme.begin();
     ADC_MCP3424.NewConversion();
     I2C_EEPROM.setMemoryType(64);
 
@@ -99,7 +98,7 @@ void setup()
         delay(3000);
         I2C_EEPROM.get(LOCATION_SETTINGS, pid_parm);
         Serial.printf("\nEEPROM value check ...\n");
-        Serial.printf("\npid_CT:%d", pid_parm.pid_CT);
+        Serial.printf("\npid_CT:%4.2f", pid_parm.pid_CT);
         Serial.printf("\nPID kp:%4.2f", pid_parm.p);
         Serial.printf("\nPID ki:%4.2f", pid_parm.i);
         Serial.printf("\nPID kd:%4.2f", pid_parm.d);
@@ -172,11 +171,8 @@ void Task_Thermo_get_data(void *pvParameters)
 
         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
-            if (aht20.startMeasurementReady(/* crcEn = */ true))
-            {
-                AMB_TEMP = aht20.getTemperature_C();
-                AMB_RH = aht20.getHumidity_RH();
-            }
+            AMB_TEMP = bme.getTemperature();
+
             vTaskDelay(50);
             ADC_MCP3424.Configuration(1, ADC_BIT, 1, 1);
             Voltage = ADC_MCP3424.Measure();
@@ -223,7 +219,7 @@ void Task_PID_autotune(void *pvParameters)
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
                             pwm_heat.write(map(pid_tune_output, 0, 255, 0, 1000));
-                            xSemaphoreGive(xThermoDataMutex);                                                            // end of lock mutex
+                            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
                         Serial.printf("PID Auto Tuneing...OUTPUT:%4.2f BT_temp:%4.2f AMB_TEMP:%4.2f\n", pid_tune_output, BT_TEMP, AMB_TEMP);
@@ -232,8 +228,8 @@ void Task_PID_autotune(void *pvParameters)
                             delayMicroseconds(1);
                     }
                     // Turn the output off here.
-                    pwm_heat.write(HEAT_OUT_PIN, 0, frequency, resolution);
-
+                    pwm_heat.writeScaled(0.0);
+                    pwm_fan.writeScaled(0.6);
                     // Get PID gains - set your PID controller's gains to these
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
@@ -263,7 +259,7 @@ void Task_PID_autotune(void *pvParameters)
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
                             pwm_heat.write(map(pid_tune_output, 0, 255, 0, 1000)); // 输出新火力pwr到SSRÍ
-                            xSemaphoreGive(xThermoDataMutex);                                                            // end of lock mutex
+                            xSemaphoreGive(xThermoDataMutex);                      // end of lock mutex
                         }
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
                         Serial.printf("PID Auto Tuneing...OUTPUT:%4.2f BT_temp:%4.2f AMB_TEMP:%4.2f\n", pid_tune_output, BT_TEMP, AMB_TEMP);
@@ -272,8 +268,8 @@ void Task_PID_autotune(void *pvParameters)
                             delayMicroseconds(1);
                     }
                     // Turn the output off here.
-                    pwm_heat.write(HEAT_OUT_PIN, 0, frequency, resolution);
-
+                    pwm_heat.writeScaled(0.0);
+                    pwm_fan.writeScaled(0.55);
                     // Get PID gains - set your PID controller's gains to these
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
@@ -302,8 +298,8 @@ void Task_PID_autotune(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
-                            pwm_heat.write(map(pid_tune_output, 0, 255, 0, 1000));  // 输出新火力pwr到SSRÍ
-                            xSemaphoreGive(xThermoDataMutex);                                                            // end of lock mutex
+                            pwm_heat.write(map(pid_tune_output, 0, 255, 0, 1000)); // 输出新火力pwr到SSRÍ
+                            xSemaphoreGive(xThermoDataMutex);                      // end of lock mutex
                         }
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
                         Serial.printf("PID Auto Tuneing...OUTPUT:%4.2f BT_temp:%4.2f AMB_TEMP:%4.2f\n", pid_tune_output, BT_TEMP, AMB_TEMP);
@@ -312,8 +308,8 @@ void Task_PID_autotune(void *pvParameters)
                             delayMicroseconds(1);
                     }
                     // Turn the output off here.
-                    pwm_heat.write(HEAT_OUT_PIN, 0, frequency, resolution);
-
+                    pwm_heat.writeScaled(0.0);
+                    pwm_fan.writeScaled(0.5);
                     // Get PID gains - set your PID controller's gains to these
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();

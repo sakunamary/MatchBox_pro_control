@@ -35,6 +35,12 @@
 #define PID_MAX_OUT 100
 #define PID_MIN_OUT 10
 
+#define PID_TUNE_SV_3 200
+#define PID_TUNE_SV_2 190
+#define PID_TUNE_SV_1 160
+
+#define ADC_BIT 16
+
 // -------------------------- slew rate limitations for fan control
 #define MAX_SLEW 25                                           // percent per second
 #define SLEW_STEP 3                                           // increase in steps of 5% for smooth transition
@@ -67,9 +73,9 @@ typedef struct eeprom_settings
 #define CHARACTERISTIC_UUID_RX "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
 #define CHARACTERISTIC_UUID_TX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
 
- static TaskHandle_t xTASK_data_to_BLE = NULL;
+//  static TaskHandle_t xTASK_data_to_BLE = NULL;
 // static TaskHandle_t xTASK_CMD_BLE = NULL;
-static TaskHandle_t xTASK_BLE_CMD_handle = NULL;
+// static TaskHandle_t xTASK_BLE_CMD_handle = NULL;
 
 SemaphoreHandle_t xThermoDataMutex = NULL;
 SemaphoreHandle_t xSerialReadBufferMutex = NULL;
