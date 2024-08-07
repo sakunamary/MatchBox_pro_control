@@ -158,8 +158,6 @@ void setup()
         Serial.printf("PID kd:%4.2f\n", pid_parm.d);
         Serial.printf("BT fix:%4.2f\n", pid_parm.BT_tempfix);
         Serial.printf("ET fix:%4.2f\n", pid_parm.ET_tempfix);
-        Serial.printf("Inlet fix:%4.2f\n", pid_parm.inlet_tempfix);
-        Serial.printf("EX fix:%4.2f\n", pid_parm.EX_tempfix);
 #endif
     }
 
