@@ -135,13 +135,13 @@ void setup()
 
     // INIT PID AUTOTUNE
     // read pid data from EEPROM
-
-    tuner.setTargetInputValue(PID_TUNE_SV);
+    tuner.begin(&BT_TEMP, &pid_tune_output, &PID_TUNE_SV, pid_parm.p, pid_parm.i, pid_parm.d);
     tuner.setTuningCycles(5);
     tuner.setLoopInterval(pid_parm.pid_CT * uS_TO_S_FACTOR);                                  // interval in uS
     tuner.setOutputRange(map(pid_out_min, 0, 100, 0, 255), map(pid_out_max, 0, 100, 0, 255)); // 取值范围转换为（0-255）-> (76-205)
     tuner.setZNMode(PIDAutotuner::ZNModeNoOvershoot);
     Serial.printf("\nPID Auto Tune will be started in 3 seconde...\n");
+
     vTaskDelay(3000);                               // 让pid关闭有足够时间执行
     xTaskNotify(xTask_PID_autotune, 0, eIncrement); // 通知处理任务干活
 
@@ -206,6 +206,7 @@ void Task_PID_autotune(void *pvParameters)
                 if (loop == 0)
                 {
                     PID_TUNE_SV = PID_TUNE_SV_1;
+
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.writeScaled(0.6);
