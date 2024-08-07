@@ -17,6 +17,8 @@ extern int levelIO3;
 extern double pid_sv;
 extern bool pid_status;
 
+extern ExternalEEPROM I2C_EEPROM;
+extern ArduPID Heat_pid_controller;
 // Need this for the lower level access to set them up.
 uint8_t address = 0x68;
 long Voltage; // Array used to store results
@@ -77,6 +79,20 @@ void Task_Thermo_get_data(void *pvParameters)
             Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
             ET_TEMP = pid_parm.ET_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
 
+            if (pid_status)
+            {
+                if (BT_TEMP >= PID_TUNE_SV_1)
+                {
+                    I2C_EEPROM.get(1, pid_parm);
+                    Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
+                }
+                else if (BT_TEMP >= PID_TUNE_SV_2)
+                {
+                    I2C_EEPROM.get(2, pid_parm);
+                    Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
+                }
+            }
+
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
         // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
@@ -84,7 +100,7 @@ void Task_Thermo_get_data(void *pvParameters)
         {
             // 封装BLE 协议
             sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
-            //Serial.print(temp_data_buffer_ble);
+            // Serial.print(temp_data_buffer_ble);
 
             xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
 
