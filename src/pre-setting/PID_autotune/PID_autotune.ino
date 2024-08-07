@@ -68,7 +68,6 @@ void setup()
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);
 
-
     pwm_heat.attachPin(HEAT_OUT_PIN, frequency, resolution); // 1KHz 8 bit
     pwm_fan.attachPin(FAN_OUT_PIN, frequency, resolution);   // 1KHz 8 bit
     pwm_heat.write(0);
@@ -131,8 +130,6 @@ void setup()
 
     // INIT PID AUTOTUNE
     // read pid data from EEPROM
-
-    tuner.setTargetInputValue(PID_TUNE_SV);
     tuner.setTuningCycles(5);
     tuner.setLoopInterval(pid_parm.pid_CT * uS_TO_S_FACTOR);                                  // interval in uS
     tuner.setOutputRange(map(pid_out_min, 0, 100, 0, 255), map(pid_out_max, 0, 100, 0, 255)); // 取值范围转换为（0-255）-> (76-205)
@@ -218,7 +215,7 @@ void Task_PID_autotune(void *pvParameters)
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
                             pwm_heat.write(map(pid_tune_output, 0, 255, 0, 1000));
-                            xSemaphoreGive(xThermoDataMutex);                                                            // end of lock mutex
+                            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
                         Serial.printf("PID Auto Tuneing...OUTPUT:%4.2f BT_temp:%4.2f AMB_TEMP:%4.2f\n", pid_tune_output, BT_TEMP, AMB_TEMP);
@@ -258,7 +255,7 @@ void Task_PID_autotune(void *pvParameters)
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
                             pwm_heat.write(map(pid_tune_output, 0, 255, 0, 1000)); // 输出新火力pwr到SSRÍ
-                            xSemaphoreGive(xThermoDataMutex);                                                            // end of lock mutex
+                            xSemaphoreGive(xThermoDataMutex);                      // end of lock mutex
                         }
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
                         Serial.printf("PID Auto Tuneing...OUTPUT:%4.2f BT_temp:%4.2f AMB_TEMP:%4.2f\n", pid_tune_output, BT_TEMP, AMB_TEMP);
@@ -297,8 +294,8 @@ void Task_PID_autotune(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
-                            pwm_heat.write(map(pid_tune_output, 0, 255, 0, 1000));  // 输出新火力pwr到SSRÍ
-                            xSemaphoreGive(xThermoDataMutex);                                                            // end of lock mutex
+                            pwm_heat.write(map(pid_tune_output, 0, 255, 0, 1000)); // 输出新火力pwr到SSRÍ
+                            xSemaphoreGive(xThermoDataMutex);                      // end of lock mutex
                         }
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
                         Serial.printf("PID Auto Tuneing...OUTPUT:%4.2f BT_temp:%4.2f AMB_TEMP:%4.2f\n", pid_tune_output, BT_TEMP, AMB_TEMP);
