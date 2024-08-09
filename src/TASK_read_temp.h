@@ -90,12 +90,12 @@ void Task_Thermo_get_data(void *pvParameters)
             {
                 if (BT_TEMP >= PID_TUNE_SV_1)
                 {
-                    I2C_EEPROM.get(1, pid_parm);
+                    I2C_EEPROM.get(128, pid_parm);
                     Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
                 }
                 else if (BT_TEMP >= PID_TUNE_SV_2)
                 {
-                    I2C_EEPROM.get(2, pid_parm);
+                    I2C_EEPROM.get(256, pid_parm);
                     Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
                 }
             }

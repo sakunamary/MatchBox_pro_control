@@ -138,7 +138,7 @@ void setup()
 #endif
     bme.begin();
     MCP.NewConversion(); // New conversion is initiated
-
+    I2C_EEPROM.setMemoryType(64);
 #if defined(DEBUG_MODE)
     Serial.println("start Reading EEPROM setting ...");
 #endif
