@@ -277,7 +277,7 @@ void Task_PID_autotune(void *pvParameters)
                     Serial.printf("\nPID kd:%4.2f\n", pid_parm.d);
                     Serial.printf("\nBT fix:%4.2f", pid_parm.BT_tempfix);
                     Serial.printf("\nET fix:%4.2f", pid_parm.ET_tempfix);
-                    I2C_EEPROM.put(1, pid_parm);
+                    I2C_EEPROM.put(128, pid_parm);
                     Serial.printf("\nPID parms saved ...\n");
                 }
                 else if (loop == 2)
@@ -318,7 +318,7 @@ void Task_PID_autotune(void *pvParameters)
                     Serial.printf("\nPID kd:%4.2f\n", pid_parm.d);
                     Serial.printf("\nBT fix:%4.2f", pid_parm.BT_tempfix);
                     Serial.printf("\nET fix:%4.2f", pid_parm.ET_tempfix);
-                    I2C_EEPROM.put(2, pid_parm);
+                    I2C_EEPROM.put(256, pid_parm);
                     Serial.printf("\nPID parms saved ...\n");
                 }
             }
