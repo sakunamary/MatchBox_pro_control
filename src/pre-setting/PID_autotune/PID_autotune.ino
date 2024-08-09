@@ -246,6 +246,7 @@ void Task_PID_autotune(void *pvParameters)
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.writeScaled(0.55);
                     vTaskDelay(1000);
+                    tuner.startTuningLoop(micros());
                     while (!tuner.isFinished()) // 开始自动整定循环
                     {
                         prevMicroseconds = microseconds;
@@ -286,6 +287,7 @@ void Task_PID_autotune(void *pvParameters)
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.writeScaled(0.5);
                     vTaskDelay(1000);
+                    tuner.startTuningLoop(micros());
                     while (!tuner.isFinished()) // 开始自动整定循环
                     {
                         prevMicroseconds = microseconds;
