@@ -105,9 +105,6 @@ void TASK_DATA_to_BLE(void *pvParameters)
             if (xQueueReceive(queue_data_to_BLE, &BLE_DATA_Buffer, timeOut) == pdPASS)
 
             { // 从接收QueueCMD 接收指令
-              // #if defined(DEBUG_MODE)
-                // Serial.println(String((char *)BLE_DATA_Buffer));
-                //  #endif
                 if (deviceConnected)
                 {
                     pTxCharacteristic->setValue(BLE_DATA_Buffer, sizeof(BLE_DATA_Buffer));
@@ -325,16 +322,10 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     {
                         pid_status = true;
                         Heat_pid_controller.start();
-                        // #if defined(DEBUG_MODE)
-                        //                         Serial.printf("PID is ON\n");//for debug
-                        // #endif
                     }
                     else if (CMD_Data[1] == "OFF")
                     {
                         Heat_pid_controller.stop();
-                        // #if defined(DEBUG_MODE)
-                        //                         Serial.printf("PID is OFF\n");//for debug
-                        // #endif
                         I2C_EEPROM.get(0, pid_parm);
                         Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
                         pid_status = false;
@@ -344,27 +335,21 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     {
                         if (pid_status == true)
                         {
-
                             pid_sv = CMD_Data[2].toFloat();
-                            // #if defined(DEBUG_MODE)
-                            //                             Serial.printf("PID set SV:%4.2f\n", pid_sv);//for debug
-                            // #endif
                             Heat_pid_controller.compute();
                             levelOT1 = map(PID_output, 0, 255, 0, 100);
                             pwm_heat.write(map(levelOT1, 0, 100, 0, 1000));
-                            // #if defined(DEBUG_MODE)
-                            //                             Serial.printf("HEAT PID set :%d\n", levelOT1);//for debug
-                            // #endif
                         }
                     }
                     else if (CMD_Data[1] == "TUNE")
                     {
                         Heat_pid_controller.stop();
-                        // #if defined(DEBUG_MODE)
-                        //                         Serial.printf("PID is OFF\n");//for debug
-                        // #endif
                         pid_status = false;
                         pid_sv = 0;
+
+                        vTaskSuspend(xTASK_HMI_CMD_handle);
+                        vTaskSuspend(xTASK_BLE_CMD_handle);
+                        vTaskSuspend(xTASK_CMD_FROM_HMI);
                         vTaskResume(xTask_PID_autotune);
                         delay(100);
                         xTaskNotify(xTask_PID_autotune, 0, eIncrement); // 通知处理任务干活

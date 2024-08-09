@@ -139,9 +139,7 @@ void Task_Thermo_get_data(void *pvParameters)
             temp_data_buffer_hmi[16] = 0xff;
 
             xQueueSend(queue_data_to_HMI, &temp_data_buffer_hmi, xIntervel);
-
             memset(temp_data_buffer_hmi, '\0', HMI_BUFFER_SIZE);
-
             xSemaphoreGive(xDATA_OUT_Mutex); // end of lock mutex
         }
         xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
@@ -173,7 +171,6 @@ void Task_PID_autotune(void *pvParameters)
                 if (loop == 0)
                 {
                     PID_TUNE_SV = PID_TUNE_SV_1;
-
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.writeScaled(0.6);
@@ -189,11 +186,15 @@ void Task_PID_autotune(void *pvParameters)
                             pwm_heat.write(map(pid_tune_output, 0, 255, 0, 1000));
                             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
+#if defined(DEBUG_MODE)
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
                         Serial.printf("PID Auto Tuneing...OUTPUT:%4.2f BT_temp:%4.2f AMB_TEMP:%4.2f\n", pid_tune_output, BT_TEMP, AMB_TEMP);
+#endif
                         //  This loop must run at the same speed as the PID control loop being tuned
-                        while (micros() - microseconds < pid_parm.pid_CT * uS_TO_S_FACTOR) // time units : us
+                        while (micros() - microseconds < pid_parm.pid_CT * uS_TO_S_FACTOR)
+                        {
                             delayMicroseconds(1);
+                        } // time units : us
                     }
                     // Turn the output off here.
                     pwm_heat.writeScaled(0.0);
@@ -202,13 +203,15 @@ void Task_PID_autotune(void *pvParameters)
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
                     pid_parm.d = tuner.getKd();
+                    I2C_EEPROM.put(0, pid_parm);
+#if defined(DEBUG_MODE)
                     Serial.printf("\nPID Auto Tune First step Finished ...\n");
                     Serial.printf("\nPID kp:%4.2f\n", pid_parm.p);
                     Serial.printf("\nPID ki:%4.2f\n", pid_parm.i);
                     Serial.printf("\nPID kd:%4.2f\n", pid_parm.d);
                     Serial.printf("\nBT fix:%4.2f", pid_parm.BT_tempfix);
                     Serial.printf("\nET fix:%4.2f", pid_parm.ET_tempfix);
-                    I2C_EEPROM.put(0, pid_parm);
+#endif
                     Serial.printf("\nPID parms saved ...\n");
                 }
                 else if (loop == 1)
@@ -229,11 +232,15 @@ void Task_PID_autotune(void *pvParameters)
                             pwm_heat.write(map(pid_tune_output, 0, 255, 0, 1000)); // 输出新火力pwr到SSRÍ
                             xSemaphoreGive(xThermoDataMutex);                      // end of lock mutex
                         }
+#if defined(DEBUG_MODE)
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
                         Serial.printf("PID Auto Tuneing...OUTPUT:%4.2f BT_temp:%4.2f AMB_TEMP:%4.2f\n", pid_tune_output, BT_TEMP, AMB_TEMP);
+#endif
                         //  This loop must run at the same speed as the PID control loop being tuned
                         while (micros() - microseconds < pid_parm.pid_CT * uS_TO_S_FACTOR) // time units : us
+                        {
                             delayMicroseconds(1);
+                        } // time units : us
                     }
                     // Turn the output off here.
                     pwm_heat.writeScaled(0.0);
@@ -242,14 +249,16 @@ void Task_PID_autotune(void *pvParameters)
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
                     pid_parm.d = tuner.getKd();
+                    I2C_EEPROM.put(1, pid_parm);
+#if defined(DEBUG_MODE)
                     Serial.printf("\nPID Auto Tune Second step Finished ...\n");
                     Serial.printf("\nPID kp:%4.2f\n", pid_parm.p);
                     Serial.printf("\nPID ki:%4.2f\n", pid_parm.i);
                     Serial.printf("\nPID kd:%4.2f\n", pid_parm.d);
                     Serial.printf("\nBT fix:%4.2f", pid_parm.BT_tempfix);
                     Serial.printf("\nET fix:%4.2f", pid_parm.ET_tempfix);
-                    I2C_EEPROM.put(1, pid_parm);
                     Serial.printf("\nPID parms saved ...\n");
+#endif
                 }
                 else if (loop == 2)
                 {
@@ -269,11 +278,15 @@ void Task_PID_autotune(void *pvParameters)
                             pwm_heat.write(map(pid_tune_output, 0, 255, 0, 1000)); // 输出新火力pwr到SSRÍ
                             xSemaphoreGive(xThermoDataMutex);                      // end of lock mutex
                         }
+#if defined(DEBUG_MODE)
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
                         Serial.printf("PID Auto Tuneing...OUTPUT:%4.2f BT_temp:%4.2f AMB_TEMP:%4.2f\n", pid_tune_output, BT_TEMP, AMB_TEMP);
+#endif
                         //  This loop must run at the same speed as the PID control loop being tuned
                         while (micros() - microseconds < pid_parm.pid_CT * uS_TO_S_FACTOR) // time units : us
+                        {
                             delayMicroseconds(1);
+                        } // time units : us
                     }
                     // Turn the output off here.
                     pwm_heat.writeScaled(0.0);
@@ -282,21 +295,24 @@ void Task_PID_autotune(void *pvParameters)
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
                     pid_parm.d = tuner.getKd();
+                    I2C_EEPROM.put(2, pid_parm);
+#if defined(DEBUG_MODE)
                     Serial.printf("\nPID Auto Tune Second step Finished ...\n");
                     Serial.printf("\nPID kp:%4.2f\n", pid_parm.p);
                     Serial.printf("\nPID ki:%4.2f\n", pid_parm.i);
                     Serial.printf("\nPID kd:%4.2f\n", pid_parm.d);
                     Serial.printf("\nBT fix:%4.2f", pid_parm.BT_tempfix);
                     Serial.printf("\nET fix:%4.2f", pid_parm.ET_tempfix);
-                    I2C_EEPROM.put(2, pid_parm);
                     Serial.printf("\nPID parms saved ...\n");
+#endif
                 }
             }
         }
     }
-
-    vTaskDelete(xTask_Thermo_get_data);
-    vTaskDelete(NULL);
+    vTaskResume(xTASK_CMD_FROM_HMI);
+    vTaskResume(xTASK_HMI_CMD_handle);
+    vTaskResume(xTASK_BLE_CMD_handle);
+    vTaskSuspend(NULL);
 }
 
 #endif

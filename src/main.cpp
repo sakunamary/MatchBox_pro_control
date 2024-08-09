@@ -13,7 +13,7 @@
 #include <TASK_read_temp.h>
 #include <TASK_BLE_Serial.h>
 #include <TASK_HMI_Serial.h>
-// #include <TASK_modbus_handle.h>
+
 
 WebServer server(80);
 String local_IP;
@@ -58,7 +58,7 @@ unsigned long ota_progress_millis = 0;
 void onOTAStart()
 {
     // Log when OTA has started
-    Serial.println("OTA update started!");
+    // Serial.println("OTA update started!");
     // <Add your own code here>
 }
 
@@ -68,21 +68,21 @@ void onOTAProgress(size_t current, size_t final)
     if (millis() - ota_progress_millis > 1000)
     {
         ota_progress_millis = millis();
-        Serial.printf("OTA Progress Current: %u bytes, Final: %u bytes\n", current, final);
+        // Serial.printf("OTA Progress Current: %u bytes, Final: %u bytes\n", current, final);
     }
 }
 
 void onOTAEnd(bool success)
 {
     // Log when OTA has finished
-    if (success)
-    {
-        Serial.println("OTA update finished successfully!");
-    }
-    else
-    {
-        Serial.println("There was an error during OTA update!");
-    }
+    // if (success)
+    // {
+    //     // Serial.println("OTA update finished successfully!");
+    // }
+    // else
+    // {
+    //     Serial.println("There was an error during OTA update!");
+    // }
     // <Add your own code here>
 }
 
@@ -126,8 +126,6 @@ void setup()
 
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);
-    // ESP32PWM::allocateTimer(2);
-    // ESP32PWM::allocateTimer(3);
     Serial.begin(HMI_BAUDRATE);
 
     // Serial_HMI.setBuffer();
@@ -136,11 +134,9 @@ void setup()
 #if defined(DEBUG_MODE)
 
     // start Serial
-
     Serial.printf("\nStart Task...");
 #endif
     bme.begin();
-    // aht20.begin();
     MCP.NewConversion(); // New conversion is initiated
 
 #if defined(DEBUG_MODE)
@@ -168,10 +164,8 @@ void setup()
     WiFi.macAddress(macAddr);
     // WiFi.mode(WIFI_AP);
     sprintf(ap_name, "MATCHBOX_%02X%02X%02X", macAddr[3], macAddr[4], macAddr[5]);
-#
     while (WiFi.status() != WL_CONNECTED)
     {
-
         delay(1000);
         Serial.println("wifi not ready");
 
@@ -269,7 +263,7 @@ void setup()
         ,
         NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
         ,
-        &xTASK_CMD_HMI // Running Core decided by FreeRTOS,let core0 run wifi and BT
+        &xTASK_CMD_FROM_HMI // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
     Serial.printf("\nTASK4:TASK_CMD_FROM_HMI...\n");
