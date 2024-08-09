@@ -49,6 +49,8 @@
         "cinttypes": "cpp",
         "typeinfo": "cpp",
         "locale": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "list": "cpp",
+        "regex": "cpp"
     }
 }

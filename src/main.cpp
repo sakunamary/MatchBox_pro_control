@@ -12,8 +12,6 @@
 #include "ArduPID.h"
 #include <TASK_read_temp.h>
 #include <TASK_BLE_Serial.h>
-// #include <TASK_modbus_handle.h>
-//  #include <TASK_HMI_Serial.h>
 
 String local_IP;
 ExternalEEPROM I2C_EEPROM;
@@ -123,12 +121,10 @@ void setup()
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);
 
+    Serial.begin(BAUDRATE);
     // read pid data from EEPROM
 #if defined(DEBUG_MODE)
-    Serial.begin(BAUDRATE);
-
     // start Serial
-
     Serial.printf("\nStart Task...");
 #endif
     aht20.begin();
