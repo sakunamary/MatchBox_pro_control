@@ -7,9 +7,7 @@
 #include <WiFiClient.h>
 #include <WebServer.h>
 #include <ElegantOTA.h>
-
-// #include <cmndreader.h>
-// #include <pidautotuner.h>
+//#include <pidautotuner.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 #include "ArduPID.h"
 #include <TASK_read_temp.h>
@@ -264,6 +262,11 @@ void setup()
 #if defined(DEBUG_MODE)
     Serial.printf("\nTASK8:TASK_BLE_CMD_handle...\n");
 #endif
+
+
+
+
+
 
     // init PID
     Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);
