@@ -72,12 +72,13 @@ typedef struct eeprom_settings
 #define CHARACTERISTIC_UUID_TX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
 
  static TaskHandle_t xTASK_data_to_BLE = NULL;
-// static TaskHandle_t xTASK_CMD_BLE = NULL;
+static TaskHandle_t xTask_PID_autotune = NULL;
+
 static TaskHandle_t xTASK_BLE_CMD_handle = NULL;
 
 SemaphoreHandle_t xThermoDataMutex = NULL;
 SemaphoreHandle_t xSerialReadBufferMutex = NULL;
-SemaphoreHandle_t xContrlDataMutex = NULL;
+// SemaphoreHandle_t xContrlDataMutex = NULL;
 
 QueueHandle_t queueCMD_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
 QueueHandle_t queue_data_to_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));

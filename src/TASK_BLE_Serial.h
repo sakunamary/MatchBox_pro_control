@@ -360,6 +360,16 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             // #endif
                         }
                     }
+                    else if (CMD_Data[1] == "TUNE")
+                    {
+                        Heat_pid_controller.stop();
+                        pid_status = false;
+                        pid_sv = 0;
+                        vTaskSuspend(xTASK_BLE_CMD_handle);
+                        vTaskResume(xTask_PID_autotune);
+                        delay(100);
+                        xTaskNotify(xTask_PID_autotune, 0, eIncrement); // 通知处理任务干活
+                    }
                 }
                 // END of  big handle case switch
                 delay(50);

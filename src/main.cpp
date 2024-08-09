@@ -7,7 +7,7 @@
 #include <WiFiClient.h>
 #include <WebServer.h>
 #include <ElegantOTA.h>
-//#include <pidautotuner.h>
+#include <pidautotuner.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 #include "ArduPID.h"
 #include <TASK_read_temp.h>
@@ -19,7 +19,7 @@ String local_IP;
 ExternalEEPROM I2C_EEPROM;
 ESP32PWM pwm_heat;
 ESP32PWM pwm_fan;
-
+PIDAutotuner tuner = PIDAutotuner();
 WebServer server(80);
 ArduPID Heat_pid_controller;
 
@@ -32,7 +32,6 @@ bool pid_status = false;
 
 double PID_output = 0;
 double pid_sv;
-double pid_tune_output;
 
 const uint32_t frequency = PWM_FREQ;
 const byte resolution = PWM_RESOLUTION;
@@ -263,10 +262,19 @@ void setup()
     Serial.printf("\nTASK8:TASK_BLE_CMD_handle...\n");
 #endif
 
-
-
-
-
+    xTaskCreate(
+        Task_PID_autotune, "PID autotune" //
+        ,
+        1024 * 6 // This stack size can be checked & adjusted by reading the Stack Highwater
+        ,
+        NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+        ,
+        &xTask_PID_autotune // Running Core decided by FreeRTOS,let core0 run wifi and BT
+    );
+    vTaskSuspend(xTask_PID_autotune); //
+#if defined(DEBUG_MODE)
+    Serial.printf("\nTASK=8:PID autotune OK");
+#endif
 
     // init PID
     Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);
@@ -275,6 +283,12 @@ void setup()
     Heat_pid_controller.setBias(255.0 / 2.0);
     Heat_pid_controller.setWindUpLimits(2, 2); // Groth bounds for the integral term to prevent integral wind-up
     Heat_pid_controller.start();
+
+    // INIT PID AUTOTUNE
+    tuner.setTargetInputValue(PID_TUNE_SV_1);
+    tuner.setLoopInterval(pid_parm.pid_CT * uS_TO_S_FACTOR);
+    tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
+    tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
 
     // Start ElegantOTA
     server.on("/", handle_root);
