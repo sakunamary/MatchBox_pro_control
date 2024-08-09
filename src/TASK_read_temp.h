@@ -79,19 +79,19 @@ void Task_Thermo_get_data(void *pvParameters)
             Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
             ET_TEMP = pid_parm.ET_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
 
-            // if (pid_status)
-            // {
-            //     if (BT_TEMP >= PID_TUNE_SV_1)
-            //     {
-            //         I2C_EEPROM.get(1, pid_parm);
-            //         Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
-            //     }
-            //     else if (BT_TEMP >= PID_TUNE_SV_2)
-            //     {
-            //         I2C_EEPROM.get(2, pid_parm);
-            //         Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
-            //     }
-            // }
+            if (pid_status)
+            {
+                if (BT_TEMP >= PID_TUNE_SV_1)
+                {
+                    I2C_EEPROM.get(1, pid_parm);
+                    Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
+                }
+                else if (BT_TEMP >= PID_TUNE_SV_2)
+                {
+                    I2C_EEPROM.get(2, pid_parm);
+                    Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
+                }
+            }
 
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
