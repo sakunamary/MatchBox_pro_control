@@ -7,8 +7,7 @@
 #include <WiFiClient.h>
 #include <WebServer.h>
 #include <ElegantOTA.h>
-// #include <cmndreader.h>
-// #include <pidautotuner.h>
+#include <pidautotuner.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 #include "ArduPID.h"
 #include <TASK_read_temp.h>
@@ -21,7 +20,7 @@ String local_IP;
 ExternalEEPROM I2C_EEPROM;
 ESP32PWM pwm_heat;
 ESP32PWM pwm_fan;
-
+PIDAutotuner tuner = PIDAutotuner();
 ArduPID Heat_pid_controller;
 
 extern bool loopTaskWDTEnabled;
@@ -33,7 +32,9 @@ bool pid_status = false;
 byte tries;
 double PID_output = 0;
 double pid_sv;
-double pid_tune_output;
+
+double pid_out_max = PID_MAX_OUT; // 取值范围 （0-100）
+double pid_out_min = PID_MIN_OUT; // 取值范围 （0-100）
 
 const uint32_t frequency = PWM_FREQ;
 const byte resolution = PWM_RESOLUTION;
@@ -42,7 +43,6 @@ const byte pwm_heat_out = PWM_HEAT;
 
 char ap_name[16];
 uint8_t macAddr[6];
-
 
 pid_setting_t pid_parm = {
     .pid_CT = 1.5,     // uint16_t pid_CT;
@@ -154,9 +154,7 @@ void setup()
     else
     {
         I2C_EEPROM.get(0, pid_parm);
-
     }
-
 
 #if defined(DEBUG_MODE)
     Serial.printf("\nStart PWM...");
@@ -303,6 +301,20 @@ void setup()
     Serial.printf("\nTASK8:TASK_BLE_CMD_handle...\n");
 #endif
 
+    xTaskCreate(
+        Task_PID_autotune, "PID autotune" //
+        ,
+        1024 * 6 // This stack size can be checked & adjusted by reading the Stack Highwater
+        ,
+        NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+        ,
+        &xTask_PID_autotune // Running Core decided by FreeRTOS,let core0 run wifi and BT
+    );
+    vTaskSuspend(xTask_PID_autotune); //
+#if defined(DEBUG_MODE)
+    Serial.printf("\nTASK=8:PID autotune OK");
+#endif
+
     // init PID
     Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);
     Heat_pid_controller.setSampleTime(pid_parm.pid_CT * 1000); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
@@ -313,11 +325,12 @@ void setup()
 
     // INIT PID AUTOTUNE
 
-    // tuner.setTargetInputValue(180.0);
-    // tuner.setLoopInterval(pid_parm.pid_CT * uS_TO_S_FACTOR);
-    // tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
-    // tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
+    tuner.setTargetInputValue(PID_TUNE_SV_1);
+    tuner.setLoopInterval(pid_parm.pid_CT * uS_TO_S_FACTOR);
+    tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
+    tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
 
+    // INIT OTA service
     server.on("/", handle_root);
 
     ElegantOTA.begin(&server); // Start ElegantOTA
@@ -329,14 +342,14 @@ void setup()
     server.begin();
     Serial.println("HTTP server started");
 
-    #if defined(DEBUG_MODE)
-        Serial.printf("\nEEPROM value check ...\n");
-        Serial.printf("pid_CT:%d\n", pid_parm.pid_CT);
-        Serial.printf("PID kp:%4.2f\n", pid_parm.p);
-        Serial.printf("PID ki:%4.2f\n", pid_parm.i);
-        Serial.printf("PID kd:%4.2f\n", pid_parm.d);
-        Serial.printf("BT fix:%4.2f\n", pid_parm.BT_tempfix);
-        Serial.printf("ET fix:%4.2f\n", pid_parm.ET_tempfix);
+#if defined(DEBUG_MODE)
+    Serial.printf("\nEEPROM value check ...\n");
+    Serial.printf("pid_CT:%d\n", pid_parm.pid_CT);
+    Serial.printf("PID kp:%4.2f\n", pid_parm.p);
+    Serial.printf("PID ki:%4.2f\n", pid_parm.i);
+    Serial.printf("PID kd:%4.2f\n", pid_parm.d);
+    Serial.printf("BT fix:%4.2f\n", pid_parm.BT_tempfix);
+    Serial.printf("ET fix:%4.2f\n", pid_parm.ET_tempfix);
 #endif
 }
 

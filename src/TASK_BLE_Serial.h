@@ -170,9 +170,6 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     }
                     CMD_String.trim();
                     CMD_String.toUpperCase();
-#if defined(DEBUG_MODE)
-                    Serial.println(CMD_String); // for debug
-#endif
 
                     // cmd from BLE cleaning
                     StringTokenizer BLE_CMD(CMD_String, ",");
@@ -187,6 +184,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     CMD_String = "";
                     xSemaphoreGive(xDATA_OUT_Mutex);
                 }
+                
                 // big handle case switch
                 if (CMD_Data[0] == "IO3")
                 {
@@ -359,10 +357,22 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             // #endif
                         }
                     }
+                    else if (CMD_Data[1] == "TUNE")
+                    {
+                        Heat_pid_controller.stop();
+                        // #if defined(DEBUG_MODE)
+                        //                         Serial.printf("PID is OFF\n");//for debug
+                        // #endif
+                        pid_status = false;
+                        pid_sv = 0;
+                        vTaskResume(xTask_PID_autotune);
+                        delay(100);
+                        xTaskNotify(xTask_PID_autotune, 0, eIncrement); // 通知处理任务干活
+                    }
                 }
-                // END of  big handle case switch
-                delay(50);
             }
+            // END of  big handle case switch
+            delay(50);
         }
     }
 }
