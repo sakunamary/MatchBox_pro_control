@@ -249,7 +249,7 @@ void Task_PID_autotune(void *pvParameters)
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
                     pid_parm.d = tuner.getKd();
-                    I2C_EEPROM.put(1, pid_parm);
+                    I2C_EEPROM.put(128, pid_parm);
 #if defined(DEBUG_MODE)
                     Serial.printf("\nPID Auto Tune Second step Finished ...\n");
                     Serial.printf("\nPID kp:%4.2f\n", pid_parm.p);
@@ -295,7 +295,7 @@ void Task_PID_autotune(void *pvParameters)
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
                     pid_parm.d = tuner.getKd();
-                    I2C_EEPROM.put(2, pid_parm);
+                    I2C_EEPROM.put(256, pid_parm);
 #if defined(DEBUG_MODE)
                     Serial.printf("\nPID Auto Tune Second step Finished ...\n");
                     Serial.printf("\nPID kp:%4.2f\n", pid_parm.p);
