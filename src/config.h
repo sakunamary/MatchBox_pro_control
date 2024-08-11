@@ -7,7 +7,7 @@
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
 
-//#define DEBUG_MODE
+#define DEBUG_MODE
 #define BLE_BUFFER_SIZE 64
 #define HMI_BUFFER_SIZE 16
 
