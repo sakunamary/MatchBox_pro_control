@@ -121,6 +121,10 @@ void setup()
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);
 
+    pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
+    pwm_fan.attachPin(pwm_fan_out, frequency, resolution);   // 1KHz 8 bit
+    pwm_heat.write(0);
+    pwm_fan.write(600);
     Serial.begin(BAUDRATE);
     // read pid data from EEPROM
 #if defined(DEBUG_MODE)
@@ -154,15 +158,6 @@ void setup()
 #endif
     }
 
-
-
-#if defined(DEBUG_MODE)
-    Serial.printf("\nStart PWM...");
-#endif
-    pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
-    pwm_fan.attachPin(pwm_fan_out, frequency, resolution);   // 1KHz 8 bit
-    pwm_heat.write(0);
-    pwm_fan.write(300);
     // 初始化网络服务
     WiFi.macAddress(macAddr);
     // WiFi.mode(WIFI_AP);
