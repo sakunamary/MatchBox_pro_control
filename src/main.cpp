@@ -14,7 +14,6 @@
 #include <TASK_BLE_Serial.h>
 #include <TASK_HMI_Serial.h>
 
-
 WebServer server(80);
 String local_IP;
 ExternalEEPROM I2C_EEPROM;
@@ -126,14 +125,21 @@ void setup()
 
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);
-    Serial.begin(HMI_BAUDRATE);
+    pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
+    pwm_fan.attachPin(pwm_fan_out, frequency, resolution);   // 1KHz 8 bit
+    pwm_heat.write(0);
+    pwm_fan.write(600);
 
+    Serial.begin(HMI_BAUDRATE);
     // Serial_HMI.setBuffer();
     Serial_HMI.begin(HMI_BAUDRATE, SERIAL_8N1, RXD_HMI, TXD_HMI);
 
 #if defined(DEBUG_MODE)
+    Serial.printf("\nStart PWM...");
+#endif
 
-    // start Serial
+#if defined(DEBUG_MODE)
+
     Serial.printf("\nStart Task...");
 #endif
     bme.begin();
@@ -151,14 +157,6 @@ void setup()
     {
         I2C_EEPROM.get(0, pid_parm);
     }
-
-#if defined(DEBUG_MODE)
-    Serial.printf("\nStart PWM...");
-#endif
-    pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
-    pwm_fan.attachPin(pwm_fan_out, frequency, resolution);   // 1KHz 8 bit
-    pwm_heat.write(0);
-    pwm_fan.write(230);
 
     // 初始化网络服务
     WiFi.macAddress(macAddr);
