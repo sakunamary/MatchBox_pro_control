@@ -181,7 +181,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     CMD_String = "";
                     xSemaphoreGive(xDATA_OUT_Mutex);
                 }
-                
+
                 // big handle case switch
                 if (CMD_Data[0] == "IO3")
                 {
@@ -347,12 +347,12 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         pid_status = false;
                         pid_sv = 0;
 
-                        vTaskSuspend(xTASK_HMI_CMD_handle);
-                        vTaskSuspend(xTASK_BLE_CMD_handle);
-                        vTaskSuspend(xTASK_CMD_FROM_HMI);
                         vTaskResume(xTask_PID_autotune);
                         delay(100);
                         xTaskNotify(xTask_PID_autotune, 0, eIncrement); // 通知处理任务干活
+                        vTaskSuspend(xTASK_HMI_CMD_handle);
+                        vTaskSuspend(xTASK_BLE_CMD_handle);
+                        vTaskSuspend(xTASK_CMD_FROM_HMI);
                     }
                 }
             }
