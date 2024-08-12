@@ -311,7 +311,7 @@ void setup()
 
     // // init PID
     Heat_pid_controller.SetMode(MANUAL);
-    Heat_pid_controller.SetOutputLimits(double(PID_MIN_OUT * 255 / 100), double(PID_MAX_OUT * 255 / 100));
+    Heat_pid_controller.SetOutputLimits(PID_MIN_OUT, PID_MAX_OUT);
     Heat_pid_controller.SetSampleTime(int(pid_parm.pid_CT * 1000)); 
 
     // Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);

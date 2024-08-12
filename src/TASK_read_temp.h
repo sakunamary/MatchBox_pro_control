@@ -23,7 +23,7 @@ double pid_tune_output;
 
 extern ExternalEEPROM I2C_EEPROM;
 extern PID Heat_pid_controller;
-//extern ArduPID Heat_pid_controller;
+// extern ArduPID Heat_pid_controller;
 extern PIDAutotuner tuner;
 extern ESP32PWM pwm_heat;
 extern ESP32PWM pwm_fan;
@@ -171,9 +171,10 @@ void Task_PID_autotune(void *pvParameters)
             {
                 if (loop == 0)
                 {
+                    tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
                     PID_TUNE_SV = PID_TUNE_SV_1;
-                    levelIO3=60;
-                    tuner.setTuningCycles(5);
+                    levelIO3 = 60;
+                    tuner.setTuningCycles(10);
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     // pwm_fan.writeScaled(0.6);
@@ -220,9 +221,10 @@ void Task_PID_autotune(void *pvParameters)
                 }
                 else if (loop == 1)
                 {
+                    tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
                     PID_TUNE_SV = PID_TUNE_SV_2;
-                    levelIO3=55;
-                    tuner.setTuningCycles(5);
+                    levelIO3 = 55;
+                    tuner.setTuningCycles(10);
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     // pwm_fan.writeScaled(0.55);
@@ -269,9 +271,10 @@ void Task_PID_autotune(void *pvParameters)
                 }
                 else if (loop == 2)
                 {
+                    tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
                     PID_TUNE_SV = PID_TUNE_SV_3;
-                    levelIO3=50;
-                    tuner.setTuningCycles(5);
+                    levelIO3 = 50;
+                    tuner.setTuningCycles(10);
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     // pwm_fan.writeScaled(0.5);
@@ -319,10 +322,12 @@ void Task_PID_autotune(void *pvParameters)
             }
         }
     }
-    vTaskResume(xTASK_CMD_FROM_HMI);
-    vTaskResume(xTASK_HMI_CMD_handle);
-    vTaskResume(xTASK_BLE_CMD_handle);
+    delay(3000);
     ESP.restart();
+    // vTaskResume(xTASK_CMD_FROM_HMI);
+    // vTaskResume(xTASK_HMI_CMD_handle);
+    // vTaskResume(xTASK_BLE_CMD_handle);
+
     // vTaskSuspend(NULL);
 }
 
