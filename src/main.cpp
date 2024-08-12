@@ -2,24 +2,24 @@
 #include "config.h"
 
 #include <WiFi.h>
-#include <pwmWrite.h>
+#include <ESP32Servo.h>
 #include <StringTokenizer.h>
 #include <WiFiClient.h>
 #include <WebServer.h>
 #include <ElegantOTA.h>
-// #include <cmndreader.h>
-// #include <pidautotuner.h>
+#include <pidautotuner.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 #include "ArduPID.h"
 #include <TASK_read_temp.h>
 #include <TASK_BLE_Serial.h>
 #include <TASK_HMI_Serial.h>
-// #include <TASK_modbus_handle.h>
 
 WebServer server(80);
 String local_IP;
 ExternalEEPROM I2C_EEPROM;
-Pwm pwm = Pwm();
+ESP32PWM pwm_heat;
+ESP32PWM pwm_fan;
+PIDAutotuner tuner = PIDAutotuner();
 ArduPID Heat_pid_controller;
 
 extern bool loopTaskWDTEnabled;
@@ -28,10 +28,12 @@ extern TaskHandle_t loopTaskHandle;
 int levelOT1 = 0;
 int levelIO3 = 30;
 bool pid_status = false;
-
+byte tries;
 double PID_output = 0;
 double pid_sv;
-double pid_tune_output;
+
+double pid_out_max = PID_MAX_OUT; // 取值范围 （0-100）
+double pid_out_min = PID_MIN_OUT; // 取值范围 （0-100）
 
 const uint32_t frequency = PWM_FREQ;
 const byte resolution = PWM_RESOLUTION;
@@ -40,10 +42,9 @@ const byte pwm_heat_out = PWM_HEAT;
 
 char ap_name[16];
 uint8_t macAddr[6];
-byte tries;
 
 pid_setting_t pid_parm = {
-    .pid_CT = 2,       // uint16_t pid_CT;
+    .pid_CT = 1.5,     // uint16_t pid_CT;
     .p = 2.0,          // double p ;
     .i = 0.12,         // double i ;
     .d = 5.0,          // double d ;
@@ -56,7 +57,7 @@ unsigned long ota_progress_millis = 0;
 void onOTAStart()
 {
     // Log when OTA has started
-    Serial.println("OTA update started!");
+    // Serial.println("OTA update started!");
     // <Add your own code here>
 }
 
@@ -66,22 +67,45 @@ void onOTAProgress(size_t current, size_t final)
     if (millis() - ota_progress_millis > 1000)
     {
         ota_progress_millis = millis();
-        Serial.printf("OTA Progress Current: %u bytes, Final: %u bytes\n", current, final);
+        // Serial.printf("OTA Progress Current: %u bytes, Final: %u bytes\n", current, final);
     }
 }
 
 void onOTAEnd(bool success)
 {
     // Log when OTA has finished
-    if (success)
-    {
-        Serial.println("OTA update finished successfully!");
-    }
-    else
-    {
-        Serial.println("There was an error during OTA update!");
-    }
+    // if (success)
+    // {
+    //     // Serial.println("OTA update finished successfully!");
+    // }
+    // else
+    // {
+    //     Serial.println("There was an error during OTA update!");
+    // }
     // <Add your own code here>
+}
+
+// Handle root url (/)
+void handle_root()
+{
+    char index_html[2048];
+    String ver = VERSION;
+    snprintf(index_html, 2048,
+             "<html>\
+<head>\
+<title>MATCH BOX PRO SETUP</title>\
+    </head> \
+    <body>\
+        <main>\
+        <h1 align='center'> ver:%s</h1>\
+        <div align='center'><a href='/update' target='_blank'>FIRMWARE UPDATE</a>\
+        </main>\
+        </div>\
+    </body>\
+</html>\
+",
+             ver);
+    server.send(200, "text/html", index_html);
 }
 
 String IpAddressToString(const IPAddress &ipAddress)
@@ -99,38 +123,47 @@ void setup()
     xThermoDataMutex = xSemaphoreCreateMutex();
     xDATA_OUT_Mutex = xSemaphoreCreateMutex();
 
+    ESP32PWM::allocateTimer(0);
+    ESP32PWM::allocateTimer(1);
+    pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
+    pwm_fan.attachPin(pwm_fan_out, frequency, resolution);   // 1KHz 8 bit
+    pwm_heat.write(0);
+    pwm_fan.write(600);
+
     Serial.begin(HMI_BAUDRATE);
     // Serial_HMI.setBuffer();
     Serial_HMI.begin(HMI_BAUDRATE, SERIAL_8N1, RXD_HMI, TXD_HMI);
 
 #if defined(DEBUG_MODE)
+    Serial.printf("\nStart PWM...");
+#endif
 
-    // start Serial
+#if defined(DEBUG_MODE)
 
     Serial.printf("\nStart Task...");
 #endif
     bme.begin();
-    //aht20.begin();
     MCP.NewConversion(); // New conversion is initiated
-
-    pwm.pause();
-    pwm.write(pwm_fan_out, 800, frequency, resolution);
-    pwm.write(pwm_heat_out, 0, frequency, resolution);
-    pwm.resume();
-    // pwm.printDebug();
-
-    // #if defined(DEBUG_MODE)
-    //     Serial.printf("\nStart PWM...");
-    // #endif
+    I2C_EEPROM.setMemoryType(64);
+#if defined(DEBUG_MODE)
+    Serial.println("start Reading EEPROM setting ...");
+#endif
+    if (!I2C_EEPROM.begin())
+    {
+        Serial.println("failed to initialise EEPROM");
+        delay(1000);
+    }
+    else
+    {
+        I2C_EEPROM.get(0, pid_parm);
+    }
 
     // 初始化网络服务
     WiFi.macAddress(macAddr);
     // WiFi.mode(WIFI_AP);
     sprintf(ap_name, "MATCHBOX_%02X%02X%02X", macAddr[3], macAddr[4], macAddr[5]);
-#
     while (WiFi.status() != WL_CONNECTED)
     {
-
         delay(1000);
         Serial.println("wifi not ready");
 
@@ -193,7 +226,7 @@ void setup()
 #if defined(DEBUG_MODE)
     Serial.printf("\nTASK1:Task_Thermo_get_data...");
 #endif
-//vTaskSuspend(xTask_Thermo_get_data);
+    // vTaskSuspend(xTask_Thermo_get_data);
 
     xTaskCreate(
         TASK_data_to_HMI, "TASK_data_to_HMI" // 获取HB数据
@@ -228,7 +261,7 @@ void setup()
         ,
         NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
         ,
-        &xTASK_CMD_HMI // Running Core decided by FreeRTOS,let core0 run wifi and BT
+        &xTASK_CMD_FROM_HMI // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
     Serial.printf("\nTASK4:TASK_CMD_FROM_HMI...\n");
@@ -260,30 +293,19 @@ void setup()
     Serial.printf("\nTASK8:TASK_BLE_CMD_handle...\n");
 #endif
 
-    // Init Modbus-TCP
-    // #if defined(DEBUG_MODE)
-    //     Serial.printf("\nStart Modbus-TCP   service...");
-    // #endif
-    //     mb.server(502); // Start Modbus IP //default port :502
-    //     mb.addHreg(BT_HREG);
-    //     mb.addHreg(ET_HREG);
-    //     mb.addHreg(HEAT_HREG);
-    //     mb.addHreg(FAN_HREG);
-    //     mb.addHreg(AMB_RH_HREG);
-    //     mb.addHreg(AMB_TEMP_HREG);
-
-    //     mb.addHreg(PID_STATUS_HREG);
-    //     mb.addHreg(PID_SV_HREG);
-
-    //     mb.Hreg(BT_HREG, 0);         // 初始化赋值
-    //     mb.Hreg(ET_HREG, 0);         // 初始化赋值
-    //     mb.Hreg(HEAT_HREG, 0);       // 初始化赋值
-    //     mb.Hreg(FAN_HREG, 10);       // 初始化赋值
-    //     mb.Hreg(PID_STATUS_HREG, 0); // 初始化赋值
-    //     mb.Hreg(PID_SV_HREG, 0);     // 初始化赋值
-
-    //     mb.Hreg(AMB_RH_HREG, 0);   // 初始化赋值
-    //     mb.Hreg(AMB_TEMP_HREG, 0); // 初始化赋值
+    xTaskCreate(
+        Task_PID_autotune, "PID autotune" //
+        ,
+        1024 * 6 // This stack size can be checked & adjusted by reading the Stack Highwater
+        ,
+        NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+        ,
+        &xTask_PID_autotune // Running Core decided by FreeRTOS,let core0 run wifi and BT
+    );
+    vTaskSuspend(xTask_PID_autotune); //
+#if defined(DEBUG_MODE)
+    Serial.printf("\nTASK=8:PID autotune OK");
+#endif
 
     // init PID
     Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);
@@ -295,13 +317,13 @@ void setup()
 
     // INIT PID AUTOTUNE
 
-    // tuner.setTargetInputValue(180.0);
-    // tuner.setLoopInterval(pid_parm.pid_CT * uS_TO_S_FACTOR);
-    // tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
-    // tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
+    tuner.setTargetInputValue(PID_TUNE_SV_1);
+    tuner.setLoopInterval(pid_parm.pid_CT * uS_TO_S_FACTOR);
+    tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
+    tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
 
-    server.on("/", []()
-              { server.send(200, "text/plain", "Hi! This is ElegantOTA Demo."); });
+    // INIT OTA service
+    server.on("/", handle_root);
 
     ElegantOTA.begin(&server); // Start ElegantOTA
     // ElegantOTA callbacks
@@ -311,6 +333,16 @@ void setup()
 
     server.begin();
     Serial.println("HTTP server started");
+
+#if defined(DEBUG_MODE)
+    Serial.printf("\nEEPROM value check ...\n");
+    Serial.printf("pid_CT:%d\n", pid_parm.pid_CT);
+    Serial.printf("PID kp:%4.2f\n", pid_parm.p);
+    Serial.printf("PID ki:%4.2f\n", pid_parm.i);
+    Serial.printf("PID kd:%4.2f\n", pid_parm.d);
+    Serial.printf("BT fix:%4.2f\n", pid_parm.BT_tempfix);
+    Serial.printf("ET fix:%4.2f\n", pid_parm.ET_tempfix);
+#endif
 }
 
 void loop()

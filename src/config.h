@@ -8,11 +8,11 @@
 #define BAUDRATE 115200        // serial port baudrate
 #define HMI_BAUDRATE 9600        // serial port baudrate
 
-#define DEBUG_MODE
+//#define DEBUG_MODE
 #define BLE_BUFFER_SIZE 128
 #define HMI_BUFFER_SIZE 17
 
-#define VERSION "1.1.3"
+#define VERSION "1.1.4"
 
 #define SPI_SCK 8
 #define SPI_MISO 9
@@ -45,15 +45,19 @@
 ////////////////////
 // Heater and Fan Limits/Options
 #define MIN_OT1 0   // Set output % for lower limit for OT1.  0% power will always be available
-#define MAX_OT1 95 // Set output % for upper limit for OT1
+#define MAX_OT1 100 // Set output % for upper limit for OT1
 
 #define MIN_IO3 30  // Set output % for lower limit for IO3.  0% power will always be available
-#define MAX_IO3 95 // Set output % for upper limit for IO3
+#define MAX_IO3 100 // Set output % for upper limit for IO3
+
+#define PID_TUNE_SV_3 200
+#define PID_TUNE_SV_2 190
+#define PID_TUNE_SV_1 160
 
 //
 typedef struct eeprom_settings
 {
-    int pid_CT;
+    double pid_CT;
     double p;
     double i;
     double d;
@@ -71,16 +75,17 @@ typedef struct eeprom_settings
 
 
 static TaskHandle_t xTASK_data_to_HMI = NULL;
-static TaskHandle_t xTASK_CMD_HMI = NULL;
+static TaskHandle_t xTASK_CMD_FROM_HMI = NULL;
 static TaskHandle_t xTASK_HMI_CMD_handle = NULL;
- static TaskHandle_t xTASK_data_to_BLE = NULL;
+static TaskHandle_t xTASK_data_to_BLE = NULL;
 static TaskHandle_t xTASK_BLE_CMD_handle = NULL;
 static TaskHandle_t xTask_Thermo_get_data = NULL;
+static TaskHandle_t xTask_PID_autotune = NULL;
+
 
 
 SemaphoreHandle_t xThermoDataMutex = NULL;
 SemaphoreHandle_t xDATA_OUT_Mutex = NULL;
-//SemaphoreHandle_t xHMI_DATA_Mutex = NULL;
 
 
 QueueHandle_t queue_data_to_HMI = xQueueCreate(15, HMI_BUFFER_SIZE); // 发送到HMI的数据 hex格式化数据

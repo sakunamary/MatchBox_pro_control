@@ -7,9 +7,6 @@
 
 // For ESP32-C3
 HardwareSerial Serial_HMI(0);
-
-long microseconds;
-long prevMicroseconds;
 extern int heat_level_to_artisan;
 extern int fan_level_to_artisan;
 
