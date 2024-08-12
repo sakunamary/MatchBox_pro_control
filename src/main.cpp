@@ -9,7 +9,8 @@
 #include <ElegantOTA.h>
 #include <pidautotuner.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
-#include "ArduPID.h"
+#include <PID_v1.h>
+// #include "ArduPID.h"
 #include <TASK_read_temp.h>
 #include <TASK_BLE_Serial.h>
 #include <TASK_HMI_Serial.h>
@@ -20,7 +21,8 @@ ExternalEEPROM I2C_EEPROM;
 ESP32PWM pwm_heat;
 ESP32PWM pwm_fan;
 PIDAutotuner tuner = PIDAutotuner();
-ArduPID Heat_pid_controller;
+// ArduPID Heat_pid_controller;
+PID Heat_pid_controller(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d, DIRECT);
 
 extern bool loopTaskWDTEnabled;
 extern TaskHandle_t loopTaskHandle;
@@ -307,13 +309,17 @@ void setup()
     Serial.printf("\nTASK=8:PID autotune OK");
 #endif
 
-    // init PID
-    Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);
-    Heat_pid_controller.setSampleTime(pid_parm.pid_CT * 1000); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
-    Heat_pid_controller.setOutputLimits(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
-    Heat_pid_controller.setBias(255.0 / 2.0);
-    Heat_pid_controller.setWindUpLimits(2, 2); // Groth bounds for the integral term to prevent integral wind-up
-    Heat_pid_controller.start();
+    // // init PID
+    Heat_pid_controller.SetMode(MANUAL);
+    Heat_pid_controller.SetOutputLimits(double(PID_MIN_OUT * 255 / 100), double(PID_MAX_OUT * 255 / 100));
+    Heat_pid_controller.SetSampleTime(int(pid_parm.pid_CT * 1000)); 
+
+    // Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);
+    // Heat_pid_controller.setSampleTime(pid_parm.pid_CT * 1000); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
+    // Heat_pid_controller.setOutputLimits(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
+    // Heat_pid_controller.setBias(255.0 / 2.0);
+    // Heat_pid_controller.setWindUpLimits(2, 2); // Groth bounds for the integral term to prevent integral wind-up
+    // Heat_pid_controller.start();
 
     // INIT PID AUTOTUNE
 
