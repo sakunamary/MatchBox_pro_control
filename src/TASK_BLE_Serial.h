@@ -342,7 +342,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         {
                             pid_sv = CMD_Data[2].toFloat();
                             Heat_pid_controller.Compute();
-                            levelOT1 = map(PID_output, 0, 255, 0, 100);
+                            levelOT1=int(round(PID_output));
                             pwm_heat.write(map(levelOT1, 0, 100, 0, 1000));
                         }
                     }
