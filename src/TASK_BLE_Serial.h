@@ -16,7 +16,7 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
-#include "ArduPID.h"
+// #include "ArduPID.h"
 
 BLEServer *pServer = NULL;
 BLECharacteristic *pTxCharacteristic;
@@ -24,7 +24,8 @@ BLECharacteristic *pTxCharacteristic;
 extern ESP32PWM pwm_heat;
 extern ESP32PWM pwm_fan;
 extern ExternalEEPROM I2C_EEPROM;
-extern ArduPID Heat_pid_controller;
+// extern ArduPID Heat_pid_controller;
+extern PID Heat_pid_controller;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 extern char ap_name[16];
@@ -220,13 +221,13 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         // #if defined(DEBUG_MODE)
                         //                         Serial.printf("FAN:%d\n", levelIO3);//for debug
                         // #endif
-                        sprintf(BLE_data_buffer_char, "#DATA_OUT,OT3,%d\n", levelIO3);
-                        memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
-                        if (deviceConnected)
-                        {
-                            pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
-                            pTxCharacteristic->notify();
-                        }
+                        // sprintf(BLE_data_buffer_char, "#DATA_OUT,OT3,%d\n", levelIO3);
+                        // memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
+                        // if (deviceConnected)
+                        // {
+                        //     pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
+                        //     pTxCharacteristic->notify();
+                        // }
                     }
                     else
                     {
@@ -327,19 +328,22 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     if (CMD_Data[1] == "ON")
                     {
                         pid_status = true;
-                        Heat_pid_controller.start();
+                        Heat_pid_controller.SetMode(AUTOMATIC);
+                        // Heat_pid_controller.start();
                         // #if defined(DEBUG_MODE)
                         //                         Serial.printf("PID is ON\n");//for debug
                         // #endif
                     }
                     else if (CMD_Data[1] == "OFF")
                     {
-                        Heat_pid_controller.stop();
+                        Heat_pid_controller.SetMode(MANUAL);
+                        // Heat_pid_controller.stop();
                         // #if defined(DEBUG_MODE)
                         //                         Serial.printf("PID is OFF\n");//for debug
                         // #endif
                         I2C_EEPROM.get(0, pid_parm);
-                        Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
+                        Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
+                        // Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
                         pid_status = false;
                         pid_sv = 0;
                     }
@@ -352,8 +356,12 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             // #if defined(DEBUG_MODE)
                             //                             Serial.printf("PID set SV:%4.2f\n", pid_sv);//for debug
                             // #endif
-                            Heat_pid_controller.compute();
-                            levelOT1 = map(PID_output, 0, 255, 0, 100);
+                            // Heat_pid_controller.compute();
+                            Heat_pid_controller.Compute();
+                            levelOT1=int(round(PID_output));
+                            //levelOT1 = map(PID_output, 0, 255, 0, 100);
+
+                            // Serial.printf("PID ON OT1: %d;PID_output:%4.2f\n", levelOT1,PID_output);
                             pwm_heat.write(map(levelOT1, 0, 100, 0, 1000));
                             // #if defined(DEBUG_MODE)
                             //                             Serial.printf("HEAT PID set :%d\n", levelOT1);//for debug
@@ -362,7 +370,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     }
                     else if (CMD_Data[1] == "TUNE")
                     {
-                        Heat_pid_controller.stop();
+                        Heat_pid_controller.SetMode(MANUAL);
                         pid_status = false;
                         pid_sv = 0;
 
