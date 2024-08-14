@@ -130,7 +130,7 @@ void setup()
     pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
     pwm_fan.attachPin(pwm_fan_out, frequency, resolution);   // 1KHz 8 bit
     pwm_heat.write(0);
-    pwm_fan.write(600);
+    pwm_fan.write(720);
 
     Serial.begin(HMI_BAUDRATE);
     // Serial_HMI.setBuffer();
@@ -320,6 +320,7 @@ void setup()
     // Heat_pid_controller.setBias(255.0 / 2.0);
     // Heat_pid_controller.setWindUpLimits(2, 2); // Groth bounds for the integral term to prevent integral wind-up
     // Heat_pid_controller.start();
+
 
     // INIT PID AUTOTUNE
 
