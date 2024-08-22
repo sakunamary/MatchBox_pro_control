@@ -15,7 +15,8 @@
 #include <BLE2902.h>
 
 #include <ESP32Servo.h>
-#include "ArduPID.h"
+#include <PID_v1.h>
+// #include "ArduPID.h"
 
 BLEServer *pServer = NULL;
 BLECharacteristic *pTxCharacteristic;
@@ -23,7 +24,9 @@ BLECharacteristic *pTxCharacteristic;
 extern ESP32PWM pwm_heat;
 extern ESP32PWM pwm_fan;
 extern ExternalEEPROM I2C_EEPROM;
-extern ArduPID Heat_pid_controller;
+
+// extern ArduPID Heat_pid_controller;
+extern PID Heat_pid_controller;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 extern char ap_name[16];
@@ -90,7 +93,7 @@ void TASK_DATA_to_BLE(void *pvParameters)
 {
     (void)pvParameters;
     uint8_t BLE_DATA_Buffer[BLE_BUFFER_SIZE];
-    const TickType_t timeOut = 150;
+    const TickType_t timeOut = 150 / portTICK_PERIOD_MS;
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
 
@@ -123,7 +126,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
     uint8_t BLE_CMD_Buffer[BLE_BUFFER_SIZE];
     char BLE_data_buffer_char[BLE_BUFFER_SIZE];
     uint8_t BLE_data_buffer_uint8[BLE_BUFFER_SIZE];
-    const TickType_t timeOut = 150;
+    const TickType_t timeOut = 150/ portTICK_PERIOD_MS;
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
     TickType_t xLastWakeTime;
@@ -321,13 +324,15 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     if (CMD_Data[1] == "ON")
                     {
                         pid_status = true;
-                        Heat_pid_controller.start();
+                        Heat_pid_controller.SetMode(AUTOMATIC);
+                        // Heat_pid_controller.start();
                     }
                     else if (CMD_Data[1] == "OFF")
                     {
-                        Heat_pid_controller.stop();
+                        // Heat_pid_controller.stop();
+                        Heat_pid_controller.SetMode(MANUAL);
                         I2C_EEPROM.get(0, pid_parm);
-                        Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
+                        Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
                         pid_status = false;
                         pid_sv = 0;
                     }
@@ -336,14 +341,15 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         if (pid_status == true)
                         {
                             pid_sv = CMD_Data[2].toFloat();
-                            Heat_pid_controller.compute();
-                            levelOT1 = map(PID_output, 0, 255, 0, 100);
+                            Heat_pid_controller.Compute();
+                            levelOT1=int(round(PID_output));
                             pwm_heat.write(map(levelOT1, 0, 100, 0, 1000));
                         }
                     }
                     else if (CMD_Data[1] == "TUNE")
                     {
-                        Heat_pid_controller.stop();
+                        // Heat_pid_controller.stop();
+                        Heat_pid_controller.SetMode(MANUAL);
                         pid_status = false;
                         pid_sv = 0;
 

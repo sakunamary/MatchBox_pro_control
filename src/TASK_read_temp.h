@@ -22,7 +22,8 @@ long microseconds;
 double pid_tune_output;
 
 extern ExternalEEPROM I2C_EEPROM;
-extern ArduPID Heat_pid_controller;
+extern PID Heat_pid_controller;
+// extern ArduPID Heat_pid_controller;
 extern PIDAutotuner tuner;
 extern ESP32PWM pwm_heat;
 extern ESP32PWM pwm_fan;
@@ -91,12 +92,12 @@ void Task_Thermo_get_data(void *pvParameters)
                 if (BT_TEMP >= PID_TUNE_SV_1)
                 {
                     I2C_EEPROM.get(128, pid_parm);
-                    Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
+                    Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
                 }
                 else if (BT_TEMP >= PID_TUNE_SV_2)
                 {
                     I2C_EEPROM.get(256, pid_parm);
-                    Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
+                    Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
                 }
             }
 
@@ -170,8 +171,10 @@ void Task_PID_autotune(void *pvParameters)
             {
                 if (loop == 0)
                 {
+                    tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
                     PID_TUNE_SV = PID_TUNE_SV_1;
-                    levelIO3=60;
+                    levelIO3 = 60;
+                    tuner.setTuningCycles(10);
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     // pwm_fan.writeScaled(0.6);
@@ -218,8 +221,10 @@ void Task_PID_autotune(void *pvParameters)
                 }
                 else if (loop == 1)
                 {
+                    tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
                     PID_TUNE_SV = PID_TUNE_SV_2;
-                    levelIO3=55;
+                    levelIO3 = 55;
+                    tuner.setTuningCycles(10);
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     // pwm_fan.writeScaled(0.55);
@@ -266,8 +271,10 @@ void Task_PID_autotune(void *pvParameters)
                 }
                 else if (loop == 2)
                 {
+                    tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
                     PID_TUNE_SV = PID_TUNE_SV_3;
-                    levelIO3=50;
+                    levelIO3 = 50;
+                    tuner.setTuningCycles(10);
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     // pwm_fan.writeScaled(0.5);
@@ -315,10 +322,13 @@ void Task_PID_autotune(void *pvParameters)
             }
         }
     }
-    vTaskResume(xTASK_CMD_FROM_HMI);
-    vTaskResume(xTASK_HMI_CMD_handle);
-    vTaskResume(xTASK_BLE_CMD_handle);
-    vTaskSuspend(NULL);
+    delay(3000);
+    ESP.restart();
+    // vTaskResume(xTASK_CMD_FROM_HMI);
+    // vTaskResume(xTASK_HMI_CMD_handle);
+    // vTaskResume(xTASK_BLE_CMD_handle);
+
+    // vTaskSuspend(NULL);
 }
 
 #endif
