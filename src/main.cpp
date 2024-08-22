@@ -26,7 +26,7 @@ PID Heat_pid_controller(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, 
 
 extern bool loopTaskWDTEnabled;
 extern TaskHandle_t loopTaskHandle;
-
+uint8_t HMI_HAND[HMI_BUFFER_SIZE];
 int levelOT1 = 0;
 int levelIO3 = 30;
 bool pid_status = false;
@@ -174,7 +174,7 @@ void setup()
             // init wifi
             Serial.println("WiFi.mode(AP):");
             WiFi.mode(WIFI_AP);
-            WiFi.softAP(ap_name, "88888888"); // defualt IP address :192.168.4.1 password min 8 digis
+            WiFi.softAP(ap_name, "matchbox8888"); // defualt IP address :192.168.4.1 password min 8 digis
             break;
         }
     }
@@ -312,7 +312,7 @@ void setup()
     // // init PID
     Heat_pid_controller.SetMode(MANUAL);
     Heat_pid_controller.SetOutputLimits(PID_MIN_OUT, PID_MAX_OUT);
-    Heat_pid_controller.SetSampleTime(int(pid_parm.pid_CT * 1000)); 
+    Heat_pid_controller.SetSampleTime(int(pid_parm.pid_CT * 1000));
 
     // Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);
     // Heat_pid_controller.setSampleTime(pid_parm.pid_CT * 1000); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
@@ -320,7 +320,6 @@ void setup()
     // Heat_pid_controller.setBias(255.0 / 2.0);
     // Heat_pid_controller.setWindUpLimits(2, 2); // Groth bounds for the integral term to prevent integral wind-up
     // Heat_pid_controller.start();
-
 
     // INIT PID AUTOTUNE
 
@@ -341,6 +340,34 @@ void setup()
 
     server.begin();
     Serial.println("HTTP server started");
+
+    HMI_HAND[0] = 0x69;
+    HMI_HAND[1] = 0xff;
+    HMI_HAND[2] = 0x00;
+    HMI_HAND[3] = 0xff;
+    HMI_HAND[4] = 0xff;
+    HMI_HAND[5] = 0xff;
+    HMI_HAND[6] = 0x69;
+    HMI_HAND[7] = 0x69;
+    HMI_HAND[8] = 0x69;
+    HMI_HAND[9] = 0x67;
+    HMI_HAND[10] = 0x67;
+    HMI_HAND[11] = 0x67;
+    HMI_HAND[12] = 0xff;
+    HMI_HAND[13] = 0xff;
+    HMI_HAND[14] = 0xff;
+    HMI_HAND[15] = 0xff;
+    HMI_HAND[16] = 0xff;
+
+    for (int loop = 0; loop < 3; loop++)
+    {
+        delay(1000);
+        xQueueSend(queue_data_to_HMI, &HMI_HAND, 300 / portTICK_PERIOD_MS);
+        xTaskNotify(xTASK_data_to_HMI, 0, eIncrement); // send notify to TASK_data_to_HMI
+    }
+    memset(HMI_HAND, '\0', HMI_BUFFER_SIZE);
+
+    // vTaskResume(xTask_Thermo_get_data);
 
 #if defined(DEBUG_MODE)
     Serial.printf("\nEEPROM value check ...\n");

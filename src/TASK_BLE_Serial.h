@@ -93,7 +93,7 @@ void TASK_DATA_to_BLE(void *pvParameters)
 {
     (void)pvParameters;
     uint8_t BLE_DATA_Buffer[BLE_BUFFER_SIZE];
-    const TickType_t timeOut = 150;
+    const TickType_t timeOut = 150 / portTICK_PERIOD_MS;
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
 
@@ -126,7 +126,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
     uint8_t BLE_CMD_Buffer[BLE_BUFFER_SIZE];
     char BLE_data_buffer_char[BLE_BUFFER_SIZE];
     uint8_t BLE_data_buffer_uint8[BLE_BUFFER_SIZE];
-    const TickType_t timeOut = 150;
+    const TickType_t timeOut = 150/ portTICK_PERIOD_MS;
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
     TickType_t xLastWakeTime;
