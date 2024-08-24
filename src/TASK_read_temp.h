@@ -173,7 +173,7 @@ void Task_PID_autotune(void *pvParameters)
                 {
                     tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
                     PID_TUNE_SV = PID_TUNE_SV_1;
-                    levelIO3 = 60;
+                    levelIO3 = PID_TUNE_FAN_1;
                     tuner.setTuningCycles(5);
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
@@ -223,7 +223,7 @@ void Task_PID_autotune(void *pvParameters)
                 {
                     tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
                     PID_TUNE_SV = PID_TUNE_SV_2;
-                    levelIO3 = 55;
+                    levelIO3 = PID_TUNE_FAN_2;
                     tuner.setTuningCycles(5);
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
@@ -273,7 +273,7 @@ void Task_PID_autotune(void *pvParameters)
                 {
                     tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
                     PID_TUNE_SV = PID_TUNE_SV_3;
-                    levelIO3 = 50;
+                    levelIO3 = PID_TUNE_FAN_3;
                     tuner.setTuningCycles(5);
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);

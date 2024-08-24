@@ -54,6 +54,10 @@
 #define PID_TUNE_SV_2 190
 #define PID_TUNE_SV_1 160
 
+#define PID_TUNE_FAN_3 50
+#define PID_TUNE_FAN_2 53
+#define PID_TUNE_FAN_1 55
+
 //
 typedef struct eeprom_settings
 {
