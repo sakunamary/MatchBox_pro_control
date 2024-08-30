@@ -61,9 +61,14 @@ void Task_Thermo_get_data(void *pvParameters)
     /* Task Setup and Initialize */
     // Initial the xLastWakeTime variable with the current time.
     xLastWakeTime = xTaskGetTickCount();
+    if (esp_task_wdt_status(NULL) != ESP_OK)
+    {
+        esp_task_wdt_add(NULL);
+    }
 
     for (;;) // A Task shall never return or exit.
     {        // for loop
+        esp_task_wdt_reset();
         // Wait for the next cycle (intervel 1500ms).
         vTaskDelayUntil(&xLastWakeTime, xIntervel);
         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据

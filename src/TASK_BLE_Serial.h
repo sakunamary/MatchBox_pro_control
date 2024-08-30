@@ -35,6 +35,10 @@ String CMD_Data[6];
 extern int levelOT1;
 extern int levelIO3;
 extern bool pid_status;
+extern double BT_TEMP;
+extern double ET_TEMP;
+extern double AMB_RH;
+extern double AMB_TEMP;
 
 extern double PID_output;
 extern double pid_sv;
@@ -126,7 +130,8 @@ void TASK_BLE_CMD_handle(void *pvParameters)
     uint8_t BLE_CMD_Buffer[BLE_BUFFER_SIZE];
     char BLE_data_buffer_char[BLE_BUFFER_SIZE];
     uint8_t BLE_data_buffer_uint8[BLE_BUFFER_SIZE];
-    const TickType_t timeOut = 150/ portTICK_PERIOD_MS;
+    uint8_t temp_data_buffer_hmi[HMI_BUFFER_SIZE];
+    const TickType_t timeOut = 150 / portTICK_PERIOD_MS;
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
     TickType_t xLastWakeTime;
@@ -335,6 +340,39 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
                         pid_status = false;
                         pid_sv = 0;
+
+                        // PID OFF/ON:ambient,chan1,chan2,  heater duty, fan duty, SV :发送一次最新的数据到HMI
+                        if (xSemaphoreTake(xDATA_OUT_Mutex, 250 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
+                        {
+                            // 封装HMI 协议
+                            temp_data_buffer_hmi[0] = 0x69;
+                            temp_data_buffer_hmi[1] = 0xff;
+                            temp_data_buffer_hmi[2] = 0x01;
+                            temp_data_buffer_hmi[3] = lowByte(int(round(AMB_TEMP * 10)));
+                            temp_data_buffer_hmi[4] = highByte(int(round(AMB_TEMP * 10)));
+                            temp_data_buffer_hmi[5] = lowByte(int(round(ET_TEMP * 10)));
+                            temp_data_buffer_hmi[6] = highByte(int(round(ET_TEMP * 10)));
+                            temp_data_buffer_hmi[7] = lowByte(int(round(BT_TEMP * 10)));
+                            temp_data_buffer_hmi[8] = highByte(int(round(BT_TEMP * 10)));
+                            temp_data_buffer_hmi[9] = lowByte(int(round(pid_sv * 10)));
+                            temp_data_buffer_hmi[10] = highByte(int(round(pid_sv * 10)));
+                            temp_data_buffer_hmi[11] = levelOT1;
+                            temp_data_buffer_hmi[12] = levelIO3;
+                            if (pid_status)
+                            {
+                                temp_data_buffer_hmi[13] = 0x01;
+                            }
+                            else
+                            {
+                                temp_data_buffer_hmi[13] = 0x00;
+                            }
+                            temp_data_buffer_hmi[14] = 0xff;
+                            temp_data_buffer_hmi[15] = 0xff;
+                            temp_data_buffer_hmi[16] = 0xff;
+                            xQueueSend(queue_data_to_HMI, &temp_data_buffer_hmi, xIntervel);
+                            memset(temp_data_buffer_hmi, '\0', HMI_BUFFER_SIZE);
+                            xSemaphoreGive(xDATA_OUT_Mutex); // end of lock mutex
+                        }
                     }
                     else if (CMD_Data[1] == "SV")
                     {
@@ -342,7 +380,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         {
                             pid_sv = CMD_Data[2].toFloat();
                             Heat_pid_controller.Compute();
-                            levelOT1=int(round(PID_output));
+                            levelOT1 = int(round(PID_output));
                             pwm_heat.write(map(levelOT1, 0, 100, 0, 1000));
                         }
                     }

@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include "config.h"
-
+#include <esp_task_wdt.h>
 #include <WiFi.h>
 #include <ESP32Servo.h>
 #include <StringTokenizer.h>
@@ -366,9 +366,6 @@ void setup()
         xTaskNotify(xTASK_data_to_HMI, 0, eIncrement); // send notify to TASK_data_to_HMI
     }
     memset(HMI_HAND, '\0', HMI_BUFFER_SIZE);
-
-    // vTaskResume(xTask_Thermo_get_data);
-
 #if defined(DEBUG_MODE)
     Serial.printf("\nEEPROM value check ...\n");
     Serial.printf("pid_CT:%d\n", pid_parm.pid_CT);
@@ -378,6 +375,10 @@ void setup()
     Serial.printf("BT fix:%4.2f\n", pid_parm.BT_tempfix);
     Serial.printf("ET fix:%4.2f\n", pid_parm.ET_tempfix);
 #endif
+
+    // init watch dog
+    esp_task_wdt_init(3, true);
+    esp_task_wdt_add(&xTask_Thermo_get_data);
 }
 
 void loop()
