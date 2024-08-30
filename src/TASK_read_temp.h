@@ -6,6 +6,7 @@
 #include <Wire.h>
 #include <PID_v1.h>
 #include <MCP3424.h>
+#include "TypeK.h"
 #include "DFRobot_AHT20.h"
 
 double BT_TEMP;
@@ -36,7 +37,7 @@ long Voltage; // Array used to store results
 
 MCP3424 MCP(address); // Declaration of MCP3424 A2=0 A1=1 A0=0
 DFRobot_AHT20 aht20;
-// TypeK temp_K_cal;
+TypeK temp_K_cal;
 extern ExternalEEPROM I2C_EEPROM;
 
 void Task_Thermo_get_data(void *pvParameters)
@@ -51,9 +52,18 @@ void Task_Thermo_get_data(void *pvParameters)
     /* Task Setup and Initialize */
     // Initial the xLastWakeTime variable with the current time.
     xLastWakeTime = xTaskGetTickCount();
+    // Subscribe this task to TWDT, then check if it is subscribed
+    esp_task_wdt_add(NULL);
+    if(esp_task_wdt_status(NULL) != ESP_OK) {
+            esp_task_wdt_add(NULL);
+    }
+
+    // Subscribe func_a and func_b as users of the the TWDT
+    // esp_task_wdt_add_user("wdt_esp_reboot", &wdt_esp_reboot);
 
     for (;;) // A Task shall never return or exit.
     {        // for loop
+        esp_task_wdt_reset();
         // Wait for the next cycle (intervel 1500ms).
         vTaskDelayUntil(&xLastWakeTime, xIntervel);
         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
@@ -70,11 +80,13 @@ void Task_Thermo_get_data(void *pvParameters)
             delay(200);
             MCP.Configuration(1, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
             Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
-            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
-            delay(200);
-            MCP.Configuration(2, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
-            Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
-            ET_TEMP = pid_parm.ET_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+                                            // BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+            BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, aht20.getTemperature_C()) + pid_parm.BT_tempfix;
+            ET_TEMP = 0.0;
+            // delay(200);
+            // MCP.Configuration(2, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
+            // Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
+            // ET_TEMP = pid_parm.ET_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
 
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
@@ -123,6 +135,7 @@ void Task_PID_autotune(void *pvParameters)
 
         if (xResult == pdTRUE)
         {
+
             // 开始 PID自动整定
             // Serial.println("PID AUTOTUNE");
             for (int loop = 0; loop < 3; loop++)

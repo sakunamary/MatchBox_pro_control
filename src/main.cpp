@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <config.h>
-
 #include <WiFi.h>
+#include <esp_task_wdt.h>
 #include <ESP32Servo.h>
 #include <StringTokenizer.h>
 #include <WiFiClient.h>
@@ -25,6 +25,8 @@ PID Heat_pid_controller(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, 
 
 extern bool loopTaskWDTEnabled;
 extern TaskHandle_t loopTaskHandle;
+// static esp_task_wdt_user_handle_t wdt_esp_reboot;
+
 
 int levelOT1 = 0;
 int levelIO3 = 30;
@@ -300,6 +302,11 @@ void setup()
 
     server.begin();
     Serial.println("HTTP server started");
+
+//init watchdog
+    // If the TWDT was not initialized automatically on startup, manually intialize it now
+    esp_task_wdt_init(TWDT_TIMEOUT_MS,true);
+
 }
 
 void loop()
@@ -323,4 +330,13 @@ void loop()
         // do stuff here on connecting
         oldDeviceConnected = deviceConnected;
     }
+
+
+#if !CONFIG_ESP_TASK_WDT_INIT
+    // If we manually initialized the TWDT, deintialize it now
+esp_task_wdt_deinit();
+
+#endif // CONFIG_ESP_TASK_WDT_INIT
+
+
 }
