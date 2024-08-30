@@ -164,20 +164,12 @@ void setup()
     WiFi.macAddress(macAddr);
     // WiFi.mode(WIFI_AP);
     sprintf(ap_name, "MATCHBOX_%02X%02X%02X", macAddr[3], macAddr[4], macAddr[5]);
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        delay(1000);
-        Serial.println("wifi not ready");
 
-        if (tries++ > 2)
-        {
-            // init wifi
-            Serial.println("WiFi.mode(AP):");
-            WiFi.mode(WIFI_AP);
-            WiFi.softAP(ap_name, "matchbox8888"); // defualt IP address :192.168.4.1 password min 8 digis
-            break;
-        }
-    }
+    // init wifi
+    Serial.println("WiFi.mode(AP):");
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP(ap_name, "matchbox8888"); // defualt IP address :192.168.4.1 password min 8 digis
+
     // show AP's IP
     Serial.printf("IP:");
     if (WiFi.getMode() == 2) // 1:STA mode 2:AP mode
@@ -377,8 +369,8 @@ void setup()
 #endif
 
     // init watch dog
-    esp_task_wdt_init(3, true);
-    esp_task_wdt_add(&xTask_Thermo_get_data);
+    esp_task_wdt_init(3, false);
+    // esp_task_wdt_add(&xTask_Thermo_get_data);
 }
 
 void loop()

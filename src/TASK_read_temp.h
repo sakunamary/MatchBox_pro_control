@@ -61,10 +61,11 @@ void Task_Thermo_get_data(void *pvParameters)
     /* Task Setup and Initialize */
     // Initial the xLastWakeTime variable with the current time.
     xLastWakeTime = xTaskGetTickCount();
-    if (esp_task_wdt_status(NULL) != ESP_OK)
-    {
-        esp_task_wdt_add(NULL);
-    }
+            esp_task_wdt_add(NULL);
+    // if (esp_task_wdt_status(NULL) != ESP_OK)
+    // {
+    //     esp_task_wdt_add(NULL);
+    // }
 
     for (;;) // A Task shall never return or exit.
     {        // for loop
@@ -114,7 +115,7 @@ void Task_Thermo_get_data(void *pvParameters)
         {
             // 封装BLE 协议
             sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
-            Serial.print(temp_data_buffer_ble);
+           // Serial.print(temp_data_buffer_ble);
 
             xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
 

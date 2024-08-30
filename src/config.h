@@ -12,7 +12,7 @@
 #define BLE_BUFFER_SIZE 128
 #define HMI_BUFFER_SIZE 17
 
-#define VERSION "1.1.8"
+#define VERSION "1.1.9"
 
 #define SPI_SCK 8
 #define SPI_MISO 9

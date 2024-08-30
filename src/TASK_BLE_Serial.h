@@ -371,6 +371,8 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             temp_data_buffer_hmi[16] = 0xff;
                             xQueueSend(queue_data_to_HMI, &temp_data_buffer_hmi, xIntervel);
                             memset(temp_data_buffer_hmi, '\0', HMI_BUFFER_SIZE);
+                            xTaskNotify(xTASK_data_to_HMI, 0, eIncrement); // send notify to TASK_data_to_HMIÍ
+
                             xSemaphoreGive(xDATA_OUT_Mutex); // end of lock mutex
                         }
                     }
