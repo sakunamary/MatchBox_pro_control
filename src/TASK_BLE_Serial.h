@@ -66,7 +66,9 @@ class MyCallbacks : public BLECharacteristicCallbacks
         int i = 0;
         while (i < rxValue.length() && rxValue.length() > 0)
         {
+#if defined(DEBUG_MODE)
             Serial.print(rxValue[i]);
+#endif
             if (rxValue[i] == 0x0A)
             {
                 BLE_DATA_Buffer[i] = rxValue[i];                  // copy value
@@ -358,8 +360,8 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             // #endif
                             // Heat_pid_controller.compute();
                             Heat_pid_controller.Compute();
-                            levelOT1=int(round(PID_output));
-                            //levelOT1 = map(PID_output, 0, 255, 0, 100);
+                            levelOT1 = int(round(PID_output));
+                            // levelOT1 = map(PID_output, 0, 255, 0, 100);
 
                             // Serial.printf("PID ON OT1: %d;PID_output:%4.2f\n", levelOT1,PID_output);
                             pwm_heat.write(map(levelOT1, 0, 100, 0, 1000));

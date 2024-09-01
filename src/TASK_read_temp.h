@@ -54,9 +54,6 @@ void Task_Thermo_get_data(void *pvParameters)
     xLastWakeTime = xTaskGetTickCount();
     // Subscribe this task to TWDT, then check if it is subscribed
     esp_task_wdt_add(NULL);
-    if(esp_task_wdt_status(NULL) != ESP_OK) {
-            esp_task_wdt_add(NULL);
-    }
 
     // Subscribe func_a and func_b as users of the the TWDT
     // esp_task_wdt_add_user("wdt_esp_reboot", &wdt_esp_reboot);
@@ -73,9 +70,9 @@ void Task_Thermo_get_data(void *pvParameters)
             {
                 AMB_TEMP = aht20.getTemperature_C();
                 AMB_RH = aht20.getHumidity_RH();
-                // #if defined(DEBUG_MODE)
-                //                 Serial.printf("raw data:AMB_TEMP:%4.2f\n", AMB_TEMP);
-                // #endif
+#if defined(DEBUG_MODE)
+                Serial.printf("raw data:AMB_TEMP:%4.2f\n", AMB_TEMP);
+#endif
             }
             delay(200);
             MCP.Configuration(1, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
@@ -110,7 +107,9 @@ void Task_Thermo_get_data(void *pvParameters)
         if (xSemaphoreTake(xSerialReadBufferMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
             sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
-            // Serial.print(temp_data_buffer_ble);
+#if defined(DEBUG_MODE)
+            Serial.print(temp_data_buffer_ble);
+ #endif           
             xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
             xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
         }

@@ -27,7 +27,6 @@ extern bool loopTaskWDTEnabled;
 extern TaskHandle_t loopTaskHandle;
 // static esp_task_wdt_user_handle_t wdt_esp_reboot;
 
-
 int levelOT1 = 0;
 int levelIO3 = 30;
 bool pid_status = false;
@@ -173,18 +172,20 @@ void setup()
     {
 
         delay(1000);
-        Serial.println("wifi not ready");
-
+#if defined(DEBUG_MODE)
+         Serial.println("wifi not ready");
+#endif
         if (tries++ > 2)
         {
             // init wifi
-            Serial.println("WiFi.mode(AP):");
+            // Serial.println("WiFi.mode(AP):");
             WiFi.mode(WIFI_AP);
             WiFi.softAP(ap_name, "88888888"); // defualt IP address :192.168.4.1 password min 8 digis
             break;
         }
     }
-    // show AP's IP
+// show AP's IP
+#if defined(DEBUG_MODE)
     Serial.printf("IP:");
     if (WiFi.getMode() == 2) // 1:STA mode 2:AP mode
     {
@@ -196,7 +197,7 @@ void setup()
         Serial.println(IpAddressToString(WiFi.localIP()));
         local_IP = IpAddressToString(WiFi.localIP());
     }
-
+#endif
     // Create the BLE Device
     BLEDevice::init(ap_name);
     // Create the BLE Server
@@ -303,10 +304,9 @@ void setup()
     server.begin();
     Serial.println("HTTP server started");
 
-//init watchdog
-    // If the TWDT was not initialized automatically on startup, manually intialize it now
-    esp_task_wdt_init(TWDT_TIMEOUT_MS,true);
-
+    // init watchdog
+    //  If the TWDT was not initialized automatically on startup, manually intialize it now
+    esp_task_wdt_init(3, true);
 }
 
 void loop()
@@ -331,12 +331,9 @@ void loop()
         oldDeviceConnected = deviceConnected;
     }
 
+    // #if !CONFIG_ESP_TASK_WDT_INIT
+    //     // If we manually initialized the TWDT, deintialize it now
+    // esp_task_wdt_deinit();
 
-#if !CONFIG_ESP_TASK_WDT_INIT
-    // If we manually initialized the TWDT, deintialize it now
-esp_task_wdt_deinit();
-
-#endif // CONFIG_ESP_TASK_WDT_INIT
-
-
+    // #endif // CONFIG_ESP_TASK_WDT_INIT
 }

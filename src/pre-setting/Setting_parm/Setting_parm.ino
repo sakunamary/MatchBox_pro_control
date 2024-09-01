@@ -10,7 +10,7 @@
 #include "Wire.h"
 #include <MCP3424.h>
 #include <ESP32Servo.h>
-// #include "TypeK.h"
+#include "TypeK.h"
 #include "DFRobot_AHT20.h"
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 
@@ -35,6 +35,7 @@ MCP3424 ADC_MCP3424(address); // Declaration of MCP3424 A2=0 A1=1 A0=0
 DFRobot_AHT20 aht20;
 ESP32PWM pwm_heat;
 ESP32PWM pwm_fan;
+TypeK temp_K_cal;
 
 pid_setting_t pid_parm = {
     .pid_CT = 1.5,     // double pid_CT;
@@ -90,7 +91,8 @@ void setup()
     vTaskDelay(200);
     ADC_MCP3424.Configuration(1, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
     Voltage = ADC_MCP3424.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
-    BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+                                            // BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+    BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, aht20.getTemperature_C()) + pid_parm.BT_tempfix;
 
     Serial.printf("Temp raw:: AMB_TEMP:%4.2f;BT:%4.2f\n", AMB_TEMP, BT_TEMP);
 
