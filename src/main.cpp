@@ -272,7 +272,7 @@ void setup()
     );
     vTaskSuspend(xTask_PID_autotune); //
 #if defined(DEBUG_MODE)
-    Serial.printf("\nTASK=8:PID autotune OK");
+    Serial.printf("\nTASK=8:PID autotune OK\n");
 #endif
 
     // init PID

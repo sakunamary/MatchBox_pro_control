@@ -70,9 +70,6 @@ void Task_Thermo_get_data(void *pvParameters)
             {
                 AMB_TEMP = aht20.getTemperature_C();
                 AMB_RH = aht20.getHumidity_RH();
-#if defined(DEBUG_MODE)
-                Serial.printf("raw data:AMB_TEMP:%4.2f\n", AMB_TEMP);
-#endif
             }
             delay(200);
             MCP.Configuration(1, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
@@ -107,9 +104,6 @@ void Task_Thermo_get_data(void *pvParameters)
         if (xSemaphoreTake(xSerialReadBufferMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
             sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
-#if defined(DEBUG_MODE)
-            Serial.print(temp_data_buffer_ble);
-#endif
             xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
             xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
         }
@@ -144,7 +138,7 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
                     tuner.setTuningCycles(5);
                     PID_TUNE_SV = PID_TUNE_SV_1;
-                    levelIO3 = 55;
+                    levelIO3 = 50;
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, 0, 100, 600, 1000));
@@ -195,7 +189,7 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
                     tuner.setTuningCycles(5);
                     PID_TUNE_SV = PID_TUNE_SV_2;
-                    levelIO3 = 50;
+                    levelIO3 = 45;
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, 0, 100, 600, 1000));
@@ -244,7 +238,7 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
                     tuner.setTuningCycles(5);
                     PID_TUNE_SV = PID_TUNE_SV_3;
-                    levelIO3 = 45;
+                    levelIO3 = 40;
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, 0, 100, 600, 1000));

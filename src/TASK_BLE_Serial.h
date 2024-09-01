@@ -67,7 +67,7 @@ class MyCallbacks : public BLECharacteristicCallbacks
         while (i < rxValue.length() && rxValue.length() > 0)
         {
 #if defined(DEBUG_MODE)
-            Serial.print(rxValue[i]);
+            //Serial.print(rxValue[i]);
 #endif
             if (rxValue[i] == 0x0A)
             {
