@@ -109,7 +109,7 @@ void Task_Thermo_get_data(void *pvParameters)
             sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
 #if defined(DEBUG_MODE)
             Serial.print(temp_data_buffer_ble);
- #endif           
+#endif
             xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
             xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
         }
@@ -142,14 +142,14 @@ void Task_PID_autotune(void *pvParameters)
                 if (loop == 0)
                 {
                     tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
-                    tuner.setTuningCycles(10);
+                    tuner.setTuningCycles(5);
                     PID_TUNE_SV = PID_TUNE_SV_1;
                     levelIO3 = 55;
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, 0, 100, 600, 1000));
                     // pwm_fan.writeScaled(0.6);
-                    vTaskDelay(1000);
+                    delay(1000);
                     while (!tuner.isFinished()) // 开始自动整定循环
                     {
                         prevMicroseconds = microseconds;
@@ -193,13 +193,13 @@ void Task_PID_autotune(void *pvParameters)
                 else if (loop == 1)
                 {
                     tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
-                    tuner.setTuningCycles(10);
+                    tuner.setTuningCycles(5);
                     PID_TUNE_SV = PID_TUNE_SV_2;
                     levelIO3 = 50;
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, 0, 100, 600, 1000));
-                    vTaskDelay(1000);
+                    delay(1000);
                     while (!tuner.isFinished()) // 开始自动整定循环
                     {
                         prevMicroseconds = microseconds;
@@ -228,7 +228,7 @@ void Task_PID_autotune(void *pvParameters)
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
                     pid_parm.d = tuner.getKd();
-                    I2C_EEPROM.put(1, pid_parm);
+                    I2C_EEPROM.put(128, pid_parm);
 #if defined(DEBUG_MODE)
                     Serial.printf("\nPID Auto Tune Second step Finished ...\n");
                     Serial.printf("\nPID kp:%4.2f\n", pid_parm.p);
@@ -242,13 +242,13 @@ void Task_PID_autotune(void *pvParameters)
                 else if (loop == 2)
                 {
                     tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
-                    tuner.setTuningCycles(10);
+                    tuner.setTuningCycles(5);
                     PID_TUNE_SV = PID_TUNE_SV_3;
                     levelIO3 = 45;
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, 0, 100, 600, 1000));
-                    vTaskDelay(1000);
+                    delay(1000);
                     while (!tuner.isFinished()) // 开始自动整定循环
                     {
                         prevMicroseconds = microseconds;
@@ -277,7 +277,7 @@ void Task_PID_autotune(void *pvParameters)
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
                     pid_parm.d = tuner.getKd();
-                    I2C_EEPROM.put(2, pid_parm);
+                    I2C_EEPROM.put(256, pid_parm);
 #if defined(DEBUG_MODE)
                     Serial.printf("\nPID Auto Tune Second step Finished ...\n");
                     Serial.printf("\nPID kp:%4.2f\n", pid_parm.p);

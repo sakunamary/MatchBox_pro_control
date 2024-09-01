@@ -95,7 +95,7 @@ void handle_root()
     snprintf(index_html, 2048,
              "<html>\
 <head>\
-<title>MATCH BOX SETUP</title>\
+<title>MATCH BOX MINI SETUP</title>\
     </head> \
     <body>\
         <main>\
@@ -180,7 +180,7 @@ void setup()
             // init wifi
             // Serial.println("WiFi.mode(AP):");
             WiFi.mode(WIFI_AP);
-            WiFi.softAP(ap_name, "88888888"); // defualt IP address :192.168.4.1 password min 8 digis
+            WiFi.softAP(ap_name, "matchbox8888"); // defualt IP address :192.168.4.1 password min 8 digis
             break;
         }
     }

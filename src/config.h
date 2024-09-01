@@ -11,7 +11,7 @@
 #define BLE_BUFFER_SIZE 64
 #define HMI_BUFFER_SIZE 16
 
-#define VERSION "1.1.0"
+#define VERSION "1.1.1"
 
 #define SPI_SCK 8
 #define SPI_MISO 9
@@ -41,9 +41,9 @@
 #define SLEW_STEP_TIME (uint32_t)(SLEW_STEP * 500 / MAX_SLEW) // min ms delay between steps
 #define DUTY_STEP 2                                         // Use 1, 2, 4, 5, or 10.
 
-#define PID_TUNE_SV_1 150
-#define PID_TUNE_SV_2 170
-#define PID_TUNE_SV_3 190
+#define PID_TUNE_SV_1 160
+#define PID_TUNE_SV_2 190
+#define PID_TUNE_SV_3 200
 
 ////////////////////
 // Heater and Fan Limits/Options
