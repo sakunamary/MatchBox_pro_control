@@ -184,7 +184,7 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     // pwm_fan.writeScaled(0.6);
-                    pwm_fan.write(map(levelIO3, 0, 100, 600, 1000));
+                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
                     vTaskDelay(1000);
                     while (!tuner.isFinished()) // 开始自动整定循环
                     {
@@ -209,7 +209,7 @@ void Task_PID_autotune(void *pvParameters)
                     }
                     // Turn the output off here.
                     pwm_heat.writeScaled(0.0);
-                    pwm_fan.write(map(levelIO3, 0, 100, 600, 1000));
+                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
                     // Get PID gains - set your PID controller's gains to these
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
@@ -234,7 +234,7 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     // pwm_fan.writeScaled(0.55);
-                    pwm_fan.write(map(levelIO3, 0, 100, 600, 1000));
+                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
                     vTaskDelay(1000);
                     while (!tuner.isFinished()) // 开始自动整定循环
                     {
@@ -259,7 +259,7 @@ void Task_PID_autotune(void *pvParameters)
                     }
                     // Turn the output off here.
                     pwm_heat.writeScaled(0.0);
-                    pwm_fan.write(map(levelIO3, 0, 100, 600, 1000));
+                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
                     // Get PID gains - set your PID controller's gains to these
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
@@ -284,7 +284,7 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     // pwm_fan.writeScaled(0.5);
-                    pwm_fan.write(map(levelIO3, 0, 100, 600, 1000));
+                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
                     vTaskDelay(1000);
                     while (!tuner.isFinished()) // 开始自动整定循环
                     {
@@ -308,8 +308,9 @@ void Task_PID_autotune(void *pvParameters)
                         } // time units : us
                     }
                     // Turn the output off here.
+                    levelIO3=30;
                     pwm_heat.writeScaled(0.0);
-                    pwm_fan.write(map(levelIO3, 0, 100, 600, 1000));
+                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
                     // Get PID gains - set your PID controller's gains to these
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
@@ -330,11 +331,11 @@ void Task_PID_autotune(void *pvParameters)
     }
     delay(3000);
     ESP.restart();
-    // vTaskResume(xTASK_CMD_FROM_HMI);
-    // vTaskResume(xTASK_HMI_CMD_handle);
-    // vTaskResume(xTASK_BLE_CMD_handle);
+    vTaskResume(xTASK_CMD_FROM_HMI);
+    vTaskResume(xTASK_HMI_CMD_handle);
+    vTaskResume(xTASK_BLE_CMD_handle);
 
-    // vTaskSuspend(NULL);
+    vTaskSuspend(NULL);
 }
 
 #endif

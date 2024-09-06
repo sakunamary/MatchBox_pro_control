@@ -109,7 +109,7 @@ void TASK_HMI_CMD_handle(void *pvParameters)
                                 if (HMI_CMD_Buffer[11] != levelOT1) // HMI输入新的火力值
                                 {
                                     levelOT1 = HMI_CMD_Buffer[11];
-                                    pwm_heat.write(map(levelOT1, 0, 100, 0, 1000));
+                                    pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                                 }
                                 // HMI_CMD_Buffer[5]   //风力数据
                                 if (HMI_CMD_Buffer[12] != levelIO3) // HMI输入新的风力值
