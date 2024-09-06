@@ -12,7 +12,7 @@
 #define BLE_BUFFER_SIZE 128
 #define HMI_BUFFER_SIZE 17
 
-#define VERSION "1.1.9"
+#define VERSION "1.1.9a"
 
 #define SPI_SCK 8
 #define SPI_MISO 9
@@ -35,7 +35,7 @@
 
 
 #define PWM_FAN_MIN 600
-#define PWM_HEAT_MIN 0
+#define PWM_HEAT_MIN 400
 
 #define PWM_FAN_MAX 1000
 #define PWM_HEAT_MAX 1000
