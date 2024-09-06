@@ -216,7 +216,7 @@ void Task_PID_autotune(void *pvParameters)
                         } // time units : us
                     }
                     // Turn the output off here.
-                    levelIO3=30
+                    levelIO3=30;
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
                     // Get PID gains - set your PID controller's gains to these
