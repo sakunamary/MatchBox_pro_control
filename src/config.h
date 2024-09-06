@@ -11,7 +11,7 @@
 #define BLE_BUFFER_SIZE 64
 #define HMI_BUFFER_SIZE 16
 
-#define VERSION "1.1.1"
+#define VERSION "1.1.1a"
 
 #define SPI_SCK 8
 #define SPI_MISO 9
@@ -31,6 +31,12 @@
 #define PWM_HEAT 2
 #define PWM_FREQ 3922
 #define PWM_RESOLUTION 10 // 0-1024
+
+#define PWM_FAN_MIN 700
+#define PWM_HEAT_MIN 400
+
+#define PWM_FAN_MAX 1000
+#define PWM_HEAT_MAX 1000
 
 #define PID_MAX_OUT 100
 #define PID_MIN_OUT 10
@@ -66,6 +72,11 @@ typedef struct eeprom_settings
 
 
 #define TWDT_TIMEOUT_S 3
+
+
+
+
+
 
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/

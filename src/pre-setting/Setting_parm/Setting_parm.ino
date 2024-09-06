@@ -69,7 +69,7 @@ void setup()
     pwm_heat.attachPin(HEAT_OUT_PIN, frequency, resolution); // 1KHz 8 bit
     pwm_fan.attachPin(FAN_OUT_PIN, frequency, resolution);   // 1KHz 8 bit
     pwm_heat.writeScaled(0.0);
-    pwm_fan.writeScaled(0.3);
+    pwm_fan.writeScaled(0.4);
 
     Serial.println("INIT AHT20 and EEPROM...\n");
     // Prepare working .....
@@ -115,6 +115,8 @@ void setup()
         Serial.println("Initialed EEPROM,load data will be writen after 3s...");
         delay(3000);
         I2C_EEPROM.put(LOCATION_SETTINGS, pid_parm);
+        I2C_EEPROM.put(128, pid_parm);
+        I2C_EEPROM.put(256, pid_parm);
         Serial.println("EEPROM,load data for check after 3s...");
 
         delay(3000);
