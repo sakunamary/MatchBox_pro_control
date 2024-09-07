@@ -115,7 +115,7 @@ void TASK_HMI_CMD_handle(void *pvParameters)
                                 if (HMI_CMD_Buffer[12] != levelIO3) // HMI输入新的风力值
                                 {
                                     levelIO3 = HMI_CMD_Buffer[12];
-                                    pwm_fan.write(map(levelIO3, 0, 100, 600, 1000));
+                                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));;
                                 }
                             }
                             else // pid run on
