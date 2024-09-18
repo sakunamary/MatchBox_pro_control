@@ -67,7 +67,7 @@ class MyCallbacks : public BLECharacteristicCallbacks
         while (i < rxValue.length() && rxValue.length() > 0)
         {
 #if defined(DEBUG_MODE)
-            //Serial.print(rxValue[i]);
+            // Serial.print(rxValue[i]);
 #endif
             if (rxValue[i] == 0x0A)
             {
@@ -219,7 +219,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         levelIO3 = levelIO3 - DUTY_STEP;
                         if (levelIO3 < MIN_IO3 & levelIO3 != 0)
                             levelIO3 = 0; // turn ot1 off if trying to go below minimum. or use levelOT1 = MIN_HTR ?
-                         pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                        pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
                         // #if defined(DEBUG_MODE)
                         //                         Serial.printf("FAN:%d\n", levelIO3);//for debug
                         // #endif
@@ -241,7 +241,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                                 levelIO3 = MAX_IO3; // don't allow OT1 to exceed maximum
                             if (levelIO3 < MIN_IO3 & levelIO3 != 0)
                                 levelIO3 = MIN_IO3; // don't allow to set less than minimum unless setting to zero
-                        pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                            pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
                             // #if defined(DEBUG_MODE)
                             //                             Serial.printf("FAN:%d\n", levelIO3);//for debug
                             // #endif
@@ -345,6 +345,8 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         // #endif
                         I2C_EEPROM.get(0, pid_parm);
                         Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
+                        levelOT1 = 0;
+                        pwm_heat.write(0);
                         // Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
                         pid_status = false;
                         pid_sv = 0;
