@@ -129,7 +129,7 @@ void setup()
 
     pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
     pwm_fan.attachPin(pwm_fan_out, frequency, resolution);   // 1KHz 8 bit
-    pwm_heat.write(10);
+    pwm_heat.write(0);
     pwm_fan.write(550);
     Serial.begin(BAUDRATE);
     // read pid data from EEPROM
