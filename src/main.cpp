@@ -124,13 +124,16 @@ void setup()
     loopTaskWDTEnabled = true;
     xThermoDataMutex = xSemaphoreCreateMutex();
     xSerialReadBufferMutex = xSemaphoreCreateMutex();
+
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);
 
-    pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
-    pwm_fan.attachPin(pwm_fan_out, frequency, resolution);   // 1KHz 8 bit
-    pwm_heat.write(0);
+    pwm_fan.attachPin(pwm_fan_out, frequency, resolution); // 1KHz 8 bit
     pwm_fan.write(550);
+
+    pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
+    pwm_heat.write(1);
+
     Serial.begin(BAUDRATE);
     // read pid data from EEPROM
 #if defined(DEBUG_MODE)
@@ -152,16 +155,6 @@ void setup()
     else
     {
         I2C_EEPROM.get(0, pid_parm);
-
-#if defined(DEBUG_MODE)
-        Serial.printf("\nEEPROM value check ...\n");
-        Serial.printf("pid_CT:%d\n", pid_parm.pid_CT);
-        Serial.printf("PID kp:%4.2f\n", pid_parm.p);
-        Serial.printf("PID ki:%4.2f\n", pid_parm.i);
-        Serial.printf("PID kd:%4.2f\n", pid_parm.d);
-        Serial.printf("BT fix:%4.2f\n", pid_parm.BT_tempfix);
-        Serial.printf("ET fix:%4.2f\n", pid_parm.ET_tempfix);
-#endif
     }
 
     // 初始化网络服务
@@ -173,7 +166,7 @@ void setup()
 
         delay(1000);
 #if defined(DEBUG_MODE)
-         Serial.println("wifi not ready");
+        Serial.println("wifi not ready");
 #endif
         if (tries++ > 2)
         {
@@ -232,7 +225,7 @@ void setup()
         NULL // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
-    Serial.printf("\nTASK1:Task_Thermo_get_data...");
+    Serial.printf("\nTASK1:Task_Thermo_get_data...\n");
 #endif
 
     xTaskCreate(
@@ -245,7 +238,7 @@ void setup()
         &xTASK_data_to_BLE // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
-    Serial.printf("\nTASK6:TASK_DATA_to_BLE...");
+    Serial.printf("\nTASK6:TASK_DATA_to_BLE...\n");
 #endif
 
     xTaskCreate(
@@ -302,11 +295,25 @@ void setup()
     ElegantOTA.onEnd(onOTAEnd);
 
     server.begin();
+#if defined(DEBUG_MODE)
     Serial.println("HTTP server started");
+#endif
+#if defined(DEBUG_MODE)
+    Serial.printf("\nEEPROM value check ...\n");
+    Serial.printf("pid_CT:%4.2f\n", pid_parm.pid_CT);
+    Serial.printf("PID kp:%4.2f\n", pid_parm.p);
+    Serial.printf("PID ki:%4.2f\n", pid_parm.i);
+    Serial.printf("PID kd:%4.2f\n", pid_parm.d);
+    Serial.printf("BT fix:%4.2f\n", pid_parm.BT_tempfix);
+    Serial.printf("ET fix:%4.2f\n", pid_parm.ET_tempfix);
+#endif
 
     // init watchdog
     //  If the TWDT was not initialized automatically on startup, manually intialize it now
     esp_task_wdt_init(3, true);
+#if defined(DEBUG_MODE)
+    Serial.println("WDT started");
+#endif
 }
 
 void loop()

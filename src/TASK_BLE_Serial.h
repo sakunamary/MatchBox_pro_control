@@ -346,7 +346,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         I2C_EEPROM.get(0, pid_parm);
                         Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
                         levelOT1 = 0;
-                        pwm_heat.write(0);
+                        pwm_heat.write(1);
                         // Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
                         pid_status = false;
                         pid_sv = 0;
