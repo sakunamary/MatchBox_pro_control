@@ -33,7 +33,7 @@
 #define PWM_RESOLUTION 10 // 0-1024
 
 #define PWM_FAN_MIN 700
-#define PWM_HEAT_MIN 50
+#define PWM_HEAT_MIN 1
 
 #define PWM_FAN_MAX 1000
 #define PWM_HEAT_MAX 1000
