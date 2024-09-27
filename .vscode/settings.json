@@ -51,6 +51,7 @@
         "locale": "cpp",
         "variant": "cpp",
         "list": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "chrono": "cpp"
     }
 }
