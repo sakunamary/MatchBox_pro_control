@@ -129,7 +129,7 @@ void setup()
     ESP32PWM::allocateTimer(1);
 
     pwm_fan.attachPin(pwm_fan_out, frequency, resolution); // 1KHz 8 bit
-    pwm_fan.write(600);
+    pwm_fan.write(250);
 
     pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
     pwm_heat.write(1);
