@@ -153,7 +153,7 @@ void Task_PID_autotune(void *pvParameters)
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
 
-                            pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                            pwm_heat.write(map(pid_tune_output, 0, 255, PWM_HEAT_MIN, PWM_HEAT_MAX));
                             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
 #if defined(DEBUG_MODE)
@@ -202,7 +202,7 @@ void Task_PID_autotune(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
-                            pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX)); // 输出新火力pwr到SSRÍ
+                            pwm_heat.write(map(pid_tune_output, 0, 255, PWM_HEAT_MIN, PWM_HEAT_MAX)); // 输出新火力pwr到SSRÍ
                             xSemaphoreGive(xThermoDataMutex);                      // end of lock mutex
                         }
 #if defined(DEBUG_MODE)
@@ -252,7 +252,7 @@ void Task_PID_autotune(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
-                            pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX)); // 输出新火力pwr到SSRÍ
+                            pwm_heat.write(map(pid_tune_output, 0, 255, PWM_HEAT_MIN, PWM_HEAT_MAX)); // 输出新火力pwr到SSRÍ
                             xSemaphoreGive(xThermoDataMutex);                      // end of lock mutex
                         }
 #if defined(DEBUG_MODE)
