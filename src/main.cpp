@@ -30,6 +30,7 @@ extern TaskHandle_t loopTaskHandle;
 int levelOT1 = 0;
 int levelIO3 = 30;
 bool pid_status = false;
+bool PID_TUNNING = flase;
 
 double PID_output = 0;
 double pid_sv;

@@ -76,7 +76,7 @@ void Task_Thermo_get_data(void *pvParameters)
             Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
                                             // BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
             BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, aht20.getTemperature_C()) + pid_parm.BT_tempfix;
-            ET_TEMP = 0.0;
+            ET_TEMP = BT_TEMP;
             // delay(200);
             // MCP.Configuration(2, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
             // Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
@@ -85,7 +85,7 @@ void Task_Thermo_get_data(void *pvParameters)
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
 
-        if (pid_status)
+        if (pid_status == true && PID_TUNNING ==false)
         {
             if (BT_TEMP >= PID_TUNE_SV_1)
             {
@@ -118,6 +118,7 @@ void Task_PID_autotune(void *pvParameters)
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
     const TickType_t xIntervel = 3000 / portTICK_PERIOD_MS;
+    PID_TUNNING = true;
 
     while (1)
     {
@@ -152,8 +153,8 @@ void Task_PID_autotune(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
-
-                            pwm_heat.write(map(pid_tune_output, 0, 255, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                            levelOT1 = map(pid_tune_output, 0, 255, 0, 100);
+                            pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
 #if defined(DEBUG_MODE)
@@ -189,7 +190,7 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
                     tuner.setTuningCycles(5);
                     PID_TUNE_SV = PID_TUNE_SV_2;
-                    levelIO3 = 45;
+                    levelIO3 = 50;
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
@@ -202,8 +203,9 @@ void Task_PID_autotune(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
-                            pwm_heat.write(map(pid_tune_output, 0, 255, PWM_HEAT_MIN, PWM_HEAT_MAX)); // 输出新火力pwr到SSRÍ
-                            xSemaphoreGive(xThermoDataMutex);                      // end of lock mutex
+                            levelOT1 = map(pid_tune_output, 0, 255, 0, 100);
+                            pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX)); // 输出新火力pwr到SSRÍ
+                            xSemaphoreGive(xThermoDataMutex);                                         // end of lock mutex
                         }
 #if defined(DEBUG_MODE)
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
@@ -216,7 +218,7 @@ void Task_PID_autotune(void *pvParameters)
                         } // time units : us
                     }
                     // Turn the output off here.
-                    levelIO3=30;
+                    levelIO3 = 30;
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
                     // Get PID gains - set your PID controller's gains to these
@@ -239,7 +241,7 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
                     tuner.setTuningCycles(5);
                     PID_TUNE_SV = PID_TUNE_SV_3;
-                    levelIO3 = 40;
+                    levelIO3 = 45;
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
@@ -252,8 +254,9 @@ void Task_PID_autotune(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
-                            pwm_heat.write(map(pid_tune_output, 0, 255, PWM_HEAT_MIN, PWM_HEAT_MAX)); // 输出新火力pwr到SSRÍ
-                            xSemaphoreGive(xThermoDataMutex);                      // end of lock mutex
+                            levelOT1 = map(pid_tune_output, 0, 255, 0, 100);
+                            pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX)); // 输出新火力pwr到SSRÍ
+                            xSemaphoreGive(xThermoDataMutex);                                         // end of lock mutex
                         }
 #if defined(DEBUG_MODE)
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
@@ -286,6 +289,7 @@ void Task_PID_autotune(void *pvParameters)
             }
         }
     }
+    PID_TUNNING = false;
     ESP.restart();
     delay(5000);
     vTaskResume(xTASK_BLE_CMD_handle);
