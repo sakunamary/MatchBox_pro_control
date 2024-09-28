@@ -17,6 +17,7 @@ extern int levelOT1;
 extern int levelIO3;
 extern double pid_sv;
 extern bool pid_status;
+extern bool PID_TUNNING;
 extern pid_setting_t pid_parm;
 float PID_TUNE_SV;
 long prevMicroseconds;

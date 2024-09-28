@@ -30,7 +30,7 @@ extern TaskHandle_t loopTaskHandle;
 int levelOT1 = 0;
 int levelIO3 = 30;
 bool pid_status = false;
-bool PID_TUNNING = flase;
+bool PID_TUNNING = false;
 
 double PID_output = 0;
 double pid_sv;
@@ -130,7 +130,7 @@ void setup()
     ESP32PWM::allocateTimer(1);
 
     pwm_fan.attachPin(pwm_fan_out, frequency, resolution); // 1KHz 8 bit
-    pwm_fan.write(250);
+    pwm_fan.write(300);
 
     pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
     pwm_heat.write(1);
