@@ -108,25 +108,25 @@ void Task_Thermo_get_data(void *pvParameters)
                 Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
             }
         }
-        // 检查温度是否达到降温降风
-        if (BT_TEMP >= 65)
-        {
-            temp_check[0] = millis();
-        }
-        else if (BT_TEMP >= 120)
-        {
-            temp_check[1] = millis();
-        }
-        else if (BT_TEMP >= 180)
-        {
-            temp_check[2] = millis();
-        }
+        // // 检查温度是否达到降温降风
+        // if (BT_TEMP > 65)
+        // {
+        //     temp_check[0] = millis();
+        // }
+        // else if (BT_TEMP > 120)
+        // {
+        //     temp_check[1] = millis();
+        // }
+        // else if (BT_TEMP > 180)
+        // {
+        //     temp_check[2] = millis();
+        // }
 
-        if (temp_check[2] > temp_check[1] > temp_check[0]) // 温度下降
-        {
-            pwm_fan.write(300); // 改为小风量
-            pwm_heat.write(1);  // for safe
-        }
+        // if (temp_check[2] < temp_check[1] < temp_check[0]) // 温度下降
+        // {
+        //     pwm_fan.write(300); // 改为小风量
+        //     pwm_heat.write(1);  // for safe
+        // }
     }
 
 } // function

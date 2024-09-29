@@ -36,10 +36,10 @@
 
 
 // pwm setting
-#define PWM_FREQ 1000     //PWM 信号频率 单位：Hz
+#define PWM_FREQ 2000     //PWM 信号频率 单位：Hz
 #define PWM_RESOLUTION 10 // 0-1024 PWM 信号分辨率 10bit 是0-1024级 ，12bit 是 0-4096级，改了主程序的分辨率输出map函数也要相应调整
 
-#define PWM_FAN_MIN 250
+#define PWM_FAN_MIN 300
 #define PWM_HEAT_MIN 1
 
 #define PWM_FAN_MAX 1000  //最大值，对应10bit的1024 ，pwm满载需要保留一点空隙。不能到1024
@@ -54,8 +54,8 @@
 
 //PID自动整定 三个阶段的温度设置
 #define PID_TUNE_SV_1 160
-#define PID_TUNE_SV_2 190
-#define PID_TUNE_SV_3 200
+#define PID_TUNE_SV_2 180
+#define PID_TUNE_SV_3 195
 
 #define PID_TUNE_FAN_1 55
 #define PID_TUNE_FAN_2 50
