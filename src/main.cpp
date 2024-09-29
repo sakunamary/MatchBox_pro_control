@@ -10,7 +10,6 @@
 #include <pidautotuner.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 #include <PID_v1.h>
-// #include "ArduPID.h"
 #include <TASK_read_temp.h>
 #include <TASK_BLE_Serial.h>
 
@@ -21,16 +20,14 @@ ESP32PWM pwm_fan;
 PIDAutotuner tuner = PIDAutotuner();
 WebServer server(80);
 PID Heat_pid_controller(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d, DIRECT);
-// ArduPID Heat_pid_controller;
 
 extern bool loopTaskWDTEnabled;
 extern TaskHandle_t loopTaskHandle;
-// static esp_task_wdt_user_handle_t wdt_esp_reboot;
 
 int levelOT1 = 0;
 int levelIO3 = 30;
 bool pid_status = false;
-
+bool PID_TUNNING = false ;
 double PID_output = 0;
 double pid_sv;
 
@@ -129,7 +126,7 @@ void setup()
     ESP32PWM::allocateTimer(1);
 
     pwm_fan.attachPin(pwm_fan_out, frequency, resolution); // 1KHz 8 bit
-    pwm_fan.write(250);
+    pwm_fan.write(300);
 
     pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
     pwm_heat.write(1);
@@ -171,7 +168,6 @@ void setup()
         if (tries++ > 2)
         {
             // init wifi
-            // Serial.println("WiFi.mode(AP):");
             WiFi.mode(WIFI_AP);
             WiFi.softAP(ap_name, "matchbox8888"); // defualt IP address :192.168.4.1 password min 8 digis
             break;
@@ -273,12 +269,7 @@ void setup()
     Heat_pid_controller.SetMode(MANUAL);
     Heat_pid_controller.SetOutputLimits(PID_MIN_OUT, PID_MAX_OUT);
     Heat_pid_controller.SetSampleTime(int(pid_parm.pid_CT * 1000));
-    // Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);
-    // Heat_pid_controller.setSampleTime(pid_parm.pid_CT * 1000); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
-    // Heat_pid_controller.setOutputLimits(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
-    // Heat_pid_controller.setBias(255.0 / 2.0);
-    // Heat_pid_controller.setWindUpLimits(2, 2); // Groth bounds for the integral term to prevent integral wind-up
-    // Heat_pid_controller.start();
+
 
     // INIT PID AUTOTUNE
     tuner.setTargetInputValue(PID_TUNE_SV_1);
@@ -318,7 +309,6 @@ void setup()
 
 void loop()
 {
-    // mb.task();
     server.handleClient();
     ElegantOTA.loop();
     // disconnecting
