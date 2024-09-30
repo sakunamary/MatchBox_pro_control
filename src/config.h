@@ -6,9 +6,9 @@
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
-#define VERSION "1.1.2"
+#define VERSION "1.0.0"
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
-//#define DEBUG_MODE 
+#define DEBUG_MODE 
 
 
 
@@ -36,7 +36,7 @@
 
 
 // pwm setting
-#define PWM_FREQ 2000     //PWM 信号频率 单位：Hz
+#define PWM_FREQ 3000     //PWM 信号频率 单位：Hz
 #define PWM_RESOLUTION 10 // 0-1024 PWM 信号分辨率 10bit 是0-1024级 ，12bit 是 0-4096级，改了主程序的分辨率输出map函数也要相应调整
 
 #define PWM_FAN_MIN 300

@@ -4,7 +4,7 @@
 #include <esp_task_wdt.h>
 #include <ESP32Servo.h>
 #include <StringTokenizer.h>
- #include <WiFiClient.h>
+//  #include <WiFiClient.h>
 // #include <WebServer.h>
 // #include <ElegantOTA.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
@@ -27,7 +27,8 @@ byte tries;
 char ap_name[16];
 uint8_t macAddr[6];
 
-
+extern const byte pwm_fan_out ;
+extern const byte pwm_heat_out;
 
 pid_setting_t pid_parm = {
     .pid_CT = 1.5,     // uint16_t pid_CT;
@@ -203,6 +204,21 @@ void setup()
     Serial.printf("\nTASK=2:modbus_control OK");
 #endif
 
+
+
+    xTaskCreate(
+        Task_PID_PARM_SETTING, "Task_PID_PARM_SETTING" //
+        ,
+        1024 * 10 // This stack size can be checked & adjusted by reading the Stack Highwater
+        ,
+        NULL, 3 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+        ,
+        NULL // Running Core decided by FreeRTOS,let core0 run wifi and BT
+    );
+#if defined(DEBUG_MODE)
+    Serial.printf("\nTASK=3:Task_PID_PARM_SETTING OK");
+#endif
+
  // INIT MODBUS
 
     mb.server(502); // Start Modbus IP //default port :502
@@ -244,6 +260,9 @@ void setup()
 
     // init PID
 
+    Heat_pid_controller.SetMode(MANUAL);
+    Heat_pid_controller.SetOutputLimits(PID_MIN_OUT, PID_MAX_OUT);
+    Heat_pid_controller.SetSampleTime(int(pid_parm.pid_CT * 1000));
 
     // // Start ElegantOTA
     // server.on("/", handle_root);
