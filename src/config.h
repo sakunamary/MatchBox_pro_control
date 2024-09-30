@@ -96,15 +96,15 @@ typedef struct eeprom_settings
 
  static TaskHandle_t xTASK_data_to_BLE = NULL;
 static TaskHandle_t xTask_PID_autotune = NULL;
-
+static TaskHandle_t xTask_modbus_control = NULL;
 static TaskHandle_t xTASK_BLE_CMD_handle = NULL;
 
 SemaphoreHandle_t xThermoDataMutex = NULL;
 SemaphoreHandle_t xSerialReadBufferMutex = NULL;
 // SemaphoreHandle_t xContrlDataMutex = NULL;
 
-QueueHandle_t queueCMD_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
-QueueHandle_t queue_data_to_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
+// QueueHandle_t queueCMD_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
+// QueueHandle_t queue_data_to_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
 
 //以上代码不要动，FreeRTOS用的代码
 #endif

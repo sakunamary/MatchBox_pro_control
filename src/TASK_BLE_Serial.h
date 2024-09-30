@@ -3,31 +3,16 @@
 #define __TASK_BLE_SERIAL_H__
 #include <Arduino.h>
 #include <config.h>
-#include <StringTokenizer.h>
-#include <esp_attr.h>
-#include <esp_task_wdt.h>
-#include <driver/rtc_io.h>
-#include "soc/rtc_wdt.h"
 
+#include "soc/rtc_wdt.h"
 #include <ESP32Servo.h>
 
-#include <BLEDevice.h>
-#include <BLEServer.h>
-#include <BLEUtils.h>
-#include <BLE2902.h>
-
-// #include "ArduPID.h"
-
-BLEServer *pServer = NULL;
-BLECharacteristic *pTxCharacteristic;
 
 extern ESP32PWM pwm_heat;
 extern ESP32PWM pwm_fan;
 extern ExternalEEPROM I2C_EEPROM;
-// extern ArduPID Heat_pid_controller;
+
 extern PID Heat_pid_controller;
-bool deviceConnected = false;
-bool oldDeviceConnected = false;
 extern char ap_name[16];
 String CMD_Data[6];
 
