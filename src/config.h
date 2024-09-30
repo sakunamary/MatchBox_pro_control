@@ -6,7 +6,7 @@
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
-#define VERSION "1.1.2"
+#define VERSION "1.1.2a"
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
 //#define DEBUG_MODE 
 
@@ -58,8 +58,14 @@
 #define PID_TUNE_SV_3 195
 
 #define PID_TUNE_FAN_1 55
-#define PID_TUNE_FAN_2 50
-#define PID_TUNE_FAN_3 45
+#define PID_TUNE_FAN_2 53
+#define PID_TUNE_FAN_3 50
+
+//PID自动整定的测定循环次数
+#define PID_TUNE_CYCLE  10
+
+//PID 自动切换模式，注释就只用eeprom内第一组pid参数
+#define PID_AUTO_SHIFT  
 
 
 ////////////////////

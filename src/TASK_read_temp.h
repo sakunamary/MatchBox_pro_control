@@ -32,7 +32,7 @@ extern ESP32PWM pwm_fan;
 // Need this for the lower level access to set them up.
 uint8_t address = 0x68;
 long Voltage; // Array used to store results
-long temp_check[3];
+unsigned long temp_check[3];
 
 #define R0 100
 #define Rref 1000
@@ -84,17 +84,8 @@ void Task_Thermo_get_data(void *pvParameters)
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
 
-        // 封装BLE 数据格式
-        // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
-        if (xSemaphoreTake(xSerialReadBufferMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
-        {
-            sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
-            xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
-            xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
-        }
-        xSemaphoreGive(xSerialReadBufferMutex); // end of lock mutex
-
         // 检查温度是否达到切换PID参数
+#if defined(PID_AUTO_SHIFT)
         if (pid_status && !PID_TUNNING)
         {
             if (BT_TEMP >= PID_TUNE_SV_1)
@@ -108,25 +99,43 @@ void Task_Thermo_get_data(void *pvParameters)
                 Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
             }
         }
-        // // 检查温度是否达到降温降风
-        // if (BT_TEMP > 65)
-        // {
-        //     temp_check[0] = millis();
-        // }
-        // else if (BT_TEMP > 120)
-        // {
-        //     temp_check[1] = millis();
-        // }
-        // else if (BT_TEMP > 180)
-        // {
-        //     temp_check[2] = millis();
-        // }
 
-        // if (temp_check[2] < temp_check[1] < temp_check[0]) // 温度下降
-        // {
-        //     pwm_fan.write(300); // 改为小风量
-        //     pwm_heat.write(1);  // for safe
-        // }
+#endif
+        //检查温度是否达到降温降风
+        if (!PID_TUNNING)
+        {
+            if (BT_TEMP < 60 && BT_TEMP > 55)
+            {
+                temp_check[0] = millis();
+            }
+            else if (BT_TEMP < 125 && BT_TEMP > 120)
+            {
+                temp_check[1] = millis();
+            }
+            else if (BT_TEMP > 160)
+            {
+                temp_check[2] = millis();
+            }
+
+            if (temp_check[2] < temp_check[1] < temp_check[0]) // 温度下降
+            {
+                pwm_fan.write(400); // 改为小风量
+                pwm_heat.write(1);  // for safe
+                temp_check[2] = 0;
+                temp_check[1] = 0;
+                temp_check[0] = 0;
+            }
+        }
+
+        // 封装BLE 数据格式
+        // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
+        if (xSemaphoreTake(xSerialReadBufferMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
+        {
+            sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
+            xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
+            xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
+        }
+        xSemaphoreGive(xSerialReadBufferMutex); // end of lock mutex
     }
 
 } // function
@@ -155,7 +164,7 @@ void Task_PID_autotune(void *pvParameters)
                 if (loop == 0)
                 {
                     tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
-                    tuner.setTuningCycles(5);
+                    tuner.setTuningCycles(PID_TUNE_CYCLE);
                     PID_TUNE_SV = PID_TUNE_SV_1;
                     levelIO3 = PID_TUNE_FAN_1;
                     tuner.setTargetInputValue(PID_TUNE_SV);
@@ -206,7 +215,7 @@ void Task_PID_autotune(void *pvParameters)
                 else if (loop == 1)
                 {
                     tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
-                    tuner.setTuningCycles(5);
+                    tuner.setTuningCycles(PID_TUNE_CYCLE);
                     PID_TUNE_SV = PID_TUNE_SV_2;
                     levelIO3 = PID_TUNE_FAN_2;
                     tuner.setTargetInputValue(PID_TUNE_SV);
@@ -256,7 +265,7 @@ void Task_PID_autotune(void *pvParameters)
                 else if (loop == 2)
                 {
                     tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
-                    tuner.setTuningCycles(5);
+                    tuner.setTuningCycles(PID_TUNE_CYCLE);
                     PID_TUNE_SV = PID_TUNE_SV_3;
                     levelIO3 = PID_TUNE_FAN_3;
                     tuner.setTargetInputValue(PID_TUNE_SV);
