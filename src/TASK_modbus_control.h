@@ -4,27 +4,29 @@
 #include <Arduino.h>
 #include <config.h>
 #include <ESP32Servo.h>
+#include <WiFi.h>
 
-const int HEAT_OUT_PIN = PWM_HEAT; // GPIO26
-const int FAN_OUT_PIN = PWM_FAN;   // GPIO26
+
+const int HEAT_OUT_PIN = PWM_HEAT; 
+const int FAN_OUT_PIN = PWM_FAN; 
 const int frequency = PWM_FREQ;
 const byte resolution = PWM_RESOLUTION; // pwm -0-4096
 
 extern ESP32PWM pwm_heat;
 extern ESP32PWM pwm_fan;
 
-extern PID Heat_pid_controller;
+
 uint16_t last_PWR;
 uint16_t last_FAN;
 
-const uint16_t FAN_HREG = 3005;  // COOLING FAN SWITCH
-const uint16_t HEAT_HREG = 3006; // HEAT SWTICH
+const uint16_t FAN_HREG = 3004;  // FAN
+const uint16_t HEAT_HREG = 3005; // HEAT
 
-const uint16_t PID_P_HREG = 3007;
-const uint16_t PID_I_HREG = 3008;
-const uint16_t PID_D_HREG = 3009;
-const uint16_t PID_SV_HREG = 3010;     // PID SV
-const uint16_t PID_STATUS_HREG = 3011; // PID RUNNING STATUS
+const uint16_t PID_P_HREG = 3006;
+const uint16_t PID_I_HREG = 3007;
+const uint16_t PID_D_HREG = 3008;
+const uint16_t PID_SV_HREG = 3009;     // PID SV
+const uint16_t PID_STATUS_HREG = 3010; // PID RUNNING STATUS
 
 int levelOT1 = 0;
 int levelIO3 = 30;
@@ -45,7 +47,7 @@ void Task_modbus_control(void *pvParameters)
     /* Variable Definition */
     (void)pvParameters;
     TickType_t xLastWakeTime;
-    const TickType_t xIntervel = 200 / portTICK_PERIOD_MS;
+    const TickType_t xIntervel = 250 / portTICK_PERIOD_MS;
     /* Task Setup and Initialize */
     // Initial the xLastWakeTime variable with the current time.
     xLastWakeTime = xTaskGetTickCount();
@@ -170,7 +172,7 @@ void Task_PID_PARM_SETTING(void *pvParameters)
     /* Variable Definition */
     (void)pvParameters;
     TickType_t xLastWakeTime;
-    const TickType_t xIntervel = 500 / portTICK_PERIOD_MS;
+    const TickType_t xIntervel = 1000 / portTICK_PERIOD_MS;
     /* Task Setup and Initialize */
     // Initial the xLastWakeTime variable with the current time.
     xLastWakeTime = xTaskGetTickCount();
@@ -182,6 +184,11 @@ void Task_PID_PARM_SETTING(void *pvParameters)
         if (mb.Hreg(PID_P_HREG) != int(pid_parm.p * 100))
         {
             pid_parm.p = (double)mb.Hreg(PID_P_HREG) / 100;
+
+#if defined(DEBUG_MODE)
+        Serial.printf("\nPID_P_HREG (3006) bt:%d,pid_parm.p:%4.2f\n", PID_P_HREG,pid_parm.p );
+        Serial.println();
+#endif
         }
         if (mb.Hreg(PID_I_HREG) != int(pid_parm.i * 100))
         {
@@ -195,6 +202,6 @@ void Task_PID_PARM_SETTING(void *pvParameters)
         Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
 
     }
-}
+}  
 
 #endif

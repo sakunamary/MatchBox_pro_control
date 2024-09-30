@@ -4,8 +4,8 @@
 #include <esp_task_wdt.h>
 #include <ESP32Servo.h>
 #include <StringTokenizer.h>
-//  #include <WiFiClient.h>
-// #include <WebServer.h>
+#include <WiFiClient.h>
+#include <WebServer.h>
 // #include <ElegantOTA.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 #include <PID_v1.h>
@@ -16,18 +16,17 @@ ExternalEEPROM I2C_EEPROM;
 ESP32PWM pwm_heat;
 ESP32PWM pwm_fan;
 
-// WebServer server(80);
+WebServer server(80);
 PID Heat_pid_controller(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d, DIRECT);
 
 extern bool loopTaskWDTEnabled;
 extern TaskHandle_t loopTaskHandle;
 
-
 byte tries;
 char ap_name[16];
 uint8_t macAddr[6];
 
-extern const byte pwm_fan_out ;
+extern const byte pwm_fan_out;
 extern const byte pwm_heat_out;
 
 pid_setting_t pid_parm = {
@@ -123,18 +122,18 @@ void setup()
     // read pid data from EEPROM
 #if defined(DEBUG_MODE)
     // start Serial
-    Serial.printf("\nStart Task...");
+    Serial.printf("\nStart Task...\n");
 #endif
     aht20.begin();
     MCP.NewConversion(); // New conversion is initiated
     I2C_EEPROM.setMemoryType(64);
 
 #if defined(DEBUG_MODE)
-    Serial.println("start Reading EEPROM setting ...");
+    Serial.println("\nstart Reading EEPROM setting ...\n");
 #endif
     if (!I2C_EEPROM.begin())
     {
-        Serial.println("failed to initialise EEPROM");
+        Serial.println("\nfailed to initialise EEPROM\n");
         delay(1000);
     }
     else
@@ -153,7 +152,7 @@ void setup()
 #if defined(DEBUG_MODE)
         Serial.println("wifi not ready");
 #endif
-        if (tries++ > 2)
+        if (tries++ > 1)
         {
             // init wifi
             WiFi.mode(WIFI_AP);
@@ -175,7 +174,7 @@ void setup()
         local_IP = IpAddressToString(WiFi.localIP());
     }
 #endif
-   
+
     /*---------- Task Definition ---------------------*/
     // Setup tasks to run independently.
     xTaskCreate(
@@ -201,10 +200,8 @@ void setup()
         &xTask_modbus_control // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
-    Serial.printf("\nTASK=2:modbus_control OK");
+    Serial.printf("\nTASK=2:modbus_control OK\n");
 #endif
-
-
 
     xTaskCreate(
         Task_PID_PARM_SETTING, "Task_PID_PARM_SETTING" //
@@ -216,10 +213,10 @@ void setup()
         NULL // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
-    Serial.printf("\nTASK=3:Task_PID_PARM_SETTING OK");
+    Serial.printf("\nTASK=3:Task_PID_PARM_SETTING OK\n");
 #endif
 
- // INIT MODBUS
+    // INIT MODBUS
 
     mb.server(502); // Start Modbus IP //default port :502
 
@@ -237,13 +234,12 @@ void setup()
     mb.addHreg(PID_P_HREG);
     mb.addHreg(PID_I_HREG);
     mb.addHreg(PID_D_HREG);
-    
 
     mb.addHreg(AMB_RH_HREG);
     mb.addHreg(AMB_TEMP_HREG);
 
     // INIT MODBUS HREG VALUE
-    mb.Hreg(BT_HREG, 0);      // 初始化赋值
+    mb.Hreg(BT_HREG, 0); // 初始化赋值
 
     mb.Hreg(HEAT_HREG, 0); // 初始化赋值
     mb.Hreg(FAN_HREG, 0);  // 初始化赋值
@@ -251,9 +247,9 @@ void setup()
     mb.Hreg(PID_SV_HREG, 0);     // 初始化赋值
     mb.Hreg(PID_STATUS_HREG, 0); // 初始化赋值
 
-    mb.Hreg(PID_P_HREG,0);
-    mb.Hreg(PID_I_HREG,0);
-    mb.Hreg(PID_D_HREG,0);
+    mb.Hreg(PID_P_HREG, 200);
+    mb.Hreg(PID_I_HREG, 12);
+    mb.Hreg(PID_D_HREG, 500);
 
     mb.Hreg(AMB_RH_HREG, 0);   // 初始化赋值
     mb.Hreg(AMB_TEMP_HREG, 0); // 初始化赋值
@@ -290,7 +286,7 @@ void setup()
     //  If the TWDT was not initialized automatically on startup, manually intialize it now
     esp_task_wdt_init(3, true);
 #if defined(DEBUG_MODE)
-    Serial.println("WDT started");
+    Serial.println("\nWDT started\n");
 #endif
 }
 
@@ -298,24 +294,24 @@ void loop()
 {
 
     mb.task();
-//     server.handleClient();
-//     ElegantOTA.loop();
-//     // disconnecting
-//     if (!deviceConnected && oldDeviceConnected)
-//     {
-//         delay(500);                  // give the bluetooth stack the chance to get things ready
-//         pServer->startAdvertising(); // restart advertising
-// #if defined(DEBUG_MODE)
-//         Serial.println("start advertising");
-// #endif
-//         oldDeviceConnected = deviceConnected;
-//     }
-//     // connecting
-//     if (deviceConnected && !oldDeviceConnected)
-//     {
-//         // do stuff here on connecting
-//         oldDeviceConnected = deviceConnected;
-//     }
+    //     server.handleClient();
+    //     ElegantOTA.loop();
+    //     // disconnecting
+    //     if (!deviceConnected && oldDeviceConnected)
+    //     {
+    //         delay(500);                  // give the bluetooth stack the chance to get things ready
+    //         pServer->startAdvertising(); // restart advertising
+    // #if defined(DEBUG_MODE)
+    //         Serial.println("start advertising");
+    // #endif
+    //         oldDeviceConnected = deviceConnected;
+    //     }
+    //     // connecting
+    //     if (deviceConnected && !oldDeviceConnected)
+    //     {
+    //         // do stuff here on connecting
+    //         oldDeviceConnected = deviceConnected;
+    //     }
 
     // #if !CONFIG_ESP_TASK_WDT_INIT
     //     // If we manually initialized the TWDT, deintialize it now
