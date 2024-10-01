@@ -22,7 +22,6 @@
   #include <rom/ets_sys.h>
 #endif
 #include "AsyncEventSource.h"
-#include "literals.h"
 
 using namespace asyncsrv;
 
@@ -128,8 +127,7 @@ AsyncEventSourceMessage::~AsyncEventSourceMessage() {
     free(_data);
 }
 
-size_t AsyncEventSourceMessage::ack(size_t len, uint32_t time) {
-  (void)time;
+size_t AsyncEventSourceMessage::ack(size_t len, __attribute__((unused)) uint32_t time) {
   // If the whole message is now acked...
   if (_acked + len > _len) {
     // Return the number of extra bytes acked (they will be carried on to the next message)
@@ -142,17 +140,19 @@ size_t AsyncEventSourceMessage::ack(size_t len, uint32_t time) {
   return 0;
 }
 
-// This could also return void as the return value is not used.
-// Leaving as-is for compatibility...
-size_t AsyncEventSourceMessage::send(AsyncClient* client) {
-  if (_sent >= _len) {
+size_t AsyncEventSourceMessage::write(AsyncClient* client) {
+  if (_sent >= _len || !client->canSend()) {
     return 0;
   }
-  const size_t len_to_send = _len - _sent;
-  auto position = reinterpret_cast<const char*>(_data + _sent);
-  const size_t sent_now = client->write(position, len_to_send);
-  _sent += sent_now;
-  return sent_now;
+  size_t len = min(_len - _sent, client->space());
+  size_t sent = client->add((const char*)_data + _sent, len);
+  _sent += sent;
+  return sent;
+}
+
+size_t AsyncEventSourceMessage::send(AsyncClient* client) {
+  size_t sent = write(client);
+  return sent && client->send() ? sent : 0;
 }
 
 // Client
@@ -174,6 +174,8 @@ AsyncEventSourceClient::AsyncEventSourceClient(AsyncWebServerRequest* request, A
 
   _server->_addClient(this);
   delete request;
+
+  _client->setNoDelay(true);
 }
 
 AsyncEventSourceClient::~AsyncEventSourceClient() {
@@ -206,16 +208,11 @@ void AsyncEventSourceClient::_queueMessage(const char* message, size_t len) {
   }
 }
 
-void AsyncEventSourceClient::_onAck(size_t len, uint32_t time) {
+void AsyncEventSourceClient::_onAck(size_t len __attribute__((unused)), uint32_t time __attribute__((unused))) {
 #ifdef ESP32
   // Same here, acquiring the lock early
   std::lock_guard<std::mutex> lock(_lockmq);
 #endif
-  while (len && _messageQueue.size()) {
-    len = _messageQueue.front().ack(len, time);
-    if (_messageQueue.front().finished())
-      _messageQueue.pop_front();
-  }
   _runQueue();
 }
 
@@ -264,11 +261,24 @@ size_t AsyncEventSourceClient::packetsWaiting() const {
 }
 
 void AsyncEventSourceClient::_runQueue() {
-  // Calls to this private method now already protected by _lockmq acquisition
-  // so no extra call of _lockmq.lock() here..
-  for (auto& i : _messageQueue) {
-    if (!i.sent())
-      i.send(_client);
+  size_t total_bytes_written = 0;
+  for (auto i = _messageQueue.begin(); i != _messageQueue.end(); ++i) {
+    if (!i->sent()) {
+      const size_t bytes_written = i->write(_client);
+      total_bytes_written += bytes_written;
+      if (bytes_written == 0)
+        break;
+    }
+  }
+  if (total_bytes_written > 0)
+    _client->send();
+
+  size_t len = total_bytes_written;
+  while (len && _messageQueue.size()) {
+    len = _messageQueue.front().ack(len);
+    if (_messageQueue.front().finished()) {
+      _messageQueue.pop_front();
+    }
   }
 }
 
@@ -278,7 +288,9 @@ void AsyncEventSource::onConnect(ArEventHandlerFunction cb) {
 }
 
 void AsyncEventSource::authorizeConnect(ArAuthorizeConnectHandler cb) {
-  _authorizeConnectHandler = cb;
+  AuthorizationMiddleware* m = new AuthorizationMiddleware(401, cb);
+  m->_freeOnRemoval = true;
+  addMiddleware(m);
 }
 
 void AsyncEventSource::_addClient(AsyncEventSourceClient* client) {
@@ -363,20 +375,10 @@ bool AsyncEventSource::canHandle(AsyncWebServerRequest* request) {
   if (request->method() != HTTP_GET || !request->url().equals(_url)) {
     return false;
   }
-  request->addInterestingHeader(T_Last_Event_ID);
-  request->addInterestingHeader(T_Cookie);
   return true;
 }
 
 void AsyncEventSource::handleRequest(AsyncWebServerRequest* request) {
-  if ((_username.length() && _password.length()) && !request->authenticate(_username.c_str(), _password.c_str())) {
-    return request->requestAuthentication();
-  }
-  if (_authorizeConnectHandler != NULL) {
-    if (!_authorizeConnectHandler(request)) {
-      return request->send(401);
-    }
-  }
   request->send(new AsyncEventSourceResponse(this));
 }
 
@@ -392,7 +394,8 @@ AsyncEventSourceResponse::AsyncEventSourceResponse(AsyncEventSource* server) {
 }
 
 void AsyncEventSourceResponse::_respond(AsyncWebServerRequest* request) {
-  String out = _assembleHead(request->version());
+  String out;
+  _assembleHead(out, request->version());
   request->client()->write(out.c_str(), _headLength);
   _state = RESPONSE_WAIT_ACK;
 }

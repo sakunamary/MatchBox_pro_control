@@ -21,7 +21,6 @@
 #define ASYNCEVENTSOURCE_H_
 
 #include <Arduino.h>
-#include <list>
 #ifdef ESP32
   #include <AsyncTCP.h>
   #include <mutex>
@@ -49,19 +48,11 @@
   #endif
 #endif
 
-#ifndef DEFAULT_MAX_SSE_CLIENTS
-  #ifdef ESP32
-    #define DEFAULT_MAX_SSE_CLIENTS 8
-  #else
-    #define DEFAULT_MAX_SSE_CLIENTS 4
-  #endif
-#endif
-
 class AsyncEventSource;
 class AsyncEventSourceResponse;
 class AsyncEventSourceClient;
 using ArEventHandlerFunction = std::function<void(AsyncEventSourceClient* client)>;
-using ArAuthorizeConnectHandler = std::function<bool(AsyncWebServerRequest* request)>;
+using ArAuthorizeConnectHandler = ArAuthorizeFunction;
 
 class AsyncEventSourceMessage {
   private:
@@ -74,7 +65,8 @@ class AsyncEventSourceMessage {
   public:
     AsyncEventSourceMessage(const char* data, size_t len);
     ~AsyncEventSourceMessage();
-    size_t ack(size_t len, uint32_t time __attribute__((unused)));
+    size_t ack(size_t len, uint32_t time = 0);
+    size_t write(AsyncClient* client);
     size_t send(AsyncClient* client);
     bool finished() { return _acked == _len; }
     bool sent() { return _sent == _len; }
@@ -99,6 +91,8 @@ class AsyncEventSourceClient {
     AsyncClient* client() { return _client; }
     void close();
     void write(const char* message, size_t len);
+    void send(const String& message, const String& event, uint32_t id = 0, uint32_t reconnect = 0) { send(message.c_str(), event.c_str(), id, reconnect); }
+    void send(const String& message, const char* event, uint32_t id = 0, uint32_t reconnect = 0) { send(message.c_str(), event, id, reconnect); }
     void send(const char* message, const char* event = NULL, uint32_t id = 0, uint32_t reconnect = 0);
     bool connected() const { return (_client != NULL) && _client->connected(); }
     uint32_t lastId() const { return _lastId; }
@@ -121,16 +115,17 @@ class AsyncEventSource : public AsyncWebHandler {
     mutable std::mutex _client_queue_lock;
 #endif
     ArEventHandlerFunction _connectcb{nullptr};
-    ArAuthorizeConnectHandler _authorizeConnectHandler;
 
   public:
-    AsyncEventSource(const String& url) : _url(url){};
+    AsyncEventSource(const String& url) : _url(url) {};
     ~AsyncEventSource() { close(); };
 
     const char* url() const { return _url.c_str(); }
     void close();
     void onConnect(ArEventHandlerFunction cb);
     void authorizeConnect(ArAuthorizeConnectHandler cb);
+    void send(const String& message, const String& event, uint32_t id = 0, uint32_t reconnect = 0) { send(message.c_str(), event.c_str(), id, reconnect); }
+    void send(const String& message, const char* event, uint32_t id = 0, uint32_t reconnect = 0) { send(message.c_str(), event, id, reconnect); }
     void send(const char* message, const char* event = NULL, uint32_t id = 0, uint32_t reconnect = 0);
     // number of clients connected
     size_t count() const;

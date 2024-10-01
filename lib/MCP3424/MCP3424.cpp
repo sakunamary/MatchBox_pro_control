@@ -26,7 +26,7 @@ Contact : batto@hotmail.fr
 
 MCP3424::MCP3424(uint8_t adresse){
 Wire.begin();
-_adresse=1101<<3;
+_adresse=(1101<<3);
 _adresse|=adresse;
 }
 
@@ -154,3 +154,28 @@ return _resultat;
 
 }
 
+
+//----------------------------------------------- dFilterRC
+filterRC::filterRC() {
+ level = 0;
+ y = 0;
+ first = true;
+}
+
+// ----------------------------------------------------
+void filterRC::init( int32_t percent ) {
+ level = percent;
+ first = true;
+}
+// ------------------------------------
+int32_t filterRC::doFilter ( int32_t xi ) {
+   if( first) {
+     y = xi;
+     first = false;
+     return y;
+   }
+   float yy = (float)(100 - level) * (float)xi * 0.01;
+   float yyy = (float)level * (float)y * 0.01;
+   yy += yyy;
+   return y = round( yy );
+}

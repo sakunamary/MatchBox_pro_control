@@ -42,6 +42,8 @@ uint8_t macAddr[6];
 double pid_out_max = PID_MAX_OUT; // 取值范围 （0-100）
 double pid_out_min = PID_MIN_OUT; // 取值范围 （0-100）
 
+extern filterRC BT_TEMP_ft;    // filter for logged ET, BT
+
 pid_setting_t pid_parm = {
     .pid_CT = 1.5,     // uint16_t pid_CT;
     .p = 2.0,          // double p ;
@@ -130,6 +132,8 @@ void setup()
 
     pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
     pwm_heat.write(1);
+
+    BT_TEMP_ft.init(BT_FILTER);
 
     Serial.begin(BAUDRATE);
     // read pid data from EEPROM
