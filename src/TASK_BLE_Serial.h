@@ -377,7 +377,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         Heat_pid_controller.SetMode(MANUAL);
                         pid_status = false;
                         pid_sv = 0;
-
+                        PID_TUNNING = true;
                         vTaskResume(xTask_PID_autotune);
                         delay(100);
                         xTaskNotify(xTask_PID_autotune, 0, eIncrement); // 通知处理任务干活

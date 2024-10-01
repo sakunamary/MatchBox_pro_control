@@ -27,7 +27,7 @@ extern TaskHandle_t loopTaskHandle;
 int levelOT1 = 0;
 int levelIO3 = 30;
 bool pid_status = false;
-bool PID_TUNNING = false ;
+bool PID_TUNNING = false;
 double PID_output = 0;
 double pid_sv;
 
@@ -42,7 +42,8 @@ uint8_t macAddr[6];
 double pid_out_max = PID_MAX_OUT; // 取值范围 （0-100）
 double pid_out_min = PID_MIN_OUT; // 取值范围 （0-100）
 
-extern filterRC BT_TEMP_ft;    // filter for logged ET, BT
+extern filterRC BT_TEMP_ft; // filter for logged ET, BT
+extern filterRC AMB_ft;     // filter for logged ET, BT
 
 pid_setting_t pid_parm = {
     .pid_CT = 1.5,     // uint16_t pid_CT;
@@ -128,13 +129,13 @@ void setup()
     ESP32PWM::allocateTimer(1);
 
     pwm_fan.attachPin(pwm_fan_out, frequency, resolution); // 1KHz 8 bit
-    pwm_fan.write(300);
+    pwm_fan.write(600);
 
     pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
     pwm_heat.write(1);
 
     BT_TEMP_ft.init(BT_FILTER);
-
+    AMB_ft.init(AMB_FILTER);
     Serial.begin(BAUDRATE);
     // read pid data from EEPROM
 #if defined(DEBUG_MODE)
@@ -274,7 +275,6 @@ void setup()
     Heat_pid_controller.SetOutputLimits(PID_MIN_OUT, PID_MAX_OUT);
     Heat_pid_controller.SetSampleTime(int(pid_parm.pid_CT * 1000));
 
-
     // INIT PID AUTOTUNE
     tuner.setTargetInputValue(PID_TUNE_SV_1);
     tuner.setLoopInterval(pid_parm.pid_CT * uS_TO_S_FACTOR);
@@ -309,6 +309,8 @@ void setup()
 #if defined(DEBUG_MODE)
     Serial.println("WDT started");
 #endif
+
+    pwm_fan.write(300);
 }
 
 void loop()

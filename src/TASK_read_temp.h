@@ -29,7 +29,8 @@ extern PID Heat_pid_controller;
 extern PIDAutotuner tuner;
 extern ESP32PWM pwm_heat;
 extern ESP32PWM pwm_fan;
-filterRC BT_TEMP_ft; 
+filterRC BT_TEMP_ft;
+filterRC AMB_ft;
 // Need this for the lower level access to set them up.
 uint8_t address = 0x68;
 long Voltage; // Array used to store results
@@ -69,16 +70,19 @@ void Task_Thermo_get_data(void *pvParameters)
             if (aht20.startMeasurementReady(/* crcEn = */ true))
             {
                 AMB_TEMP = aht20.getTemperature_C();
+                AMB_TEMP = AMB_ft.doFilter(AMB_TEMP);
                 // AMB_RH = aht20.getHumidity_RH();
             }
             delay(200);
             MCP.Configuration(1, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
-            Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
-            Voltage = BT_TEMP_ft.doFilter(Voltage << 10); // multiply by 1024 to create some resolution for filter
-            Voltage >>= 10;
-            
-            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
-            //BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, aht20.getTemperature_C()) + pid_parm.BT_tempfix;
+
+            Voltage = MCP.Measure(); // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
+            Voltage = BT_TEMP_ft.doFilter(Voltage);
+            // Voltage = BT_TEMP_ft.doFilter(Voltage << 10); // multiply by 1024 to create some resolution for filter
+            // Voltage >>= 10;
+
+            // BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+            BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, AMB_TEMP) + pid_parm.BT_tempfix;
             ET_TEMP = BT_TEMP;
             // delay(200);
             // MCP.Configuration(2, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
@@ -105,7 +109,7 @@ void Task_Thermo_get_data(void *pvParameters)
         }
 
 #endif
-        //检查温度是否达到降温降风
+        // 检查温度是否达到降温降风
         if (PID_TUNNING == false)
         {
             if (BT_TEMP < 60 && BT_TEMP > 55)
@@ -121,10 +125,11 @@ void Task_Thermo_get_data(void *pvParameters)
                 temp_check[2] = millis();
             }
 
-            if (temp_check[2] < temp_check[1] < temp_check[0]) // 温度下降
+            if ((temp_check[2] < temp_check[1] < temp_check[0]) && (temp_check[2] != 0 && temp_check[1] != 0 && temp_check[0] != 0)) // 温度下降
             {
-                pwm_fan.write(400); // 改为小风量
-                pwm_heat.write(1);  // for safe
+                levelIO3 = 30;
+                pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                pwm_heat.write(1); // for safe
                 temp_check[2] = 0;
                 temp_check[1] = 0;
                 temp_check[0] = 0;
@@ -150,7 +155,6 @@ void Task_PID_autotune(void *pvParameters)
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
     const TickType_t xIntervel = 3000 / portTICK_PERIOD_MS;
-    PID_TUNNING = true;
     while (1)
     {
         xResult = xTaskNotifyWait(0x00,                 // 在运行前这个命令之前，先清除这几位

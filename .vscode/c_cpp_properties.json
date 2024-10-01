@@ -10,9 +10,9 @@
             "includePath": [
                 "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/include",
                 "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/src",
+                "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/lib/MCP3424",
                 "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/lib/TypeK",
                 "/Users/xiaoning/.platformio/packages/framework-arduinoespressif32/libraries/BLE/src",
-                "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/lib/MCP3424",
                 "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/lib/arduino-pid-autotuner",
                 "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/lib/StringTokenizer",
                 "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/lib/PID_v1",
@@ -254,9 +254,9 @@
                 "path": [
                     "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/include",
                     "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/src",
+                    "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/lib/MCP3424",
                     "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/lib/TypeK",
                     "/Users/xiaoning/.platformio/packages/framework-arduinoespressif32/libraries/BLE/src",
-                    "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/lib/MCP3424",
                     "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/lib/arduino-pid-autotuner",
                     "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/lib/StringTokenizer",
                     "/Users/xiaoning/Documents/GitHub/MatchBox_pro_control/lib/PID_v1",
