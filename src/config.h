@@ -69,6 +69,9 @@
 #define PID_TUNE_FAN_2 53
 #define PID_TUNE_FAN_1 55
 
+#define BT_FILTER 80
+#define ET_FILTER 80
+
 //
 typedef struct eeprom_settings
 {

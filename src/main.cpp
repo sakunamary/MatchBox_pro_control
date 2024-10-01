@@ -20,6 +20,8 @@ String local_IP;
 ExternalEEPROM I2C_EEPROM;
 ESP32PWM pwm_heat;
 ESP32PWM pwm_fan;
+extern filterRC BT_TEMP_ft;
+extern filterRC ET_TEMP_ft;
 PIDAutotuner tuner = PIDAutotuner();
 // ArduPID Heat_pid_controller;
 PID Heat_pid_controller(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d, DIRECT);
@@ -132,6 +134,8 @@ void setup()
     pwm_heat.write(0);
     pwm_fan.write(700);
 
+    BT_TEMP_ft.init(BT_FILTER);
+    ET_TEMP_ft.init(ET_FILTER);
     Serial.begin(HMI_BAUDRATE);
     // Serial_HMI.setBuffer();
     Serial_HMI.begin(HMI_BAUDRATE, SERIAL_8N1, RXD_HMI, TXD_HMI);

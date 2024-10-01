@@ -23,6 +23,9 @@ double pid_tune_output;
 
 extern ExternalEEPROM I2C_EEPROM;
 extern PID Heat_pid_controller;
+filterRC BT_TEMP_ft;
+filterRC ET_TEMP_ft;
+
 // extern ArduPID Heat_pid_controller;
 extern PIDAutotuner tuner;
 extern ESP32PWM pwm_heat;
@@ -61,7 +64,7 @@ void Task_Thermo_get_data(void *pvParameters)
     /* Task Setup and Initialize */
     // Initial the xLastWakeTime variable with the current time.
     xLastWakeTime = xTaskGetTickCount();
-            esp_task_wdt_add(NULL);
+    esp_task_wdt_add(NULL);
     // if (esp_task_wdt_status(NULL) != ESP_OK)
     // {
     //     esp_task_wdt_add(NULL);
@@ -85,12 +88,16 @@ void Task_Thermo_get_data(void *pvParameters)
             // #endif
             // }
             delay(200);
-            MCP.Configuration(1, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
-            Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+            MCP.Configuration(1, 16, 1, 1);               // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
+            Voltage = MCP.Measure();                      // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+            Voltage = BT_TEMP_ft.doFilter(Voltage << 10); // multiply by 1024 to create some resolution for filter
+            Voltage >>= 10;
             BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
             delay(200);
-            MCP.Configuration(2, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
-            Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
+            MCP.Configuration(2, 16, 1, 1);               // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
+            Voltage = MCP.Measure();                      // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
+            Voltage = ET_TEMP_ft.doFilter(Voltage << 10); // multiply by 1024 to create some resolution for filter
+            Voltage >>= 10;
             ET_TEMP = pid_parm.ET_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
 
             if (pid_status)
@@ -115,7 +122,7 @@ void Task_Thermo_get_data(void *pvParameters)
         {
             // 封装BLE 协议
             sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
-           // Serial.print(temp_data_buffer_ble);
+            // Serial.print(temp_data_buffer_ble);
 
             xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
 
@@ -308,7 +315,7 @@ void Task_PID_autotune(void *pvParameters)
                         } // time units : us
                     }
                     // Turn the output off here.
-                    levelIO3=30;
+                    levelIO3 = 30;
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
                     // Get PID gains - set your PID controller's gains to these
