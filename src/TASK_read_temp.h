@@ -110,7 +110,7 @@ void Task_Thermo_get_data(void *pvParameters)
 
 #endif
         // 检查温度是否达到降温降风
-        if (PID_TUNNING == false)
+        if (PID_TUNNING == false && pid_status == false)
         {
             if (BT_TEMP < 60 && BT_TEMP > 55)
             {
@@ -120,7 +120,7 @@ void Task_Thermo_get_data(void *pvParameters)
             {
                 temp_check[1] = millis();
             }
-            else if (BT_TEMP > 160)
+            else if (BT_TEMP > 180)
             {
                 temp_check[2] = millis();
             }
