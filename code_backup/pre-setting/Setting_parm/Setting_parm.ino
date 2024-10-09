@@ -63,7 +63,7 @@ void setup()
 
     Serial.println("start...\n");
     Serial.println("INIT PWM...\n");
-    vTaskDelay(30000);
+    vTaskDelay(3000);
     //  Init pwm output
 
     pwm_heat.attachPin(HEAT_OUT_PIN, frequency, resolution); // 1KHz 8 bit

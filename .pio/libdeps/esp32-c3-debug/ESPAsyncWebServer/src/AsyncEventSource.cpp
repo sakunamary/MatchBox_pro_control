@@ -141,6 +141,9 @@ size_t AsyncEventSourceMessage::ack(size_t len, __attribute__((unused)) uint32_t
 }
 
 size_t AsyncEventSourceMessage::write(AsyncClient* client) {
+  if(!client)
+    return 0;
+
   if (_sent >= _len || !client->canSend()) {
     return 0;
   }
@@ -186,7 +189,10 @@ AsyncEventSourceClient::~AsyncEventSourceClient() {
   close();
 }
 
-void AsyncEventSourceClient::_queueMessage(const char* message, size_t len) {
+bool AsyncEventSourceClient::_queueMessage(const char* message, size_t len) {
+  if (!_client)
+    return false;
+
 #ifdef ESP32
   // length() is not thread-safe, thus acquiring the lock before this call..
   std::lock_guard<std::mutex> lock(_lockmq);
@@ -198,7 +204,7 @@ void AsyncEventSourceClient::_queueMessage(const char* message, size_t len) {
 #elif defined(ESP32)
     log_e("Too many messages queued: deleting message");
 #endif
-    return;
+    return false;
   }
 
   _messageQueue.emplace_back(message, len);
@@ -206,6 +212,8 @@ void AsyncEventSourceClient::_queueMessage(const char* message, size_t len) {
   if (_client->canSend()) {
     _runQueue();
   }
+
+  return true;
 }
 
 void AsyncEventSourceClient::_onAck(size_t len __attribute__((unused)), uint32_t time __attribute__((unused))) {
@@ -227,30 +235,31 @@ void AsyncEventSourceClient::_onPoll() {
 }
 
 void AsyncEventSourceClient::_onTimeout(uint32_t time __attribute__((unused))) {
-  _client->close(true);
+  if (_client)
+    _client->close(true);
 }
 
 void AsyncEventSourceClient::_onDisconnect() {
-  _client = NULL;
+  if (!_client)
+    return;
+  _client = nullptr;
   _server->_handleDisconnect(this);
 }
 
 void AsyncEventSourceClient::close() {
-  if (_client != NULL)
+  if (_client)
     _client->close();
 }
 
-void AsyncEventSourceClient::write(const char* message, size_t len) {
-  if (!connected())
-    return;
-  _queueMessage(message, len);
+bool AsyncEventSourceClient::write(const char* message, size_t len) {
+  return connected() && _queueMessage(message, len);
 }
 
-void AsyncEventSourceClient::send(const char* message, const char* event, uint32_t id, uint32_t reconnect) {
+bool AsyncEventSourceClient::send(const char* message, const char* event, uint32_t id, uint32_t reconnect) {
   if (!connected())
-    return;
+    return false;
   String ev = generateEventMessage(message, event, id, reconnect);
-  _queueMessage(ev.c_str(), ev.length());
+  return _queueMessage(ev.c_str(), ev.length());
 }
 
 size_t AsyncEventSourceClient::packetsWaiting() const {
@@ -261,6 +270,9 @@ size_t AsyncEventSourceClient::packetsWaiting() const {
 }
 
 void AsyncEventSourceClient::_runQueue() {
+  if(!_client)
+    return;
+
   size_t total_bytes_written = 0;
   for (auto i = _messageQueue.begin(); i != _messageQueue.end(); ++i) {
     if (!i->sent()) {
@@ -270,6 +282,7 @@ void AsyncEventSourceClient::_runQueue() {
         break;
     }
   }
+
   if (total_bytes_written > 0)
     _client->send();
 
@@ -280,11 +293,6 @@ void AsyncEventSourceClient::_runQueue() {
       _messageQueue.pop_front();
     }
   }
-}
-
-// Handler
-void AsyncEventSource::onConnect(ArEventHandlerFunction cb) {
-  _connectcb = cb;
 }
 
 void AsyncEventSource::authorizeConnect(ArAuthorizeConnectHandler cb) {
@@ -308,6 +316,8 @@ void AsyncEventSource::_handleDisconnect(AsyncEventSourceClient* client) {
 #ifdef ESP32
   std::lock_guard<std::mutex> lock(_client_queue_lock);
 #endif
+  if (_disconnectcb)
+    _disconnectcb(client);
   for (auto i = _clients.begin(); i != _clients.end(); ++i) {
     if (i->get() == client)
       _clients.erase(i);
@@ -346,17 +356,21 @@ size_t AsyncEventSource::avgPacketsWaiting() const {
   return ((aql) + (nConnectedClients / 2)) / (nConnectedClients); // round up
 }
 
-void AsyncEventSource::send(
+AsyncEventSource::SendStatus AsyncEventSource::send(
   const char* message, const char* event, uint32_t id, uint32_t reconnect) {
   String ev = generateEventMessage(message, event, id, reconnect);
 #ifdef ESP32
   std::lock_guard<std::mutex> lock(_client_queue_lock);
 #endif
+  size_t hits = 0;
+  size_t miss = 0;
   for (const auto& c : _clients) {
-    if (c->connected()) {
-      c->write(ev.c_str(), ev.length());
-    }
+    if (c->write(ev.c_str(), ev.length()))
+      ++hits;
+    else
+      ++miss;
   }
+  return hits == 0 ? DISCARDED : (miss == 0 ? ENQUEUED : PARTIALLY_ENQUEUED);
 }
 
 size_t AsyncEventSource::count() const {

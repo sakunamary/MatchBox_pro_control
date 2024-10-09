@@ -66,7 +66,7 @@ void AuthenticationMiddleware::setPassword(const char* password) {
 
 void AuthenticationMiddleware::setPasswordHash(const char* hash) {
   _credentials = hash;
-  _hash = true;
+  _hash = _credentials.length();
   _hasCreds = _username.length() && _credentials.length();
 }
 
@@ -99,8 +99,11 @@ bool AuthenticationMiddleware::allowed(AsyncWebServerRequest* request) {
   if (_authMethod == AsyncAuthType::AUTH_NONE)
     return true;
 
-  if (!_hasCreds)
+  if (_authMethod == AsyncAuthType::AUTH_DENIED)
     return false;
+
+  if (!_hasCreds)
+    return true;
 
   return request->authenticate(_username.c_str(), _credentials.c_str(), _realm.c_str(), _hash);
 }

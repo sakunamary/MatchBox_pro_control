@@ -4,9 +4,15 @@
 #include <esp_task_wdt.h>
 #include <ESP32Servo.h>
 #include <StringTokenizer.h>
-#include <WiFiClient.h>
-#include <WebServer.h>
+
+#include <WiFi.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 #include <ElegantOTA.h>
+
+#include <WiFiClient.h>
+//  #include <WebServer.h>
+//  #include <ElegantOTA.h>
 #include <pidautotuner.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 #include <PID_v1.h>
@@ -18,7 +24,8 @@ ExternalEEPROM I2C_EEPROM;
 ESP32PWM pwm_heat;
 ESP32PWM pwm_fan;
 PIDAutotuner tuner = PIDAutotuner();
-WebServer server(80);
+AsyncWebServer server(80);
+// WebServer server(80);
 PID Heat_pid_controller(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d, DIRECT);
 
 extern bool loopTaskWDTEnabled;
@@ -87,28 +94,28 @@ void onOTAEnd(bool success)
     // <Add your own code here>
 }
 
-// Handle root url (/)
-void handle_root()
-{
-    char index_html[2048];
-    String ver = VERSION;
-    snprintf(index_html, 2048,
-             "<html>\
-<head>\
-<title>MATCH BOX MINI SETUP</title>\
-    </head> \
-    <body>\
-        <main>\
-        <h1 align='center'>BLE version:%s</h1>\
-        <div align='center'><a href='/update' target='_blank'>FIRMWARE UPDATE</a>\
-        </main>\
-        </div>\
-    </body>\
-</html>\
-",
-             ver);
-    server.send(200, "text/html", index_html);
-}
+// // Handle root url (/)
+// void handle_root()
+// {
+//     char index_html[2048];
+//     String ver = VERSION;
+//     snprintf(index_html, 2048,
+//              "<html>\
+// <head>\
+// <title>MATCH BOX MINI SETUP</title>\
+//     </head> \
+//     <body>\
+//         <main>\
+//         <h1 align='center'>BLE version:%s</h1>\
+//         <div align='center'><a href='/update' target='_blank'>FIRMWARE UPDATE</a>\
+//         </main>\
+//         </div>\
+//     </body>\
+// </html>\
+// ",
+//              ver);
+// server.send(200, "text/html", index_html);
+// }
 
 String IpAddressToString(const IPAddress &ipAddress)
 {
@@ -116,6 +123,15 @@ String IpAddressToString(const IPAddress &ipAddress)
            String(ipAddress[1]) + String(".") +
            String(ipAddress[2]) + String(".") +
            String(ipAddress[3]);
+}
+
+String processor(const String &var)
+{
+    if (var == "version")
+    {
+        return VERSION;
+    }
+    return String();
 }
 
 void setup()
@@ -282,7 +298,11 @@ void setup()
     tuner.setZNMode(PIDAutotuner::ZNModeNoOvershoot);
 
     // Start ElegantOTA
-    server.on("/", handle_root);
+
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send_P(200, "text/html", index_html, processor); });
+
+    // server.on("/", handle_root);
     ElegantOTA.begin(&server); // Start ElegantOTA
     // ElegantOTA callbacks
     ElegantOTA.onStart(onOTAStart);
@@ -315,7 +335,7 @@ void setup()
 
 void loop()
 {
-    server.handleClient();
+    // server.handleClient();
     ElegantOTA.loop();
     // disconnecting
     if (!deviceConnected && oldDeviceConnected)
