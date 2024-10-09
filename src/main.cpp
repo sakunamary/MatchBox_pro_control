@@ -39,8 +39,8 @@ byte tries;
 char ap_name[16];
 uint8_t macAddr[6];
 
-double pid_out_max = PID_MAX_OUT; // 取值范围 （0-100）
-double pid_out_min = PID_MIN_OUT; // 取值范围 （0-100）
+double pid_out_max = PID_STAGE_1_MAX_OUT; // 取值范围 （0-100）
+double pid_out_min = PID_STAGE_1_MIN_OUT; // 取值范围 （0-100）
 
 extern filterRC BT_TEMP_ft; // filter for logged ET, BT
 extern filterRC AMB_ft;     // filter for logged ET, BT
@@ -272,13 +272,13 @@ void setup()
     // init PID
 
     Heat_pid_controller.SetMode(MANUAL);
-    Heat_pid_controller.SetOutputLimits(PID_MIN_OUT, PID_MAX_OUT);
+    Heat_pid_controller.SetOutputLimits(PID_STAGE_1_MIN_OUT, PID_STAGE_1_MAX_OUT);
     Heat_pid_controller.SetSampleTime(int(pid_parm.pid_CT * 1000));
 
     // INIT PID AUTOTUNE
     tuner.setTargetInputValue(PID_TUNE_SV_1);
     tuner.setLoopInterval(pid_parm.pid_CT * uS_TO_S_FACTOR);
-    tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
+    tuner.setOutputRange(round(PID_STAGE_1_MIN_OUT * 255 / 100), round(PID_STAGE_1_MAX_OUT * 255 / 100));
     tuner.setZNMode(PIDAutotuner::ZNModeNoOvershoot);
 
     // Start ElegantOTA

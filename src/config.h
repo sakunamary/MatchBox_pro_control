@@ -6,7 +6,7 @@
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
-#define VERSION "1.1.2e"
+#define VERSION "1.1.2f"
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
 //#define DEBUG_MODE 
 
@@ -76,8 +76,14 @@
 #define MIN_IO3 30  // Set output % for lower limit for IO3.  0% power will always be available
 #define MAX_IO3 100 // Set output % for upper limit for IO3
 
-#define PID_MAX_OUT 100 //0-100 ，跟OT3 IO1的数值一样
-#define PID_MIN_OUT 10  //0-100 ，跟OT3 IO1的数值一样
+#define PID_STAGE_1_MAX_OUT 100 //0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_1_MIN_OUT 10  //0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+
+#define PID_STAGE_2_MAX_OUT 100 //0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_2_MIN_OUT 10  //0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+
+#define PID_STAGE_3_MAX_OUT 100 //0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_3_MIN_OUT 10  //0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
 #define BT_FILTER 70
 #define AMB_FILTER 70

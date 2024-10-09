@@ -99,11 +99,13 @@ void Task_Thermo_get_data(void *pvParameters)
             if (BT_TEMP >= PID_TUNE_SV_1)
             {
                 I2C_EEPROM.get(128, pid_parm);
+                Heat_pid_controller.SetOutputLimits(PID_STAGE_2_MIN_OUT, PID_STAGE_2_MAX_OUT);
                 Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
             }
             else if (BT_TEMP >= PID_TUNE_SV_2)
             {
                 I2C_EEPROM.get(256, pid_parm);
+                Heat_pid_controller.SetOutputLimits(PID_STAGE_3_MIN_OUT, PID_STAGE_3_MAX_OUT);
                 Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
             }
         }
@@ -112,27 +114,42 @@ void Task_Thermo_get_data(void *pvParameters)
         // 检查温度是否达到降温降风
         if (PID_TUNNING == false && pid_status == false)
         {
-            if (BT_TEMP < 60 && BT_TEMP > 55)
+            if (BT_TEMP > 50 && BT_TEMP < 60)
             {
                 temp_check[0] = millis();
+#if defined(DEBUG_MODE)
+                Serial.printf("\nTempCheck[0]:%ld\n", temp_check[0]);
+#endif
             }
-            else if (BT_TEMP < 125 && BT_TEMP > 120)
+            if (BT_TEMP > 120 && BT_TEMP < 135)
             {
                 temp_check[1] = millis();
+#if defined(DEBUG_MODE)
+                Serial.printf("\nTempCheck[1]:%ld\n", temp_check[1]);
+#endif
             }
-            else if (BT_TEMP > 180)
+            if (BT_TEMP > 180)
             {
                 temp_check[2] = millis();
+#if defined(DEBUG_MODE)
+                Serial.printf("\nTempCheck[2]:%ld\n", temp_check[2]);
+#endif
             }
 
-            if ((temp_check[2] < temp_check[1] < temp_check[0]) && (temp_check[2] != 0 && temp_check[1] != 0 && temp_check[0] != 0)) // 温度下降
+            if (temp_check[2] != 0 && temp_check[1] != 0 && temp_check[0] != 0) // 确认是机器运行中
             {
-                levelIO3 = 30;
-                pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
-                pwm_heat.write(1); // for safe
-                temp_check[2] = 0;
-                temp_check[1] = 0;
-                temp_check[0] = 0;
+                if (temp_check[2] < temp_check[1] && temp_check[1] < temp_check[0]) // 判断温度趋势是下降
+                {
+#if defined(DEBUG_MODE)
+                    Serial.printf("\n Turn Down fan t0:%ld t1:%ld t2:%ld\n", temp_check[0], temp_check[1], temp_check[2]);
+#endif
+                    levelIO3 = 35;
+                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                    pwm_heat.write(1); // for safe
+                    temp_check[2] = 0;
+                    temp_check[1] = 0;
+                    temp_check[0] = 0;
+                }
             }
         }
 
@@ -175,6 +192,7 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.setTuningCycles(PID_TUNE_CYCLE);
                     PID_TUNE_SV = PID_TUNE_SV_1;
                     levelIO3 = PID_TUNE_FAN_1;
+                    tuner.setOutputRange(round(PID_STAGE_1_MIN_OUT * 255 / 100), round(PID_STAGE_1_MAX_OUT * 255 / 100));
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
@@ -226,6 +244,7 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.setTuningCycles(PID_TUNE_CYCLE);
                     PID_TUNE_SV = PID_TUNE_SV_2;
                     levelIO3 = PID_TUNE_FAN_2;
+                    tuner.setOutputRange(round(PID_STAGE_2_MIN_OUT * 255 / 100), round(PID_STAGE_2_MAX_OUT * 255 / 100));
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
@@ -276,6 +295,7 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.setTuningCycles(PID_TUNE_CYCLE);
                     PID_TUNE_SV = PID_TUNE_SV_3;
                     levelIO3 = PID_TUNE_FAN_3;
+                    tuner.setOutputRange(round(PID_STAGE_3_MIN_OUT * 255 / 100), round(PID_STAGE_3_MAX_OUT * 255 / 100));
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
