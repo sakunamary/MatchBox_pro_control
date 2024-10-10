@@ -31,7 +31,6 @@ double pid_tune_output;
 extern ExternalEEPROM I2C_EEPROM;
 extern PID Heat_pid_controller;
 
-
 extern ESP32PWM pwm_heat;
 extern ESP32PWM pwm_fan;
 // Need this for the lower level access to set them up.
@@ -47,13 +46,10 @@ DFRobot_AHT20 aht20;
 TypeK temp_K_cal;
 extern ExternalEEPROM I2C_EEPROM;
 
-
 // Modbus Registers Offsets
 const uint16_t BT_HREG = 3001;
 const uint16_t AMB_RH_HREG = 3002;
 const uint16_t AMB_TEMP_HREG = 3003;
-
-
 
 void Task_Thermo_get_data(void *pvParameters)
 { // function
@@ -81,44 +77,43 @@ void Task_Thermo_get_data(void *pvParameters)
             if (aht20.startMeasurementReady(/* crcEn = */ true))
             {
                 AMB_TEMP = aht20.getTemperature_C();
-                //AMB_RH = aht20.getHumidity_RH();
+                AMB_RH = aht20.getHumidity_RH();
             }
             delay(200);
             MCP.Configuration(1, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
             Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
-            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
-            //BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, aht20.getTemperature_C()) + pid_parm.BT_tempfix;
-            // ET_TEMP = BT_TEMP;
-            // delay(200);
-            // MCP.Configuration(2, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
-            // Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
-            // ET_TEMP = pid_parm.ET_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
-
-            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
+           // BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+             BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, aht20.getTemperature_C()) + pid_parm.BT_tempfix;
+            //  ET_TEMP = BT_TEMP;
+            //  delay(200);
+            //  MCP.Configuration(2, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
+            //  Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
+            //  ET_TEMP = pid_parm.ET_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+            mb.Hreg(BT_HREG, int(round(BT_TEMP * 10)));        // 初始化赋值
+            mb.Hreg(AMB_RH_HREG, int(round(AMB_RH * 10)));     // 初始化赋值
+            mb.Hreg(AMB_TEMP_HREG, int(round(AMB_TEMP * 10))); // 初始化赋值
+            xSemaphoreGive(xThermoDataMutex);                  // end of lock mutex
         }
 
-
-
-// #if defined(DEBUG_MODE)
-//         Serial.printf("BT_TEMP (3001) bt:%d\n", int(round(BT_TEMP * 10)));
-//         Serial.printf("AMB_TEMP (3003) amb:%d\n", int(round(AMB_TEMP * 10)));
-//         Serial.println();
-// #endif
+        // #if defined(DEBUG_MODE)
+        //         Serial.printf("BT_TEMP (3001) bt:%d\n", int(round(BT_TEMP * 10)));
+        //         Serial.printf("AMB_TEMP (3003) amb:%d\n", int(round(AMB_TEMP * 10)));
+        //         Serial.println();
+        // #endif
 
         // update  Hreg data
-        mb.Hreg(BT_HREG, int(round(BT_TEMP * 10)));        // 初始化赋值
-        //mb.Hreg(AMB_RH_HREG, int(round(AMB_RH * 10)));     // 初始化赋值
-        //mb.Hreg(AMB_TEMP_HREG, int(round(AMB_TEMP * 10))); // 初始化赋值
-        // // 封装BLE 数据格式
-        // // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
-        // if (xSemaphoreTake(xSerialReadBufferMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
-        // {
-        //     sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
-        //     xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
-        //     xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
-        // }
-        // xSemaphoreGive(xSerialReadBufferMutex); // end of lock mutex
-
+        //mb.Hreg(BT_HREG, int(round(BT_TEMP * 10))); // 初始化赋值
+        // mb.Hreg(AMB_RH_HREG, int(round(AMB_RH * 10)));     // 初始化赋值
+        // mb.Hreg(AMB_TEMP_HREG, int(round(AMB_TEMP * 10))); // 初始化赋值
+        //  // 封装BLE 数据格式
+        //  // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
+        //  if (xSemaphoreTake(xSerialReadBufferMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
+        //  {
+        //      sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
+        //      xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
+        //      xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
+        //  }
+        //  xSemaphoreGive(xSerialReadBufferMutex); // end of lock mutex
     }
 
 } // function

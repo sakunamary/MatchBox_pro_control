@@ -8,7 +8,7 @@
 #define BAUDRATE 115200        // serial port baudrate
 #define VERSION "1.0.0"
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
-#define DEBUG_MODE 
+// #define DEBUG_MODE 
 
 
 
@@ -36,7 +36,7 @@
 
 
 // pwm setting
-#define PWM_FREQ 3000     //PWM 信号频率 单位：Hz
+#define PWM_FREQ 4000     //PWM 信号频率 单位：Hz
 #define PWM_RESOLUTION 10 // 0-1024 PWM 信号分辨率 10bit 是0-1024级 ，12bit 是 0-4096级，改了主程序的分辨率输出map函数也要相应调整
 
 #define PWM_FAN_MIN 300
@@ -107,4 +107,23 @@ SemaphoreHandle_t xSerialReadBufferMutex = NULL;
 // QueueHandle_t queue_data_to_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
 
 //以上代码不要动，FreeRTOS用的代码
+
+
+
+// const char index_html[] PROGMEM = R"rawliteral(
+
+// <!doctype html><html lang='cn'>
+//  <head>
+// <title>MATCH BOX MINI SETUP</title>
+// </head> 
+//  <body>
+// <main>
+//     <h1 align='center'>BLE version:%version%</h1>
+//        <div align='center'><a href='/update' target='_blank'>FIRMWARE UPDATE</a>
+//         </main>
+//          </div>
+//     </body>
+//  </html>
+// )rawliteral";
+
 #endif

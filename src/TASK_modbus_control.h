@@ -6,15 +6,13 @@
 #include <ESP32Servo.h>
 #include <WiFi.h>
 
-
-const int HEAT_OUT_PIN = PWM_HEAT; 
-const int FAN_OUT_PIN = PWM_FAN; 
+const int HEAT_OUT_PIN = PWM_HEAT;
+const int FAN_OUT_PIN = PWM_FAN;
 const int frequency = PWM_FREQ;
 const byte resolution = PWM_RESOLUTION; // pwm -0-4096
 
 extern ESP32PWM pwm_heat;
 extern ESP32PWM pwm_fan;
-
 
 uint16_t last_PWR;
 uint16_t last_FAN;
@@ -47,11 +45,13 @@ void Task_modbus_control(void *pvParameters)
     /* Variable Definition */
     (void)pvParameters;
     TickType_t xLastWakeTime;
-    const TickType_t xIntervel = 250 / portTICK_PERIOD_MS;
+    const TickType_t xIntervel = 150 / portTICK_PERIOD_MS;
     /* Task Setup and Initialize */
     // Initial the xLastWakeTime variable with the current time.
     xLastWakeTime = xTaskGetTickCount();
 
+    Serial.printf("\n Task_modbus_control\n");
+    Serial.println();
     while (1) // A Task shall never return or exit.
     {         // for loop
         vTaskDelayUntil(&xLastWakeTime, xIntervel);
@@ -88,11 +88,16 @@ void Task_modbus_control(void *pvParameters)
                         pid_sv = mb.Hreg(PID_SV_HREG) / 10;
 
                         // Heat_pid_controller.start();
-                        Heat_pid_controller.Compute();                  // 计算pid输出
-                        levelOT1 = map(PID_output - 2, 0, 255, 0, 100); // 转换为格式 pid_output (0,255) -> (0,100)
+                        Heat_pid_controller.Compute(); // 计算pid输出
+                        levelOT1 = int(round(PID_output));
+                        // levelOT1 = map(PID_output, 0, 255, 0, 100); // 转换为格式 pid_output (0,255) -> (0,100)
                         last_PWR = levelOT1;
                         mb.Hreg(HEAT_HREG, levelOT1);
                         xSemaphoreGive(xThermoDataMutex);
+#if defined(DEBUG_MODE)
+                        Serial.printf("\n PID_STATUS(3010):%ld,  PID_SV_HREG (3009) :%4.2f,HEAT_HREG:%d\n", mb.Hreg(PID_STATUS_HREG), pid_sv, levelOT1);
+                        Serial.println();
+#endif
                     }
                 }
                 else                                                           //
@@ -101,11 +106,16 @@ void Task_modbus_control(void *pvParameters)
                     {
                         pid_sv = mb.Hreg(PID_SV_HREG) / 10; // 计算pid输出
                         Heat_pid_controller.Compute();
-                        levelOT1 = map(PID_output - 2, 0, 255, 0, 100); // 转换为格式 pid_output (0,255) -> (0,100)
+                        levelOT1 = int(round(PID_output));
+                        // levelOT1 = map(PID_output, 0, 255, 0, 100); // 转换为格式 pid_output (0,255) -> (0,100)
                         last_PWR = levelOT1;
                         mb.Hreg(HEAT_HREG, levelOT1);
                         xSemaphoreGive(xThermoDataMutex);
                     }
+#if defined(DEBUG_MODE)
+                    Serial.printf("\n PID_STATUS(3010):%ld,  PID_SV_HREG (3009) :%4.2f,HEAT_HREG:%d\n", mb.Hreg(PID_STATUS_HREG), pid_sv, levelOT1);
+                    Serial.println();
+#endif
                 }
             }
             else // Artisan PID 关闭 --手动模式
@@ -122,6 +132,10 @@ void Task_modbus_control(void *pvParameters)
                         mb.Hreg(HEAT_HREG, levelOT1);
                         xSemaphoreGive(xThermoDataMutex);
                     }
+#if defined(DEBUG_MODE)
+                    Serial.printf("\n PID_STATUS(3010):%ld,  PID_SV_HREG (3009) :%4.2f,HEAT_HREG:%d\n", mb.Hreg(PID_STATUS_HREG), pid_sv, levelOT1);
+                    Serial.println();
+#endif
                 }
                 else
                 {                                       // pid_status = false and pid_status_hreg =0
@@ -133,6 +147,10 @@ void Task_modbus_control(void *pvParameters)
                             levelOT1 = last_PWR;           // 发送新火力pwr数据到 SSR
                             xSemaphoreGive(xThermoDataMutex);
                         }
+#if defined(DEBUG_MODE)
+                        Serial.printf("\n PID_STATUS(3010):%d,  PID_SV_HREG (3009) :%4.2f,HEAT_HREG:%d,lastpwr :%d \n", mb.Hreg(PID_STATUS_HREG), pid_sv, levelOT1, last_PWR);
+                        Serial.println();
+#endif
                     }
                 }
             }
@@ -184,24 +202,31 @@ void Task_PID_PARM_SETTING(void *pvParameters)
         if (mb.Hreg(PID_P_HREG) != int(pid_parm.p * 100))
         {
             pid_parm.p = (double)mb.Hreg(PID_P_HREG) / 100;
-
 #if defined(DEBUG_MODE)
-        Serial.printf("\nPID_P_HREG (3006) bt:%d,pid_parm.p:%4.2f\n", PID_P_HREG,pid_parm.p );
-        Serial.println();
+            Serial.printf("\nPID_P_HREG (3006) pid_parm.p:%4.2f\n", pid_parm.p);
+            Serial.println();
 #endif
         }
         if (mb.Hreg(PID_I_HREG) != int(pid_parm.i * 100))
         {
             pid_parm.i = (double)mb.Hreg(PID_I_HREG) / 100;
+#if defined(DEBUG_MODE)
+            Serial.printf("\nPID_P_HREG (3007) pid_parm.i:%4.2f\n", pid_parm.i);
+            Serial.println();
+#endif
         }
         if (mb.Hreg(PID_D_HREG) != int(pid_parm.d * 100))
         {
             pid_parm.d = (double)mb.Hreg(PID_D_HREG) / 100;
+#if defined(DEBUG_MODE)
+            Serial.printf("\nPID_P_HREG (3008) pid_parm.d:%4.2f\n", pid_parm.d);
+            Serial.println();
+#endif
         }
 
         Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
-
+        I2C_EEPROM.put(0, pid_parm);
     }
-}  
+}
 
 #endif

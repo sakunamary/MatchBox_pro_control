@@ -5,7 +5,12 @@
 #include <ESP32Servo.h>
 #include <StringTokenizer.h>
 #include <WiFiClient.h>
-#include <WebServer.h>
+#include <WiFi.h>
+// #include <AsyncTCP.h>
+// #include <ESPAsyncWebServer.h>
+// #include <ElegantOTA.h>
+
+// #include <WebServer.h>
 // #include <ElegantOTA.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 #include <PID_v1.h>
@@ -16,7 +21,8 @@ ExternalEEPROM I2C_EEPROM;
 ESP32PWM pwm_heat;
 ESP32PWM pwm_fan;
 
-WebServer server(80);
+// AsyncWebServer server(80);
+//  WebServer server(80);
 PID Heat_pid_controller(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d, DIRECT);
 
 extern bool loopTaskWDTEnabled;
@@ -100,6 +106,15 @@ String IpAddressToString(const IPAddress &ipAddress)
            String(ipAddress[1]) + String(".") +
            String(ipAddress[2]) + String(".") +
            String(ipAddress[3]);
+}
+
+String processor(const String &var)
+{
+    if (var == "version")
+    {
+        return VERSION;
+    }
+    return String();
 }
 
 void setup()
@@ -247,9 +262,9 @@ void setup()
     mb.Hreg(PID_SV_HREG, 0);     // 初始化赋值
     mb.Hreg(PID_STATUS_HREG, 0); // 初始化赋值
 
-    mb.Hreg(PID_P_HREG, 200);
-    mb.Hreg(PID_I_HREG, 12);
-    mb.Hreg(PID_D_HREG, 500);
+    mb.Hreg(PID_P_HREG, int(pid_parm.p * 100));
+    mb.Hreg(PID_I_HREG, int(pid_parm.i * 100));
+    mb.Hreg(PID_D_HREG, int(pid_parm.d * 100));
 
     mb.Hreg(AMB_RH_HREG, 0);   // 初始化赋值
     mb.Hreg(AMB_TEMP_HREG, 0); // 初始化赋值
@@ -262,6 +277,8 @@ void setup()
 
     // // Start ElegantOTA
     // server.on("/", handle_root);
+    // server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+    //           { request->send(200, "text/html", index_html, processor); });
     // ElegantOTA.begin(&server); // Start ElegantOTA
     // // ElegantOTA callbacks
     // ElegantOTA.onStart(onOTAStart);
@@ -292,8 +309,10 @@ void setup()
 
 void loop()
 {
-
+    // ElegantOTA.loop();
+    // delay(50);
     mb.task();
+
     //     server.handleClient();
     //     ElegantOTA.loop();
     //     // disconnecting
