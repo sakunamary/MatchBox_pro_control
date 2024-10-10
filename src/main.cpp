@@ -5,8 +5,13 @@
 #include <ESP32Servo.h>
 #include <StringTokenizer.h>
 #include <WiFiClient.h>
-#include <WebServer.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 #include <ElegantOTA.h>
+
+// #include <WebServer.h>
+// #include <ElegantOTA.h>
+
 #include <pidautotuner.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 #include <PID_v1.h>
@@ -15,7 +20,8 @@
 #include <TASK_BLE_Serial.h>
 #include <TASK_HMI_Serial.h>
 
-WebServer server(80);
+AsyncWebServer server(80);
+// WebServer server(80);
 String local_IP;
 ExternalEEPROM I2C_EEPROM;
 ESP32PWM pwm_heat;
@@ -32,6 +38,7 @@ uint8_t HMI_HAND[HMI_BUFFER_SIZE];
 int levelOT1 = 0;
 int levelIO3 = 30;
 bool pid_status = false;
+bool PID_TUNNING = false;
 byte tries;
 double PID_output = 0;
 double pid_sv;
@@ -90,27 +97,27 @@ void onOTAEnd(bool success)
 }
 
 // Handle root url (/)
-void handle_root()
-{
-    char index_html[2048];
-    String ver = VERSION;
-    snprintf(index_html, 2048,
-             "<html>\
-<head>\
-<title>MATCH BOX PRO SETUP</title>\
-    </head> \
-    <body>\
-        <main>\
-        <h1 align='center'> ver:%s</h1>\
-        <div align='center'><a href='/update' target='_blank'>FIRMWARE UPDATE</a>\
-        </main>\
-        </div>\
-    </body>\
-</html>\
-",
-             ver);
-    server.send(200, "text/html", index_html);
-}
+// void handle_root()
+// {
+//     char index_html[2048];
+//     String ver = VERSION;
+//     snprintf(index_html, 2048,
+//              "<html>\
+// <head>\
+// <title>MATCH BOX PRO SETUP</title>\
+//     </head> \
+//     <body>\
+//         <main>\
+//         <h1 align='center'> ver:%s</h1>\
+//         <div align='center'><a href='/update' target='_blank'>FIRMWARE UPDATE</a>\
+//         </main>\
+//         </div>\
+//     </body>\
+// </html>\
+// ",
+//              ver);
+//     server.send(200, "text/html", index_html);
+// }
 
 String IpAddressToString(const IPAddress &ipAddress)
 {
@@ -118,6 +125,15 @@ String IpAddressToString(const IPAddress &ipAddress)
            String(ipAddress[1]) + String(".") +
            String(ipAddress[2]) + String(".") +
            String(ipAddress[3]);
+}
+
+String processor(const String &var)
+{
+    if (var == "version")
+    {
+        return VERSION;
+    }
+    return String();
 }
 
 void setup()
@@ -129,13 +145,14 @@ void setup()
 
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);
-    pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
-    pwm_fan.attachPin(pwm_fan_out, frequency, resolution);   // 1KHz 8 bit
-    pwm_heat.write(0);
+    pwm_fan.attachPin(pwm_fan_out, frequency, resolution); // 1KHz 8 bit
     pwm_fan.write(700);
+    pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
+    pwm_heat.write(1);
 
     BT_TEMP_ft.init(BT_FILTER);
     ET_TEMP_ft.init(ET_FILTER);
+
     Serial.begin(HMI_BAUDRATE);
     // Serial_HMI.setBuffer();
     Serial_HMI.begin(HMI_BAUDRATE, SERIAL_8N1, RXD_HMI, TXD_HMI);
@@ -326,8 +343,9 @@ void setup()
     tuner.setTuningCycles(5);
 
     // INIT OTA service
-    server.on("/", handle_root);
-
+    // server.on("/", handle_root);
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send_P(200, "text/html", index_html, processor); });
     ElegantOTA.begin(&server); // Start ElegantOTA
     // ElegantOTA callbacks
     ElegantOTA.onStart(onOTAStart);
@@ -379,7 +397,7 @@ void setup()
 
 void loop()
 {
-    server.handleClient();
+    // server.handleClient();
     ElegantOTA.loop();
     // disconnecting
     if (!deviceConnected && oldDeviceConnected)

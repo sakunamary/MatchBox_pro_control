@@ -12,7 +12,7 @@ static constexpr const char* T_app_xform_urlencoded = "application/x-www-form-ur
 static constexpr const char* T_AUTH             = "Authorization";
 static constexpr const char* T_BASIC            = "Basic";
 static constexpr const char* T_BASIC_REALM      = "Basic realm=\"";
-static constexpr const char* T_BASIC_REALM_LOGIN_REQ = "Basic realm=\"Login Required\"";
+static constexpr const char* T_LOGIN_REQ        = "Login Required";
 static constexpr const char* T_BODY             = "body";
 static constexpr const char* T_Cache_Control    = "Cache-Control";
 static constexpr const char* T_chunked          = "chunked";
@@ -25,6 +25,7 @@ static constexpr const char* T_Content_Type     = "Content-Type";
 static constexpr const char* T_Cookie           = "Cookie";
 static constexpr const char* T_DIGEST           = "Digest";
 static constexpr const char* T_DIGEST_          = "Digest ";
+static constexpr const char* T_BEARER           = "Bearer";
 static constexpr const char* T_ETag             = "ETag";
 static constexpr const char* T_EXPECT           = "Expect";
 static constexpr const char* T_HTTP_1_0         = "HTTP/1.0";
@@ -41,7 +42,7 @@ static constexpr const char* T_none             = "none";
 static constexpr const char* T_UPGRADE          = "Upgrade";
 static constexpr const char* T_WS               = "websocket";
 static constexpr const char* T_WWW_AUTH         = "WWW-Authenticate";
-static constexpr const char* Transfer_Encoding  = "Transfer-Encoding";
+static constexpr const char* T_Transfer_Encoding = "Transfer-Encoding";
 
 // HTTP Methods
 static constexpr const char* T_ANY      = "ANY";
@@ -137,6 +138,7 @@ static constexpr const char* T_HTTP_CODE_414 = "Request-URI Too Large";
 static constexpr const char* T_HTTP_CODE_415 = "Unsupported Media Type";
 static constexpr const char* T_HTTP_CODE_416 = "Requested range not satisfiable";
 static constexpr const char* T_HTTP_CODE_417 = "Expectation Failed";
+static constexpr const char* T_HTTP_CODE_429 = "Too Many Requests";
 static constexpr const char* T_HTTP_CODE_500 = "Internal Server Error";
 static constexpr const char* T_HTTP_CODE_501 = "Not Implemented";
 static constexpr const char* T_HTTP_CODE_502 = "Bad Gateway";
@@ -148,7 +150,6 @@ static constexpr const char* T_HTTP_CODE_ANY = "Unknown code";
 // other
 static constexpr const char* T__opaque  = "\", opaque=\"";
 static constexpr const char* T_13       = "13";
-static constexpr const char* T_asyncesp = "asyncesp";
 static constexpr const char* T_auth_nonce = "\", qop=\"auth\", nonce=\"";
 static constexpr const char* T_cnonce   = "cnonce";
 static constexpr const char* T_data_    = "data: ";
@@ -181,7 +182,7 @@ static const char T_app_xform_urlencoded[] PROGMEM = "application/x-www-form-url
 static const char T_AUTH[] PROGMEM = "Authorization";
 static const char T_BASIC[] PROGMEM = "Basic";
 static const char T_BASIC_REALM[] PROGMEM = "Basic realm=\"";
-static const char T_BASIC_REALM_LOGIN_REQ[] PROGMEM = "Basic realm=\"Login Required\"";
+static const char T_LOGIN_REQ[] PROGMEM = "Login Required";
 static const char T_BODY[] PROGMEM = "body";
 static const char T_Cache_Control[] PROGMEM = "Cache-Control";
 static const char T_chunked[] PROGMEM = "chunked";
@@ -194,6 +195,7 @@ static const char T_Content_Type[] PROGMEM = "Content-Type";
 static const char T_Cookie[] PROGMEM = "Cookie";
 static const char T_DIGEST[] PROGMEM = "Digest";
 static const char T_DIGEST_[] PROGMEM = "Digest ";
+static const char T_BEARER[] PROGMEM = "Bearer";
 static const char T_ETag[] PROGMEM = "ETag";
 static const char T_EXPECT[] PROGMEM = "Expect";
 static const char T_HTTP_1_0[] PROGMEM = "HTTP/1.0";
@@ -210,7 +212,7 @@ static const char T_none[] PROGMEM = "none";
 static const char T_UPGRADE[] PROGMEM = "Upgrade";
 static const char T_WS[] PROGMEM = "websocket";
 static const char T_WWW_AUTH[] PROGMEM = "WWW-Authenticate";
-static const char Transfer_Encoding[] PROGMEM = "Transfer-Encoding";
+static const char T_Transfer_Encoding[] PROGMEM = "Transfer-Encoding";
 
 // HTTP Methods
 static const char T_ANY[] PROGMEM = "ANY";
@@ -306,6 +308,7 @@ static const char T_HTTP_CODE_414[] PROGMEM = "Request-URI Too Large";
 static const char T_HTTP_CODE_415[] PROGMEM = "Unsupported Media Type";
 static const char T_HTTP_CODE_416[] PROGMEM = "Requested range not satisfiable";
 static const char T_HTTP_CODE_417[] PROGMEM = "Expectation Failed";
+static const char T_HTTP_CODE_429[] PROGMEM = "Too Many Requests";
 static const char T_HTTP_CODE_500[] PROGMEM = "Internal Server Error";
 static const char T_HTTP_CODE_501[] PROGMEM = "Not Implemented";
 static const char T_HTTP_CODE_502[] PROGMEM = "Bad Gateway";
@@ -317,7 +320,6 @@ static const char T_HTTP_CODE_ANY[] PROGMEM = "Unknown code";
 // other
 static const char T__opaque[] PROGMEM = "\", opaque=\"";
 static const char T_13[] PROGMEM = "13";
-static const char T_asyncesp[] PROGMEM = "asyncesp";
 static const char T_auth_nonce[] PROGMEM = "\", qop=\"auth\", nonce=\"";
 static const char T_cnonce[] PROGMEM = "cnonce";
 static const char T_data_[] PROGMEM = "data: ";

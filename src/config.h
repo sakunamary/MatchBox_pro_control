@@ -2,18 +2,25 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
+
+// MATCH BOX PRO
 #include <Wire.h>
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
 #define HMI_BAUDRATE 9600        // serial port baudrate
 
-//#define DEBUG_MODE
+//  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
+// #define DEBUG_MODE
+
 #define BLE_BUFFER_SIZE 128
 #define HMI_BUFFER_SIZE 17
 
-#define VERSION "1.1.9a"
+#define VERSION "1.1.9b"
 
+
+
+// 下面代码不要动，主板硬件IO对应。已测试。
 #define SPI_SCK 8
 #define SPI_MISO 9
 #define SPI_MOSI 10
@@ -26,11 +33,12 @@
 
 #define TXD_HMI 21
 #define RXD_HMI 20
+// 上面代码不要动，主板硬件IO对应。已测试。
 
 // pwm setting
 #define PWM_FAN 5
 #define PWM_HEAT 2
-#define PWM_FREQ 3922
+#define PWM_FREQ 4000
 #define PWM_RESOLUTION 10 // 0-1024
 
 
@@ -43,8 +51,6 @@
 #define PID_MAX_OUT 100
 #define PID_MIN_OUT 10
 
-#define PID_MAX_OUT 100
-#define PID_MIN_OUT 10
 
 // -------------------------- slew rate limitations for fan control
 #define MAX_SLEW 25                                           // percent per second
@@ -60,7 +66,7 @@
 #define MIN_IO3 30  // Set output % for lower limit for IO3.  0% power will always be available
 #define MAX_IO3 100 // Set output % for upper limit for IO3
 
-
+// PID自动整定 三个阶段的温度设置
 #define PID_TUNE_SV_3 200
 #define PID_TUNE_SV_2 190
 #define PID_TUNE_SV_1 160
@@ -69,10 +75,26 @@
 #define PID_TUNE_FAN_2 53
 #define PID_TUNE_FAN_1 55
 
+#define PID_STAGE_1_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_1_MIN_OUT 10  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+
+#define PID_STAGE_2_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_2_MIN_OUT 10  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+
+#define PID_STAGE_3_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_3_MIN_OUT 10  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+// PID自动整定的测定循环次数
+#define PID_TUNE_CYCLE 10
+
+// PID 自动切换模式，注释就只用eeprom内第一组pid参数
+#define PID_AUTO_SHIFT
+
+
+
 #define BT_FILTER 80
 #define ET_FILTER 80
 
-//
+// 以下代码不要动，FreeRTOS用的代码
 typedef struct eeprom_settings
 {
     double pid_CT;
@@ -83,6 +105,8 @@ typedef struct eeprom_settings
     double ET_tempfix;
 } pid_setting_t;
 
+
+#define TWDT_TIMEOUT_S 3
 
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
@@ -110,7 +134,24 @@ QueueHandle_t queue_data_to_HMI = xQueueCreate(15, HMI_BUFFER_SIZE); // 发送�
 QueueHandle_t queueCMD_HMI = xQueueCreate(15, sizeof(uint8_t[HMI_BUFFER_SIZE]));      // 从HMI接收到的Hex格式命令
 QueueHandle_t queueCMD_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
 QueueHandle_t queue_data_to_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
+// 以上代码不要动，FreeRTOS用的代码
 
+
+const char index_html[] PROGMEM = R"rawliteral(
+
+<!doctype html><html lang='cn'>
+ <head>
+<title>MATCH BOX PRO SETUP</title>
+</head> 
+ <body>
+<main>
+    <h1 align='center'>BLE version:%version%</h1>
+       <div align='center'><a href='/update' target='_blank'>FIRMWARE UPDATE</a>
+        </main>
+         </div>
+    </body>
+ </html>
+)rawliteral";
 
 #endif
 
