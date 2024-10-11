@@ -116,7 +116,7 @@ void setup() {
   Serial.printf("Temp raw:: AMB_TEMP:%4.2f;BT:%4.2f;ET:%4.2f\n", AMB_TEMP, BT_TEMP, ET_TEMP);
 
   pid_parm.BT_tempfix = AMB_TEMP - BT_TEMP;
-  pid_parm.ET_tempfix = AMB_TEMP - ET_TEMP;
+  pid_parm.ET_tempfix = AMB_TEMP - BT_TEMP;
 
   Serial.printf("Temp fix::BT fix:%4.2f;ET fix:%4.2f\n", pid_parm.BT_tempfix, pid_parm.ET_tempfix);
   Serial.println("Pharse II:Done\n");

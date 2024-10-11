@@ -3,7 +3,7 @@
 #define __CONFIG_H__
 
 
-// MATCH BOX PRO
+// MATCH BOX H& 2004LCD
 #include <Wire.h>
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
@@ -11,12 +11,13 @@
 #define HMI_BAUDRATE 9600        // serial port baudrate
 
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
-// #define DEBUG_MODE
+ #define DEBUG_MODE
 
-#define BLE_BUFFER_SIZE 128
+#define BLE_BUFFER_SIZE 64
 #define HMI_BUFFER_SIZE 17
 
 #define VERSION "1.1.9b"
+#define BANNER "MATCHBOX H7"
 
 
 
@@ -43,7 +44,7 @@
 
 
 #define PWM_FAN_MIN 600
-#define PWM_HEAT_MIN 400
+#define PWM_HEAT_MIN 300
 
 #define PWM_FAN_MAX 1000
 #define PWM_HEAT_MAX 1000
@@ -91,8 +92,8 @@
 
 
 
-#define BT_FILTER 80
-#define ET_FILTER 80
+#define BT_FILTER 70
+#define ET_FILTER 70
 
 // 以下代码不要动，FreeRTOS用的代码
 typedef struct eeprom_settings
@@ -106,7 +107,7 @@ typedef struct eeprom_settings
 } pid_setting_t;
 
 
-#define TWDT_TIMEOUT_S 3
+#define TWDT_TIMEOUT_S 5
 
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
@@ -114,11 +115,6 @@ typedef struct eeprom_settings
 #define CHARACTERISTIC_UUID_RX "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
 #define CHARACTERISTIC_UUID_TX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
 
-
-
-static TaskHandle_t xTASK_data_to_HMI = NULL;
-static TaskHandle_t xTASK_CMD_FROM_HMI = NULL;
-static TaskHandle_t xTASK_HMI_CMD_handle = NULL;
 static TaskHandle_t xTASK_data_to_BLE = NULL;
 static TaskHandle_t xTASK_BLE_CMD_handle = NULL;
 static TaskHandle_t xTask_Thermo_get_data = NULL;
@@ -127,11 +123,8 @@ static TaskHandle_t xTask_PID_autotune = NULL;
 
 
 SemaphoreHandle_t xThermoDataMutex = NULL;
-SemaphoreHandle_t xDATA_OUT_Mutex = NULL;
 
 
-QueueHandle_t queue_data_to_HMI = xQueueCreate(15, HMI_BUFFER_SIZE); // 发送到HMI的数据 hex格式化数据
-QueueHandle_t queueCMD_HMI = xQueueCreate(15, sizeof(uint8_t[HMI_BUFFER_SIZE]));      // 从HMI接收到的Hex格式命令
 QueueHandle_t queueCMD_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
 QueueHandle_t queue_data_to_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
 // 以上代码不要动，FreeRTOS用的代码

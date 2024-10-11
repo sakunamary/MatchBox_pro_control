@@ -5,7 +5,12 @@
 #include <config.h>
 #include <Wire.h>
 #include <MCP3424.h>
-//#include "DFRobot_BME280.h"
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
+#include <BLE2902.h>
+
+// #include "DFRobot_BME280.h"
 
 double BT_TEMP;
 double ET_TEMP;
@@ -32,16 +37,22 @@ filterRC ET_TEMP_ft;
 extern PIDAutotuner tuner;
 extern ESP32PWM pwm_heat;
 extern ESP32PWM pwm_fan;
+
+extern BLEServer *pServer;
+extern BLECharacteristic *pTxCharacteristic;
+extern bool deviceConnected;
+extern bool oldDeviceConnected;
+
 // Need this for the lower level access to set them up.
 uint8_t address = 0x68;
 long Voltage; // Array used to store results
 unsigned long temp_check[3];
 
-//typedef DFRobot_BME280_IIC BME; // ******** use abbreviations instead of full names ********
+// typedef DFRobot_BME280_IIC BME; // ******** use abbreviations instead of full names ********
 
 /**IIC address is 0x77 when pin SDO is high */
 /**IIC address is 0x76 when pin SDO is low */
-//BME bme(&Wire, 0x76); // select TwoWire peripheral and set sensor address
+// BME bme(&Wire, 0x76); // select TwoWire peripheral and set sensor address
 
 #define SEA_LEVEL_PRESSURE 1015.0f
 
@@ -62,8 +73,10 @@ void Task_Thermo_get_data(void *pvParameters)
     (void)pvParameters;
     TickType_t xLastWakeTime;
     char temp_data_buffer_ble[BLE_BUFFER_SIZE];
-    uint8_t temp_data_buffer_hmi[HMI_BUFFER_SIZE];
+    uint8_t temp_data_buffer_ble_out[BLE_BUFFER_SIZE];
     const TickType_t xIntervel = (pid_parm.pid_CT * 1000) / portTICK_PERIOD_MS;
+    const TickType_t timeOut = 500 / portTICK_PERIOD_MS;
+    int i = 0;
     /* Task Setup and Initialize */
     // Initial the xLastWakeTime variable with the current time.
     xLastWakeTime = xTaskGetTickCount();
@@ -166,46 +179,34 @@ void Task_Thermo_get_data(void *pvParameters)
         }
 
         // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
-        if (xSemaphoreTake(xDATA_OUT_Mutex, 250 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
+        if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
             // 封装BLE 协议
             sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
-            // Serial.print(temp_data_buffer_ble);
-
-            xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
-
-            // 封装HMI 协议
-            temp_data_buffer_hmi[0] = 0x69;
-            temp_data_buffer_hmi[1] = 0xff;
-            temp_data_buffer_hmi[2] = 0x01;
-            temp_data_buffer_hmi[3] = lowByte(int(round(AMB_TEMP * 10)));
-            temp_data_buffer_hmi[4] = highByte(int(round(AMB_TEMP * 10)));
-            temp_data_buffer_hmi[5] = lowByte(int(round(ET_TEMP * 10)));
-            temp_data_buffer_hmi[6] = highByte(int(round(ET_TEMP * 10)));
-            temp_data_buffer_hmi[7] = lowByte(int(round(BT_TEMP * 10)));
-            temp_data_buffer_hmi[8] = highByte(int(round(BT_TEMP * 10)));
-            temp_data_buffer_hmi[9] = lowByte(int(round(pid_sv * 10)));
-            temp_data_buffer_hmi[10] = highByte(int(round(pid_sv * 10)));
-            temp_data_buffer_hmi[11] = levelOT1;
-            temp_data_buffer_hmi[12] = levelIO3;
-            if (pid_status)
+            while (i < sizeof(temp_data_buffer_ble) && sizeof(temp_data_buffer_ble) > 0)
             {
-                temp_data_buffer_hmi[13] = 0x01;
+                // Serial.print(rxValue[i]);
+                if (temp_data_buffer_ble[i] == 0x0A)
+                {
+                    temp_data_buffer_ble_out[i] = temp_data_buffer_ble[i]; // copy value
+                    i = 0;                                                 // clearing
+                    break;                                                 // 跳出循环
+                }
+                else
+                {
+                    temp_data_buffer_ble_out[i] = temp_data_buffer_ble[i];
+                    i++;
+                }
             }
-            else
+            if (deviceConnected)
             {
-                temp_data_buffer_hmi[13] = 0x00;
+                pTxCharacteristic->setValue(temp_data_buffer_ble_out, sizeof(temp_data_buffer_ble_out));
+                pTxCharacteristic->notify();
             }
-            temp_data_buffer_hmi[14] = 0xff;
-            temp_data_buffer_hmi[15] = 0xff;
-            temp_data_buffer_hmi[16] = 0xff;
-
-            xQueueSend(queue_data_to_HMI, &temp_data_buffer_hmi, xIntervel);
-            memset(temp_data_buffer_hmi, '\0', HMI_BUFFER_SIZE);
-            xSemaphoreGive(xDATA_OUT_Mutex); // end of lock mutex
+            memset(&temp_data_buffer_ble_out, '\0', BLE_BUFFER_SIZE);
+            memset(&temp_data_buffer_ble, '\0', BLE_BUFFER_SIZE);
+            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
-        xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
-        xTaskNotify(xTASK_data_to_HMI, 0, eIncrement); // send notify to TASK_data_to_HMIÍ
     }
 
 } // function
@@ -391,10 +392,7 @@ void Task_PID_autotune(void *pvParameters)
     PID_TUNNING = false;
     delay(3000);
     ESP.restart();
-    vTaskResume(xTASK_CMD_FROM_HMI);
-    vTaskResume(xTASK_HMI_CMD_handle);
-    vTaskResume(xTASK_BLE_CMD_handle);
-
+    //vTaskResume(xTASK_BLE_CMD_handle);
     vTaskSuspend(NULL);
 }
 

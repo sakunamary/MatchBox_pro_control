@@ -16,7 +16,6 @@
 #include <TASK_read_temp.h>
 #include <TASK_BLE_Serial.h>
 #include "TASK_LCD.h"
-// #include <TASK_HMI_Serial.h>
 
 AsyncWebServer server(80);
 
@@ -115,9 +114,7 @@ String processor(const String &var)
 void setup()
 {
 
-    loopTaskWDTEnabled = true;
     xThermoDataMutex = xSemaphoreCreateMutex();
-    xDATA_OUT_Mutex = xSemaphoreCreateMutex();
 
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);
@@ -135,7 +132,7 @@ void setup()
 
     Serial.begin(HMI_BAUDRATE);
     // Serial_HMI.setBuffer();
-   // Serial_HMI.begin(HMI_BAUDRATE, SERIAL_8N1, RXD_HMI, TXD_HMI);
+    // Serial_HMI.begin(HMI_BAUDRATE, SERIAL_8N1, RXD_HMI, TXD_HMI);
 
 #if defined(DEBUG_MODE)
     Serial.printf("\nStart PWM...");
@@ -145,7 +142,8 @@ void setup()
 
     Serial.printf("\nStart Task...");
 #endif
-    //bme.begin();
+    Wire.begin();
+    // bme.begin();
     MCP.NewConversion(); // New conversion is initiated
     I2C_EEPROM.setMemoryType(64);
 #if defined(DEBUG_MODE)
@@ -221,36 +219,7 @@ void setup()
 #if defined(DEBUG_MODE)
     Serial.printf("\nTASK1:Task_Thermo_get_data...");
 #endif
-    // vTaskSuspend(xTask_Thermo_get_data);
-
-
-    xTaskCreate(
-        TASK_LCD, "TASK_LCD" // 获取HB数据
-        ,
-        1024 * 6 // This stack size can be checked & adjusted by reading the Stack Highwater
-        ,
-        NULL, 3 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-        ,
-        NULL // Running Core decided by FreeRTOS,let core0 run wifi and BT
-    );
-#if defined(DEBUG_MODE)
-    Serial.printf("\nTASK2:TASK_LCD...");
-#endif
-
-
-    xTaskCreate(
-        TASK_DATA_to_BLE, "TASK_DATA_to_BLE" // 获取HB数据
-        ,
-        1024 * 6 // This stack size can be checked & adjusted by reading the Stack Highwater
-        ,
-        NULL, 3 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-        ,
-        &xTASK_data_to_BLE // Running Core decided by FreeRTOS,let core0 run wifi and BT
-    );
-#if defined(DEBUG_MODE)
-    Serial.printf("\nTASK6:TASK_DATA_to_BLE...");
-#endif
-
+//     // vTaskSuspend(xTask_Thermo_get_data);
     xTaskCreate(
         TASK_BLE_CMD_handle, "TASK_BLE_CMD_handle" // 获取HB数据
         ,
@@ -275,7 +244,20 @@ void setup()
     );
     vTaskSuspend(xTask_PID_autotune); //
 #if defined(DEBUG_MODE)
-    Serial.printf("\nTASK=8:PID autotune OK");
+    Serial.printf("\nTASK=8:PID autotune OK\n");
+#endif
+
+    xTaskCreate(
+        TASK_LCD, "TASK_LCD" // 获取HB数据
+        ,
+        1024 * 6 // This stack size can be checked & adjusted by reading the Stack Highwater
+        ,
+        NULL, 4 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+        ,
+        NULL // Running Core decided by FreeRTOS,let core0 run wifi and BT
+    );
+#if defined(DEBUG_MODE)
+    Serial.printf("\nTASK2:TASK_LCD...");
 #endif
 
     // // init PID
@@ -289,7 +271,7 @@ void setup()
     tuner.setLoopInterval(pid_parm.pid_CT * uS_TO_S_FACTOR);
     tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
     tuner.setZNMode(PIDAutotuner::ZNModeNoOvershoot);
-    tuner.setTuningCycles(5);
+
 
     // INIT OTA service
     // server.on("/", handle_root);
@@ -306,7 +288,7 @@ void setup()
 
 #if defined(DEBUG_MODE)
     Serial.printf("\nEEPROM value check ...\n");
-    Serial.printf("pid_CT:%d\n", pid_parm.pid_CT);
+    Serial.printf("pid_CT:%4.2f\n", pid_parm.pid_CT);
     Serial.printf("PID kp:%4.2f\n", pid_parm.p);
     Serial.printf("PID ki:%4.2f\n", pid_parm.i);
     Serial.printf("PID kd:%4.2f\n", pid_parm.d);
@@ -315,7 +297,7 @@ void setup()
 #endif
 
     // init watch dog
-    esp_task_wdt_init(3, false);
+    esp_task_wdt_init(TWDT_TIMEOUT_S, false);
     // esp_task_wdt_add(&xTask_Thermo_get_data);
 }
 
