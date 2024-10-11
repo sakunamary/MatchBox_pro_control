@@ -300,7 +300,7 @@ void setup()
     // Start ElegantOTA
 
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send_P(200, "text/html", index_html, processor); });
+              { request->send(200, "text/html", index_html, processor); });
 
     // server.on("/", handle_root);
     ElegantOTA.begin(&server); // Start ElegantOTA

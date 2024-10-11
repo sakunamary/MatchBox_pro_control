@@ -8,7 +8,7 @@
 #define BAUDRATE 115200        // serial port baudrate
 #define VERSION "1.1.2f"
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
-// #define DEBUG_MODE
+ //#define DEBUG_MODE
 
 // 下面代码不要动，主板硬件IO对应。已测试。
 #define BLE_BUFFER_SIZE 64
