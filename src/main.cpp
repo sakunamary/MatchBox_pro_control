@@ -12,11 +12,11 @@
 
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 #include <PID_v1.h>
-
+#include "pidautotuner.h"
 #include <TASK_read_temp.h>
 #include <TASK_BLE_Serial.h>
-#include <TASK_HMI_Serial.h>
-
+#include "TASK_LCD.h"
+// #include <TASK_HMI_Serial.h>
 
 AsyncWebServer server(80);
 
@@ -26,6 +26,7 @@ ESP32PWM pwm_heat;
 ESP32PWM pwm_fan;
 extern filterRC BT_TEMP_ft;
 extern filterRC ET_TEMP_ft;
+extern HD44780LCD LCD;
 PIDAutotuner tuner = PIDAutotuner();
 
 PID Heat_pid_controller(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d, DIRECT);
@@ -125,12 +126,16 @@ void setup()
     pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
     pwm_heat.write(1);
 
+    LCD.PCF8574_LCDInit(LCD.LCDCursorTypeOff);
+    LCD.PCF8574_LCDClearScreen();
+    LCD.PCF8574_LCDBackLightSet(true);
+
     BT_TEMP_ft.init(BT_FILTER);
     ET_TEMP_ft.init(ET_FILTER);
 
     Serial.begin(HMI_BAUDRATE);
     // Serial_HMI.setBuffer();
-    Serial_HMI.begin(HMI_BAUDRATE, SERIAL_8N1, RXD_HMI, TXD_HMI);
+   // Serial_HMI.begin(HMI_BAUDRATE, SERIAL_8N1, RXD_HMI, TXD_HMI);
 
 #if defined(DEBUG_MODE)
     Serial.printf("\nStart PWM...");
@@ -140,7 +145,7 @@ void setup()
 
     Serial.printf("\nStart Task...");
 #endif
-    bme.begin();
+    //bme.begin();
     MCP.NewConversion(); // New conversion is initiated
     I2C_EEPROM.setMemoryType(64);
 #if defined(DEBUG_MODE)
@@ -218,44 +223,20 @@ void setup()
 #endif
     // vTaskSuspend(xTask_Thermo_get_data);
 
-    xTaskCreate(
-        TASK_data_to_HMI, "TASK_data_to_HMI" // 获取HB数据
-        ,
-        1024 * 2 // This stack size can be checked & adjusted by reading the Stack Highwater
-        ,
-        NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-        ,
-        &xTASK_data_to_HMI // Running Core decided by FreeRTOS,let core0 run wifi and BT
-    );
-#if defined(DEBUG_MODE)
-    Serial.printf("\nTASK3:TASK_data_to_HMI...\n");
-#endif
 
     xTaskCreate(
-        TASK_HMI_CMD_handle, "TASK_HMI_CMD_handle" // 获取HB数据
+        TASK_LCD, "TASK_LCD" // 获取HB数据
         ,
-        1024 * 10 // This stack size can be checked & adjusted by reading the Stack Highwater
+        1024 * 6 // This stack size can be checked & adjusted by reading the Stack Highwater
         ,
-        NULL, 1 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+        NULL, 3 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
         ,
-        &xTASK_HMI_CMD_handle // Running Core decided by FreeRTOS,let core0 run wifi and BT
+        NULL // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
-    Serial.printf("\nTASK5:TASK_HMI_CMD_handle...\n");
+    Serial.printf("\nTASK2:TASK_LCD...");
 #endif
 
-    xTaskCreate(
-        TASK_CMD_FROM_HMI, "TASK_CMD_FROM_HMI" // 获取HB数据
-        ,
-        1024 * 2 // This stack size can be checked & adjusted by reading the Stack Highwater
-        ,
-        NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-        ,
-        &xTASK_CMD_FROM_HMI // Running Core decided by FreeRTOS,let core0 run wifi and BT
-    );
-#if defined(DEBUG_MODE)
-    Serial.printf("\nTASK4:TASK_CMD_FROM_HMI...\n");
-#endif
 
     xTaskCreate(
         TASK_DATA_to_BLE, "TASK_DATA_to_BLE" // 获取HB数据
@@ -302,13 +283,6 @@ void setup()
     Heat_pid_controller.SetOutputLimits(PID_MIN_OUT, PID_MAX_OUT);
     Heat_pid_controller.SetSampleTime(int(pid_parm.pid_CT * 1000));
 
-    // Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);
-    // Heat_pid_controller.setSampleTime(pid_parm.pid_CT * 1000); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
-    // Heat_pid_controller.setOutputLimits(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
-    // Heat_pid_controller.setBias(255.0 / 2.0);
-    // Heat_pid_controller.setWindUpLimits(2, 2); // Groth bounds for the integral term to prevent integral wind-up
-    // Heat_pid_controller.start();
-
     // INIT PID AUTOTUNE
 
     tuner.setTargetInputValue(PID_TUNE_SV_1);
@@ -320,7 +294,7 @@ void setup()
     // INIT OTA service
     // server.on("/", handle_root);
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send_P(200, "text/html", index_html, processor); });
+              { request->send(200, "text/html", index_html, processor); });
     ElegantOTA.begin(&server); // Start ElegantOTA
     // ElegantOTA callbacks
     ElegantOTA.onStart(onOTAStart);
@@ -330,31 +304,6 @@ void setup()
     server.begin();
     Serial.println("HTTP server started");
 
-    HMI_HAND[0] = 0x69;
-    HMI_HAND[1] = 0xff;
-    HMI_HAND[2] = 0x00;
-    HMI_HAND[3] = 0xff;
-    HMI_HAND[4] = 0xff;
-    HMI_HAND[5] = 0xff;
-    HMI_HAND[6] = 0x69;
-    HMI_HAND[7] = 0x69;
-    HMI_HAND[8] = 0x69;
-    HMI_HAND[9] = 0x67;
-    HMI_HAND[10] = 0x67;
-    HMI_HAND[11] = 0x67;
-    HMI_HAND[12] = 0xff;
-    HMI_HAND[13] = 0xff;
-    HMI_HAND[14] = 0xff;
-    HMI_HAND[15] = 0xff;
-    HMI_HAND[16] = 0xff;
-
-    for (int loop = 0; loop < 3; loop++)
-    {
-        delay(1000);
-        xQueueSend(queue_data_to_HMI, &HMI_HAND, 300 / portTICK_PERIOD_MS);
-        xTaskNotify(xTASK_data_to_HMI, 0, eIncrement); // send notify to TASK_data_to_HMI
-    }
-    memset(HMI_HAND, '\0', HMI_BUFFER_SIZE);
 #if defined(DEBUG_MODE)
     Serial.printf("\nEEPROM value check ...\n");
     Serial.printf("pid_CT:%d\n", pid_parm.pid_CT);

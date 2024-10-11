@@ -5,7 +5,7 @@
 #include <config.h>
 #include <Wire.h>
 #include <MCP3424.h>
-#include "DFRobot_BME280.h"
+//#include "DFRobot_BME280.h"
 
 double BT_TEMP;
 double ET_TEMP;
@@ -37,11 +37,11 @@ uint8_t address = 0x68;
 long Voltage; // Array used to store results
 unsigned long temp_check[3];
 
-typedef DFRobot_BME280_IIC BME; // ******** use abbreviations instead of full names ********
+//typedef DFRobot_BME280_IIC BME; // ******** use abbreviations instead of full names ********
 
 /**IIC address is 0x77 when pin SDO is high */
 /**IIC address is 0x76 when pin SDO is low */
-BME bme(&Wire, 0x76); // select TwoWire peripheral and set sensor address
+//BME bme(&Wire, 0x76); // select TwoWire peripheral and set sensor address
 
 #define SEA_LEVEL_PRESSURE 1015.0f
 
@@ -84,9 +84,9 @@ void Task_Thermo_get_data(void *pvParameters)
 
             // if (aht20.startMeasurementReady(/* crcEn = */ true))
             // {
-            AMB_TEMP = bme.getTemperature();
-            AMB_PRESS = bme.getPressure();
-            AMB_RH = bme.getHumidity();
+            // AMB_TEMP = bme.getTemperature();
+            // AMB_PRESS = bme.getPressure();
+            // AMB_RH = bme.getHumidity();
             // #if defined(DEBUG_MODE)
             //                 Serial.printf("raw data:AMB_TEMP:%4.2f\n", AMB_TEMP);
             // #endif
