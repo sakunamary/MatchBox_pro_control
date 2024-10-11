@@ -4,15 +4,12 @@
 #include <WiFi.h>
 #include <ESP32Servo.h>
 #include <StringTokenizer.h>
+#include "HD44780_LCD_PCF8574.h"
 #include <WiFiClient.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <ElegantOTA.h>
 
-// #include <WebServer.h>
-// #include <ElegantOTA.h>
-
-#include <pidautotuner.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 #include <PID_v1.h>
 
@@ -20,8 +17,9 @@
 #include <TASK_BLE_Serial.h>
 #include <TASK_HMI_Serial.h>
 
+
 AsyncWebServer server(80);
-// WebServer server(80);
+
 String local_IP;
 ExternalEEPROM I2C_EEPROM;
 ESP32PWM pwm_heat;
@@ -29,7 +27,7 @@ ESP32PWM pwm_fan;
 extern filterRC BT_TEMP_ft;
 extern filterRC ET_TEMP_ft;
 PIDAutotuner tuner = PIDAutotuner();
-// ArduPID Heat_pid_controller;
+
 PID Heat_pid_controller(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d, DIRECT);
 
 extern bool loopTaskWDTEnabled;
@@ -95,29 +93,6 @@ void onOTAEnd(bool success)
     // }
     // <Add your own code here>
 }
-
-// Handle root url (/)
-// void handle_root()
-// {
-//     char index_html[2048];
-//     String ver = VERSION;
-//     snprintf(index_html, 2048,
-//              "<html>\
-// <head>\
-// <title>MATCH BOX PRO SETUP</title>\
-//     </head> \
-//     <body>\
-//         <main>\
-//         <h1 align='center'> ver:%s</h1>\
-//         <div align='center'><a href='/update' target='_blank'>FIRMWARE UPDATE</a>\
-//         </main>\
-//         </div>\
-//     </body>\
-// </html>\
-// ",
-//              ver);
-//     server.send(200, "text/html", index_html);
-// }
 
 String IpAddressToString(const IPAddress &ipAddress)
 {
