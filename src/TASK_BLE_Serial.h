@@ -92,36 +92,36 @@ class MyCallbacks : public BLECharacteristicCallbacks
 
 // const int BLE_BUFFER_SIZE = 1024;
 
-// void TASK_DATA_to_BLE(void *pvParameters)
-// {
-//     (void)pvParameters;
-//     uint8_t BLE_DATA_Buffer[BLE_BUFFER_SIZE];
-//     const TickType_t timeOut = 250 / portTICK_PERIOD_MS;
-//     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
-//     BaseType_t xResult;
+void TASK_DATA_to_BLE(void *pvParameters)
+{
+    (void)pvParameters;
+    uint8_t BLE_DATA_Buffer[BLE_BUFFER_SIZE];
+    const TickType_t timeOut = 250 / portTICK_PERIOD_MS;
+    uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
+    BaseType_t xResult;
 
-//     while (1)
-//     {
-//         xResult = xTaskNotifyWait(0x00,                 // 在运行前这个命令之前，先清除这几位
-//                                   0x00,                 // 运行后，重置所有的bits 0x00 or ULONG_MAX or 0xFFFFFFFF
-//                                   &ulNotificationValue, // 重置前的notification value
-//                                   portMAX_DELAY);       // 一直等待
-//         if (xResult == pdTRUE)
-//         {
-//             if (xQueueReceive(queue_data_to_BLE, &BLE_DATA_Buffer, timeOut) == pdPASS)
+    while (1)
+    {
+        xResult = xTaskNotifyWait(0x00,                 // 在运行前这个命令之前，先清除这几位
+                                  0x00,                 // 运行后，重置所有的bits 0x00 or ULONG_MAX or 0xFFFFFFFF
+                                  &ulNotificationValue, // 重置前的notification value
+                                  portMAX_DELAY);       // 一直等待
+        if (xResult == pdTRUE)
+        {
+            if (xQueueReceive(queue_data_to_BLE, &BLE_DATA_Buffer, timeOut) == pdPASS)
 
-//             { // 从接收QueueCMD 接收指令
-//                 if (deviceConnected)
-//                 {
-//                     pTxCharacteristic->setValue(BLE_DATA_Buffer, sizeof(BLE_DATA_Buffer));
-//                     pTxCharacteristic->notify();
-//                 }
-//                 // data frame:PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
-//                 delay(50);
-//             }
-//         }
-//     }
-// }
+            { // 从接收QueueCMD 接收指令
+                if (deviceConnected)
+                {
+                    pTxCharacteristic->setValue(BLE_DATA_Buffer, sizeof(BLE_DATA_Buffer));
+                    pTxCharacteristic->notify();
+                }
+                // data frame:PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
+                delay(50);
+            }
+        }
+    }
+}
 
 void TASK_BLE_CMD_handle(void *pvParameters)
 {
@@ -272,7 +272,6 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     }
                     else if (CMD_Data[1] == "OFF")
                     {
-                        // Heat_pid_controller.stop();
                         Heat_pid_controller.SetMode(MANUAL);
                         I2C_EEPROM.get(0, pid_parm);
                         Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);

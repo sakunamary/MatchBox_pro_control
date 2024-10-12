@@ -220,12 +220,26 @@ void setup()
     Serial.printf("\nTASK1:Task_Thermo_get_data...");
 #endif
 //     // vTaskSuspend(xTask_Thermo_get_data);
+
+    xTaskCreate(
+        TASK_DATA_to_BLE, "TASK_DATA_to_BLE" // 获取HB数据
+        ,
+        1024 * 6 // This stack size can be checked & adjusted by reading the Stack Highwater
+        ,
+        NULL, 3 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+        ,
+        &xTASK_data_to_BLE // Running Core decided by FreeRTOS,let core0 run wifi and BT
+    );
+#if defined(DEBUG_MODE)
+    Serial.printf("\nTASK6:TASK_DATA_to_BLE...");
+#endif
+
     xTaskCreate(
         TASK_BLE_CMD_handle, "TASK_BLE_CMD_handle" // 获取HB数据
         ,
         1024 * 6 // This stack size can be checked & adjusted by reading the Stack Highwater
         ,
-        NULL, 1 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+        NULL, 3 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
         ,
         &xTASK_BLE_CMD_handle // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
@@ -252,7 +266,7 @@ void setup()
         ,
         1024 * 6 // This stack size can be checked & adjusted by reading the Stack Highwater
         ,
-        NULL, 4 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+        NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
         ,
         NULL // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );

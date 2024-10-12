@@ -16,6 +16,7 @@ double BT_TEMP;
 double ET_TEMP;
 double AMB_RH;
 double AMB_TEMP;
+double ror;
 uint32_t AMB_PRESS;
 extern int levelOT1;
 extern int levelIO3;
@@ -73,7 +74,7 @@ void Task_Thermo_get_data(void *pvParameters)
     (void)pvParameters;
     TickType_t xLastWakeTime;
     char temp_data_buffer_ble[BLE_BUFFER_SIZE];
-    uint8_t temp_data_buffer_ble_out[BLE_BUFFER_SIZE];
+    // uint8_t temp_data_buffer_ble_out[BLE_BUFFER_SIZE];
     const TickType_t xIntervel = (pid_parm.pid_CT * 1000) / portTICK_PERIOD_MS;
     const TickType_t timeOut = 500 / portTICK_PERIOD_MS;
     int i = 0;
@@ -183,27 +184,30 @@ void Task_Thermo_get_data(void *pvParameters)
         {
             // 封装BLE 协议
             sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
-            while (i < sizeof(temp_data_buffer_ble) && sizeof(temp_data_buffer_ble) > 0)
-            {
-                // Serial.print(rxValue[i]);
-                if (temp_data_buffer_ble[i] == 0x0A)
-                {
-                    temp_data_buffer_ble_out[i] = temp_data_buffer_ble[i]; // copy value
-                    i = 0;                                                 // clearing
-                    break;                                                 // 跳出循环
-                }
-                else
-                {
-                    temp_data_buffer_ble_out[i] = temp_data_buffer_ble[i];
-                    i++;
-                }
-            }
-            if (deviceConnected)
-            {
-                pTxCharacteristic->setValue(temp_data_buffer_ble_out, sizeof(temp_data_buffer_ble_out));
-                pTxCharacteristic->notify();
-            }
-            memset(&temp_data_buffer_ble_out, '\0', BLE_BUFFER_SIZE);
+            // while (i < sizeof(temp_data_buffer_ble) && sizeof(temp_data_buffer_ble) > 0)
+            // {
+            //     // Serial.print(rxValue[i]);
+            //     if (temp_data_buffer_ble[i] == 0x0A)
+            //     {
+            //         temp_data_buffer_ble_out[i] = temp_data_buffer_ble[i]; // copy value
+            //         i = 0;                                                 // clearing
+            //         break;                                                 // 跳出循环
+            //     }
+            //     else
+            //     {
+            //         temp_data_buffer_ble_out[i] = temp_data_buffer_ble[i];
+            //         i++;
+            //     }
+            // }
+            // if (deviceConnected)
+            // {
+            //     pTxCharacteristic->setValue(temp_data_buffer_ble_out, sizeof(temp_data_buffer_ble_out));
+            //     pTxCharacteristic->notify();
+            // }
+
+            // memset(&temp_data_buffer_ble_out, '\0', BLE_BUFFER_SIZE);
+            xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
+            xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
             memset(&temp_data_buffer_ble, '\0', BLE_BUFFER_SIZE);
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
@@ -392,7 +396,7 @@ void Task_PID_autotune(void *pvParameters)
     PID_TUNNING = false;
     delay(3000);
     ESP.restart();
-    //vTaskResume(xTASK_BLE_CMD_handle);
+    // vTaskResume(xTASK_BLE_CMD_handle);
     vTaskSuspend(NULL);
 }
 
