@@ -148,7 +148,7 @@ void setup()
     pwm_fan.write(600);
 
     pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
-    pwm_heat.write(1);
+    pwm_heat.write(5);
 
     BT_TEMP_ft.init(BT_FILTER);
     AMB_ft.init(AMB_FILTER);
