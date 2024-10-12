@@ -121,7 +121,7 @@ void setup()
     ESP32PWM::allocateTimer(1);
     pwm_fan.attachPin(pwm_fan_out, frequency, resolution); // 1KHz 8 bit
     pwm_fan.write(700);
-    pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
+    pwm_heat.attachPin(pwm_heat_out, 50, resolution); // 1KHz 8 bit
     pwm_heat.write(1);
 
     LCD.PCF8574_LCDInit(LCD.LCDCursorTypeOff);
