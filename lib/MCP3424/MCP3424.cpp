@@ -23,6 +23,7 @@ Contact : batto@hotmail.fr
 */
 
 #include <MCP3424.h>
+#define D_MULT 0.001 
 
 MCP3424::MCP3424(uint8_t adresse){
 Wire.begin();
@@ -181,4 +182,13 @@ int32_t filterRC::doFilter ( int32_t xi ) {
    yy += yyy;
    return y = round( yy );
 };
-
+// ------------------------------------
+float filterRC::calcRise(int32_t T1, int32_t T2, int32_t t1, int32_t t2)
+{
+    int32_t dt = t2 - t1;
+    if (dt == 0)
+        return 0.0; // fixme -- throw an exception here?
+    float dT = (T2 - T1) * D_MULT;
+    float dS = dt * 0.001;   // convert from milli-seconds to seconds
+    return (dT / dS) * 60.0; // rise per minute
+}

@@ -94,6 +94,9 @@
 
 #define BT_FILTER 70
 #define ET_FILTER 70
+#define D_MULT 0.001 
+#define RISE_FILTER 85 // heavy filtering on non-displayed BT for RoR calculations
+#define ROR_FILTER 80 // post-filtering for the computed RoR values
 
 // 以下代码不要动，FreeRTOS用的代码
 typedef struct eeprom_settings

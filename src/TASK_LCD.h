@@ -77,7 +77,7 @@ void TASK_LCD(void *pvParameters)
 
         if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
-            sprintf(line2, "RoR:%3d      BT:%4d", (int)round(ror), (int)round(BT_TEMP));
+            sprintf(line2, "RoR:%4d     BT:%4d", (int)round(ror), (int)round(BT_TEMP));
             LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberTwo, 0);
             LCD.PCF8574_LCDSendString(line2);
             sprintf(line4, "FAN:%3d  ", (int)round(levelIO3));

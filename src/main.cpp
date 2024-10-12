@@ -37,6 +37,7 @@ int levelOT1 = 0;
 int levelIO3 = 30;
 bool pid_status = false;
 bool PID_TUNNING = false;
+bool first = true;
 byte tries;
 double PID_output = 0;
 double pid_sv;
@@ -129,10 +130,11 @@ void setup()
 
     BT_TEMP_ft.init(BT_FILTER);
     ET_TEMP_ft.init(ET_FILTER);
+    fRise.init(RISE_FILTER); // digital filtering for RoR calculation
+    fRoR.init(ROR_FILTER);   // post-filtering on RoR values
+    first = true;
 
     Serial.begin(HMI_BAUDRATE);
-    // Serial_HMI.setBuffer();
-    // Serial_HMI.begin(HMI_BAUDRATE, SERIAL_8N1, RXD_HMI, TXD_HMI);
 
 #if defined(DEBUG_MODE)
     Serial.printf("\nStart PWM...");
@@ -219,7 +221,7 @@ void setup()
 #if defined(DEBUG_MODE)
     Serial.printf("\nTASK1:Task_Thermo_get_data...");
 #endif
-//     // vTaskSuspend(xTask_Thermo_get_data);
+    //     // vTaskSuspend(xTask_Thermo_get_data);
 
     xTaskCreate(
         TASK_DATA_to_BLE, "TASK_DATA_to_BLE" // 获取HB数据
@@ -286,7 +288,6 @@ void setup()
     tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
     tuner.setZNMode(PIDAutotuner::ZNModeNoOvershoot);
 
-
     // INIT OTA service
     // server.on("/", handle_root);
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
@@ -309,7 +310,6 @@ void setup()
     Serial.printf("BT fix:%4.2f\n", pid_parm.BT_tempfix);
     Serial.printf("ET fix:%4.2f\n", pid_parm.ET_tempfix);
 #endif
-
     // init watch dog
     esp_task_wdt_init(TWDT_TIMEOUT_S, false);
     // esp_task_wdt_add(&xTask_Thermo_get_data);

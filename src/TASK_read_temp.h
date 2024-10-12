@@ -17,6 +17,12 @@ double ET_TEMP;
 double AMB_RH;
 double AMB_TEMP;
 double ror;
+float rx;
+int32_t ftemps;     // heavily filtered temps
+int32_t ftimes;     // filtered sample timestamps
+int32_t ftemps_old; // for calculating derivative
+int32_t ftimes_old; // for calculating derivative
+
 uint32_t AMB_PRESS;
 extern int levelOT1;
 extern int levelIO3;
@@ -28,11 +34,14 @@ float PID_TUNE_SV;
 long prevMicroseconds;
 long microseconds;
 double pid_tune_output;
+extern bool first;
 
 extern ExternalEEPROM I2C_EEPROM;
 extern PID Heat_pid_controller;
 filterRC BT_TEMP_ft;
 filterRC ET_TEMP_ft;
+filterRC fRise;
+filterRC fRoR;
 
 // extern ArduPID Heat_pid_controller;
 extern PIDAutotuner tuner;
@@ -47,6 +56,7 @@ extern bool oldDeviceConnected;
 // Need this for the lower level access to set them up.
 uint8_t address = 0x68;
 long Voltage; // Array used to store results
+
 unsigned long temp_check[3];
 
 // typedef DFRobot_BME280_IIC BME; // ******** use abbreviations instead of full names ********
@@ -82,17 +92,14 @@ void Task_Thermo_get_data(void *pvParameters)
     // Initial the xLastWakeTime variable with the current time.
     xLastWakeTime = xTaskGetTickCount();
     esp_task_wdt_add(NULL);
-    // if (esp_task_wdt_status(NULL) != ESP_OK)
-    // {
-    //     esp_task_wdt_add(NULL);
-    // }
-
-    for (;;) // A Task shall never return or exit.
-    {        // for loop
-             // 喂狗
+    while (1) // A Task shall never return or exit.
+    {         // for loop
+              // 喂狗
         esp_task_wdt_reset();
         // Wait for the next cycle (intervel 1500ms).
         vTaskDelayUntil(&xLastWakeTime, xIntervel);
+
+        // step1:
         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
 
@@ -105,6 +112,11 @@ void Task_Thermo_get_data(void *pvParameters)
             //                 Serial.printf("raw data:AMB_TEMP:%4.2f\n", AMB_TEMP);
             // #endif
             // }
+            if (!first)
+            {
+                ftemps_old = ftemps; // save old filtered temps for RoR calcs
+                ftimes_old = ftimes; // save old timestamps for filtered temps for RoR calcs
+            }
             delay(200);
             MCP.Configuration(1, 16, 1, 1);               // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
             Voltage = MCP.Measure();                      // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
@@ -117,9 +129,32 @@ void Task_Thermo_get_data(void *pvParameters)
             Voltage = ET_TEMP_ft.doFilter(Voltage << 10); // multiply by 1024 to create some resolution for filter
             Voltage >>= 10;
             ET_TEMP = pid_parm.ET_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+
+            // cal RoR
+            ftimes = millis();
+            ftemps = fRise.doFilter(BT_TEMP * 1000);
+            if (!first)
+            {
+                rx = fRise.calcRise(ftemps_old, ftemps, ftimes_old, ftimes);
+                ror = fRoR.doFilter(rx / D_MULT) * D_MULT;
+            }
+
+            first = false;
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
-        // 检查温度是否达到切换PID参数
+        // step2:
+        //  PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
+        if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
+        {
+            // 封装BLE 协议
+            sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
+            xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
+            xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
+            memset(&temp_data_buffer_ble, '\0', BLE_BUFFER_SIZE);
+            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
+        }
+        // step3:
+        //  检查温度是否达到切换PID参数
 #if defined(PID_AUTO_SHIFT)
         if (pid_status && !PID_TUNNING)
         {
@@ -135,84 +170,52 @@ void Task_Thermo_get_data(void *pvParameters)
                 Heat_pid_controller.SetOutputLimits(PID_STAGE_3_MIN_OUT, PID_STAGE_3_MAX_OUT);
                 Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
             }
-        }
-#endif
-        // 检查温度是否达到降温降风
-        if (PID_TUNNING == false && pid_status == false)
-        {
-            if (BT_TEMP > 50 && BT_TEMP < 60)
-            {
-                temp_check[0] = millis();
-#if defined(DEBUG_MODE)
-                Serial.printf("\nTempCheck[0]:%ld\n", temp_check[0]);
-#endif
-            }
-            if (BT_TEMP > 120 && BT_TEMP < 135)
-            {
-                temp_check[1] = millis();
-#if defined(DEBUG_MODE)
-                Serial.printf("\nTempCheck[1]:%ld\n", temp_check[1]);
-#endif
-            }
-            if (BT_TEMP > 180)
-            {
-                temp_check[2] = millis();
-#if defined(DEBUG_MODE)
-                Serial.printf("\nTempCheck[2]:%ld\n", temp_check[2]);
-#endif
-            }
 
-            if (temp_check[2] != 0 && temp_check[1] != 0 && temp_check[0] != 0) // 确认是机器运行中
-            {
-                if (temp_check[2] < temp_check[1] && temp_check[1] < temp_check[0]) // 判断温度趋势是下降
-                {
-#if defined(DEBUG_MODE)
-                    Serial.printf("\n Turn Down fan t0:%ld t1:%ld t2:%ld\n", temp_check[0], temp_check[1], temp_check[2]);
 #endif
-                    levelIO3 = 35;
-                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
-                    pwm_heat.write(1); // for safe
-                    temp_check[2] = 0;
-                    temp_check[1] = 0;
-                    temp_check[0] = 0;
+            // step4:
+            //  检查温度是否达到降温降风
+            if (PID_TUNNING == false && pid_status == false)
+            {
+                if (BT_TEMP > 50 && BT_TEMP < 60)
+                {
+                    temp_check[0] = millis();
+#if defined(DEBUG_MODE)
+                    Serial.printf("\nTempCheck[0]:%ld\n", temp_check[0]);
+#endif
+                }
+                if (BT_TEMP > 120 && BT_TEMP < 135)
+                {
+                    temp_check[1] = millis();
+#if defined(DEBUG_MODE)
+                    Serial.printf("\nTempCheck[1]:%ld\n", temp_check[1]);
+#endif
+                }
+                if (BT_TEMP > 180)
+                {
+                    temp_check[2] = millis();
+#if defined(DEBUG_MODE)
+                    Serial.printf("\nTempCheck[2]:%ld\n", temp_check[2]);
+#endif
+                }
+
+                if (temp_check[2] != 0 && temp_check[1] != 0 && temp_check[0] != 0) // 确认是机器运行中
+                {
+                    if (temp_check[2] < temp_check[1] && temp_check[1] < temp_check[0]) // 判断温度趋势是下降
+                    {
+#if defined(DEBUG_MODE)
+                        Serial.printf("\n Turn Down fan t0:%ld t1:%ld t2:%ld\n", temp_check[0], temp_check[1], temp_check[2]);
+#endif
+                        levelIO3 = 35;
+                        pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                        pwm_heat.write(1); // for safe
+                        temp_check[2] = 0;
+                        temp_check[1] = 0;
+                        temp_check[0] = 0;
+                    }
                 }
             }
         }
-
-        // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
-        if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
-        {
-            // 封装BLE 协议
-            sprintf(temp_data_buffer_ble, "#%4.2f,%4.2f,%4.2f,%d,%d,%4.2f;\n", AMB_TEMP, ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
-            // while (i < sizeof(temp_data_buffer_ble) && sizeof(temp_data_buffer_ble) > 0)
-            // {
-            //     // Serial.print(rxValue[i]);
-            //     if (temp_data_buffer_ble[i] == 0x0A)
-            //     {
-            //         temp_data_buffer_ble_out[i] = temp_data_buffer_ble[i]; // copy value
-            //         i = 0;                                                 // clearing
-            //         break;                                                 // 跳出循环
-            //     }
-            //     else
-            //     {
-            //         temp_data_buffer_ble_out[i] = temp_data_buffer_ble[i];
-            //         i++;
-            //     }
-            // }
-            // if (deviceConnected)
-            // {
-            //     pTxCharacteristic->setValue(temp_data_buffer_ble_out, sizeof(temp_data_buffer_ble_out));
-            //     pTxCharacteristic->notify();
-            // }
-
-            // memset(&temp_data_buffer_ble_out, '\0', BLE_BUFFER_SIZE);
-            xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
-            xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
-            memset(&temp_data_buffer_ble, '\0', BLE_BUFFER_SIZE);
-            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
-        }
     }
-
 } // function
 
 void Task_PID_autotune(void *pvParameters)
@@ -396,7 +399,7 @@ void Task_PID_autotune(void *pvParameters)
     PID_TUNNING = false;
     delay(3000);
     ESP.restart();
-    // vTaskResume(xTASK_BLE_CMD_handle);
+    vTaskResume(xTASK_BLE_CMD_handle);
     vTaskSuspend(NULL);
 }
 
