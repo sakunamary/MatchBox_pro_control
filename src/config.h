@@ -36,10 +36,10 @@
 #define PWM_RESOLUTION 10 // 0-1024 PWM 信号分辨率 10bit 是0-1024级 ，12bit 是 0-4096级，改了主程序的分辨率输出map函数也要相应调整
 
 #define PWM_FAN_MIN 300
-#define PWM_HEAT_MIN 480
+#define PWM_HEAT_MIN 500
 
 #define PWM_FAN_MAX 1000  // 最大值，对应10bit的1024 ，pwm满载需要保留一点空隙。不能到1024
-#define PWM_HEAT_MAX 980 // 最大值，对应10bit的1024 ，pwm满载需要保留一点空隙。不能到1024
+#define PWM_HEAT_MAX 990 // 最大值，对应10bit的1024 ，pwm满载需要保留一点空隙。不能到1024
 
 // -------------------------- slew rate limitations for fan control 风门缓降参数设置
 #define MAX_SLEW 25                                           // percent per second
@@ -49,15 +49,15 @@
 
 // PID自动整定 三个阶段的温度设置
 #define PID_TUNE_SV_1 160
-#define PID_TUNE_SV_2 180
-#define PID_TUNE_SV_3 195
+#define PID_TUNE_SV_2 185
+#define PID_TUNE_SV_3 190
 
 #define PID_TUNE_FAN_1 55
-#define PID_TUNE_FAN_2 55
-#define PID_TUNE_FAN_3 55
+#define PID_TUNE_FAN_2 50
+#define PID_TUNE_FAN_3 45
 
 // PID自动整定的测定循环次数
-#define PID_TUNE_CYCLE 8
+#define PID_TUNE_CYCLE 4
 
 // PID 自动切换模式，注释就只用eeprom内第一组pid参数
 #define PID_AUTO_SHIFT
@@ -70,17 +70,17 @@
 #define MIN_IO3 30  // Set output % for lower limit for IO3.  0% power will always be available
 #define MAX_IO3 100 // Set output % for upper limit for IO3
 
-#define PID_STAGE_1_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_1_MAX_OUT 80 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 #define PID_STAGE_1_MIN_OUT 50  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
-#define PID_STAGE_2_MAX_OUT 70// 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
-#define PID_STAGE_2_MIN_OUT 50  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_2_MAX_OUT 100// 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_2_MIN_OUT 10  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
-#define PID_STAGE_3_MAX_OUT 90 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
-#define PID_STAGE_3_MIN_OUT 60  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_3_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_3_MIN_OUT 10  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
-#define BT_FILTER 80
-#define AMB_FILTER 80
+#define BT_FILTER 70
+#define AMB_FILTER 70
 
 // 以下代码不要动，FreeRTOS用的代码
 typedef struct eeprom_settings
