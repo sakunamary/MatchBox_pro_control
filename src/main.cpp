@@ -94,28 +94,6 @@ void onOTAEnd(bool success)
     // <Add your own code here>
 }
 
-// // Handle root url (/)
-// void handle_root()
-// {
-//     char index_html[2048];
-//     String ver = VERSION;
-//     snprintf(index_html, 2048,
-//              "<html>\
-// <head>\
-// <title>MATCH BOX MINI SETUP</title>\
-//     </head> \
-//     <body>\
-//         <main>\
-//         <h1 align='center'>BLE version:%s</h1>\
-//         <div align='center'><a href='/update' target='_blank'>FIRMWARE UPDATE</a>\
-//         </main>\
-//         </div>\
-//     </body>\
-// </html>\
-// ",
-//              ver);
-// server.send(200, "text/html", index_html);
-// }
 
 String IpAddressToString(const IPAddress &ipAddress)
 {
