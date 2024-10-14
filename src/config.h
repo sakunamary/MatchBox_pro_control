@@ -72,8 +72,8 @@
 #define PID_TUNE_SV_2 190
 #define PID_TUNE_SV_1 160
 
-#define PID_TUNE_FAN_3 50
-#define PID_TUNE_FAN_2 53
+#define PID_TUNE_FAN_3 45
+#define PID_TUNE_FAN_2 50
 #define PID_TUNE_FAN_1 55
 
 #define PID_STAGE_1_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整

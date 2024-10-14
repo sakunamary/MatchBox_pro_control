@@ -239,7 +239,7 @@ void Task_PID_autotune(void *pvParameters)
     (void)pvParameters;
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
-    const TickType_t xIntervel = 3000 / portTICK_PERIOD_MS;
+    const TickType_t xIntervel = pid_parm.pid_CT / portTICK_PERIOD_MS;
 
     while (1)
     {
