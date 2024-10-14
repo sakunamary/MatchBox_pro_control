@@ -39,10 +39,8 @@ extern bool first;
 
 uint8_t anlg1 = ANIN1;     // analog input pins
 int32_t old_reading_anlg1; // previous analogue reading
-boolean analogue1_changed;
 uint8_t anlg2 = ANIN2;     // analog input pins
 int32_t old_reading_anlg2; // previous analogue reading
-boolean analogue2_changed;
 
 extern ExternalEEPROM I2C_EEPROM;
 extern PID Heat_pid_controller;
@@ -155,8 +153,8 @@ void Task_Thermo_get_data(void *pvParameters)
 
             // 获取 旋钮数值
             readAnlg1();
-            delay(100); //IO1
-            readAnlg2(); //OT3
+            delay(100);  // IO1
+            readAnlg2(); // OT3
             // end of 获取 旋钮数值
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
@@ -440,12 +438,11 @@ int32_t getAnalogValue(uint8_t CH)
         if (aval == (min_anlg1 * 10.24))
             aval = 0; // still allow OT1 to be switched off at minimum value. NOT SURE IF THIS FEATURE IS GOOD???????
         mod = min_anlg1;
-    trial = (aval + 0.001) * 100; // to fix weird rounding error from previous calcs?????
-    trial /= 1023;
-    trial = (trial / DUTY_STEP) * DUTY_STEP; // truncate to multiple of DUTY_STEP
-    if (trial < mod)
-        trial = 0;
-
+        trial = (aval + 0.001) * 100; // to fix weird rounding error from previous calcs?????
+        trial /= 1023;
+        trial = (trial / DUTY_STEP) * DUTY_STEP; // truncate to multiple of DUTY_STEP
+        if (trial < mod)
+            trial = 0;
     }
     if (CH == anlg2)
     {
@@ -453,11 +450,11 @@ int32_t getAnalogValue(uint8_t CH)
         if (aval == (min_anlg2 * 10.24))
             aval = 0; // still allow OT2 to be switched off at minimum value. NOT SURE IF THIS FEATURE IS GOOD???????
         mod = min_anlg2;
-            trial = (aval + 0.001) * 100; // to fix weird rounding error from previous calcs?????
-    trial /= 1023;
-    trial = (trial / DUTY_STEP) * DUTY_STEP; // truncate to multiple of DUTY_STEP
-    if (trial < mod)
-        trial = MIN_IO3;
+        trial = (aval + 0.001) * 100; // to fix weird rounding error from previous calcs?????
+        trial /= 1023;
+        trial = (trial / DUTY_STEP) * DUTY_STEP; // truncate to multiple of DUTY_STEP
+        if (trial < mod)
+            trial = MIN_IO3;
     }
 
     return trial;
@@ -468,16 +465,15 @@ void readAnlg1()
 { // read analog port 1 and adjust OT1 output
     char pstr[5];
     int32_t reading;
-    reading = getAnalogValue(anlg1);
-    if (reading <= 100 && reading != old_reading_anlg1)
-    { // did it change?
-        analogue1_changed = true;
-        old_reading_anlg1 = reading; // save reading for next time
-        levelOT1 = reading;
-    }
-    else
+    if (pid_status == false)
     {
-        analogue1_changed = false;
+        reading = getAnalogValue(anlg1);
+        if (reading <= 100 && reading != old_reading_anlg1)
+        {                                // did it change?
+            old_reading_anlg1 = reading; // save reading for next time
+            levelOT1 = reading;
+            pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+        }
     }
 }
 
@@ -486,16 +482,15 @@ void readAnlg2()
 { // read analog port 2 and adjust OT2 output
     char pstr[5];
     int32_t reading;
-    reading = getAnalogValue(anlg2);
-    if (reading <= 100 && reading != old_reading_anlg2)
-    { // did it change?
-        analogue2_changed = true;
-        old_reading_anlg2 = reading; // save reading for next time
-        levelIO3 = reading;
-    }
-    else
+    if (pid_status == false)
     {
-        analogue2_changed = false;
+        reading = getAnalogValue(anlg2);
+        if (reading <= 100 && reading != old_reading_anlg2)
+        {                                // did it change?
+            old_reading_anlg2 = reading; // save reading for next time
+            levelIO3 = reading;
+            pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+        }
     }
 }
 

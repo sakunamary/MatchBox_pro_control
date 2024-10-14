@@ -49,7 +49,7 @@ ESP32PWM pwm_heat;
 ESP32PWM pwm_fan;
 
 pid_setting_t pid_parm = {
-  .pid_CT = 1.5,      // double pid_CT;
+  .pid_CT = 1.0,      // double pid_CT;
   .p = 3.2,           // double p ;
   .i = 0.17,          // double i ;
   .d = 8.0,           // double d ;

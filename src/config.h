@@ -44,7 +44,7 @@
 
 
 #define PWM_FAN_MIN 600
-#define PWM_HEAT_MIN 300
+#define PWM_HEAT_MIN 400
 
 #define PWM_FAN_MAX 1000
 #define PWM_HEAT_MAX 1000
@@ -99,8 +99,8 @@
 #define ANIN2  4// if potentiometer connected on ANLG2 OT3
 
 
-#define BT_FILTER 70
-#define ET_FILTER 70
+#define BT_FILTER 80
+#define ET_FILTER 80
 #define D_MULT 0.001 
 #define RISE_FILTER 85 // heavy filtering on non-displayed BT for RoR calculations
 #define ROR_FILTER 80 // post-filtering for the computed RoR values
@@ -117,7 +117,7 @@ typedef struct eeprom_settings
 } pid_setting_t;
 
 
-#define TWDT_TIMEOUT_S 5
+#define TWDT_TIMEOUT_S 3
 
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
