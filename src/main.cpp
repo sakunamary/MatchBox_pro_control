@@ -102,13 +102,19 @@ String IpAddressToString(const IPAddress &ipAddress)
            String(ipAddress[3]);
 }
 
-String processor(const String &var)
-{
-    if (var == "version")
-    {
-        return VERSION;
-    }
-    return String();
+String processor(const String &var) {
+  if (var == "version") {
+    return VERSION;
+  } else if (var == "pid_CT") {
+    return String(pid_parm.pid_CT);
+  } else if (var == "pid_P") {
+    return String(pid_parm.p);
+  } else if (var == "pid_I") {
+    return String(pid_parm.i);
+  } else if (var == "pid_D") {
+    return String(pid_parm.d);
+  }
+  return String();
 }
 
 void setup()

@@ -141,12 +141,22 @@ const char index_html[] PROGMEM = R"rawliteral(
 
 <!doctype html><html lang='cn'>
  <head>
-<title>MATCH BOX PRO SETUP</title>
+<title>MATCH BOX MINI SETUP</title>
 </head> 
  <body>
 <main>
     <h1 align='center'>BLE version:%version%</h1>
        <div align='center'><a href='/update' target='_blank'>FIRMWARE UPDATE</a>
+        </br>
+        </br>
+        <label>PID:CT (current: %pid_CT%)</label>
+       </br>
+       <label>PID:P (current: %pid_P%)</label>
+       </br>
+        <label>PID:I (current: %pid_I%)</label>
+       </br>
+        <label>PID:D (current: %pid_D%)</label>
+       </br>
         </main>
          </div>
     </body>
