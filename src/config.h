@@ -90,6 +90,13 @@
 // PID 自动切换模式，注释就只用eeprom内第一组pid参数
 #define PID_AUTO_SHIFT
 
+////////////////////
+// Analogue inputs (optional)
+// Comment out if not required
+#define ANALOGUE1 // if potentiometer connected on ANLG1
+#define ANALOGUE2 // if potentiometer connected on ANLG2
+#define ANIN1  3// if potentiometer connected on ANLG1 OT1
+#define ANIN2  4// if potentiometer connected on ANLG2 OT3
 
 
 #define BT_FILTER 70

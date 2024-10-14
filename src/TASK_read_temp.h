@@ -17,6 +17,7 @@ double ET_TEMP;
 double AMB_RH;
 double AMB_TEMP;
 double ror;
+
 float rx;
 int32_t ftemps;     // heavily filtered temps
 int32_t ftimes;     // filtered sample timestamps
@@ -35,6 +36,13 @@ long prevMicroseconds;
 long microseconds;
 double pid_tune_output;
 extern bool first;
+
+uint8_t anlg1 = ANIN1;     // analog input pins
+int32_t old_reading_anlg1; // previous analogue reading
+boolean analogue1_changed;
+uint8_t anlg2 = ANIN2;     // analog input pins
+int32_t old_reading_anlg2; // previous analogue reading
+boolean analogue2_changed;
 
 extern ExternalEEPROM I2C_EEPROM;
 extern PID Heat_pid_controller;
@@ -77,6 +85,10 @@ MCP3424 MCP(address); // Declaration of MCP3424 A2=0 A1=1 A0=0
 extern pid_setting_t pid_parm;
 extern HardwareSerial Serial_HMI;
 
+int32_t getAnalogValue(uint8_t CH);
+void readAnlg1();
+void readAnlg2();
+
 void Task_Thermo_get_data(void *pvParameters)
 { // function
 
@@ -117,13 +129,13 @@ void Task_Thermo_get_data(void *pvParameters)
                 ftemps_old = ftemps; // save old filtered temps for RoR calcs
                 ftimes_old = ftimes; // save old timestamps for filtered temps for RoR calcs
             }
-            delay(200);
+            // delay(200);
             MCP.Configuration(1, 16, 1, 1);               // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
             Voltage = MCP.Measure();                      // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
             Voltage = BT_TEMP_ft.doFilter(Voltage << 10); // multiply by 1024 to create some resolution for filter
             Voltage >>= 10;
             BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
-            delay(200);
+            delay(100);
             MCP.Configuration(2, 16, 1, 1);               // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
             Voltage = MCP.Measure();                      // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
             Voltage = ET_TEMP_ft.doFilter(Voltage << 10); // multiply by 1024 to create some resolution for filter
@@ -140,6 +152,12 @@ void Task_Thermo_get_data(void *pvParameters)
             }
 
             first = false;
+
+            // 获取 旋钮数值
+            readAnlg1();
+            delay(100); //IO1
+            readAnlg2(); //OT3
+            // end of 获取 旋钮数值
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
         // step2:
@@ -401,6 +419,84 @@ void Task_PID_autotune(void *pvParameters)
     ESP.restart();
     vTaskResume(xTASK_BLE_CMD_handle);
     vTaskSuspend(NULL);
+}
+
+int32_t getAnalogValue(uint8_t CH)
+{
+    int32_t mod, trial, min_anlg1, max_anlg1, min_anlg2, max_anlg2;
+    min_anlg1 = MIN_OT1;
+    max_anlg1 = MAX_OT1;
+    min_anlg2 = MIN_IO3;
+    max_anlg2 = MAX_IO3;
+    float aval;
+    MCP.Configuration(CH, 16, 1, 1);
+    delay(100);
+
+    aval = map(MCP.Measure(), 6750, 2047900, 0, 1023);
+
+    if (CH == anlg1)
+    {
+        aval = min_anlg1 * 10.24 + (aval / 1024) * 10.24 * (max_anlg1 - min_anlg1); // scale analogue value to new range
+        if (aval == (min_anlg1 * 10.24))
+            aval = 0; // still allow OT1 to be switched off at minimum value. NOT SURE IF THIS FEATURE IS GOOD???????
+        mod = min_anlg1;
+    trial = (aval + 0.001) * 100; // to fix weird rounding error from previous calcs?????
+    trial /= 1023;
+    trial = (trial / DUTY_STEP) * DUTY_STEP; // truncate to multiple of DUTY_STEP
+    if (trial < mod)
+        trial = 0;
+
+    }
+    if (CH == anlg2)
+    {
+        aval = min_anlg2 * 10.24 + (aval / 1024) * 10.24 * (max_anlg2 - min_anlg2); // scale analogue value to new range
+        if (aval == (min_anlg2 * 10.24))
+            aval = 0; // still allow OT2 to be switched off at minimum value. NOT SURE IF THIS FEATURE IS GOOD???????
+        mod = min_anlg2;
+            trial = (aval + 0.001) * 100; // to fix weird rounding error from previous calcs?????
+    trial /= 1023;
+    trial = (trial / DUTY_STEP) * DUTY_STEP; // truncate to multiple of DUTY_STEP
+    if (trial < mod)
+        trial = MIN_IO3;
+    }
+
+    return trial;
+}
+
+// ---------------------------------
+void readAnlg1()
+{ // read analog port 1 and adjust OT1 output
+    char pstr[5];
+    int32_t reading;
+    reading = getAnalogValue(anlg1);
+    if (reading <= 100 && reading != old_reading_anlg1)
+    { // did it change?
+        analogue1_changed = true;
+        old_reading_anlg1 = reading; // save reading for next time
+        levelOT1 = reading;
+    }
+    else
+    {
+        analogue1_changed = false;
+    }
+}
+
+// ---------------------------------
+void readAnlg2()
+{ // read analog port 2 and adjust OT2 output
+    char pstr[5];
+    int32_t reading;
+    reading = getAnalogValue(anlg2);
+    if (reading <= 100 && reading != old_reading_anlg2)
+    { // did it change?
+        analogue2_changed = true;
+        old_reading_anlg2 = reading; // save reading for next time
+        levelIO3 = reading;
+    }
+    else
+    {
+        analogue2_changed = false;
+    }
 }
 
 #endif
