@@ -100,6 +100,8 @@ String processor(const String &var) {
     return String(pid_parm.i);
   } else if (var == "pid_D") {
     return String(pid_parm.d);
+  } else if (var == "bt_fix") {
+    return String(pid_parm.BT_tempfix);
   }
   return String();
 }
@@ -113,18 +115,19 @@ void setup() {
   // ESP32PWM::allocateTimer(2);
   // ESP32PWM::allocateTimer(3);
 
-  Serial.begin(BAUDRATE);
 
-  Serial.println("start...\n");
-  Serial.println("INIT PWM...\n");
-  vTaskDelay(3000);
   //  Init pwm output
 
   pwm_heat.attachPin(HEAT_OUT_PIN, frequency, resolution);  // 1KHz 8 bit
-  pwm_fan.attachPin(FAN_OUT_PIN, frequency, resolution);    // 1KHz 8 bit
   pwm_heat.writeScaled(0.0);
+  pwm_fan.attachPin(FAN_OUT_PIN, frequency, resolution);  // 1KHz 8 bit
   pwm_fan.writeScaled(0.4);
 
+  Serial.begin(BAUDRATE);
+  Serial.println("start...\n");
+  Serial.println("INIT PWM...\n");
+
+  vTaskDelay(30000);
   Serial.println("INIT AHT20 and EEPROM...\n");
   // Prepare working .....
   Wire.begin();
@@ -189,8 +192,8 @@ void setup() {
   vTaskDelay(200);
   ADC_MCP3424.Configuration(1, 16, 1, 1);  // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
   Voltage = ADC_MCP3424.Measure();         // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
-  BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
-  //BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, aht20.getTemperature_C()) + pid_parm.BT_tempfix;
+                                           //BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+  BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, aht20.getTemperature_C()) + pid_parm.BT_tempfix;
 
   Serial.printf("Temp raw:: AMB_TEMP:%4.2f;BT:%4.2f\n", AMB_TEMP, BT_TEMP);
 

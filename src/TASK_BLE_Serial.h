@@ -67,7 +67,7 @@ class MyCallbacks : public BLECharacteristicCallbacks
         while (i < rxValue.length() && rxValue.length() > 0)
         {
 #if defined(DEBUG_MODE)
-             Serial.print(rxValue[i]);
+            Serial.print(rxValue[i]);
 #endif
             if (rxValue[i] == 0x0A)
             {
@@ -266,38 +266,28 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             levelOT1 = MAX_OT1; // don't allow OT1 to exceed maximum
                         if (levelOT1 < MIN_OT1)
                             levelOT1 = MIN_OT1; // don't allow OT1 to turn on less than minimum
-                        pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
-                        // #if defined(DEBUG_MODE)
-                        //                         Serial.printf("HEAT:%d\n", levelOT1);//for debug
-                        // #endif
-                        // sprintf(BLE_data_buffer_char, "#DATA_OUT,OT1,%d\n", levelOT1);
-                        // // Serial.print(BLE_data_buffer_char);
-                        // memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
-                        // // 格式转换
-                        // if (deviceConnected)
-                        // {
-                        //     pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
-                        //     pTxCharacteristic->notify();
-                        // }
+                        if (levelOT1 <= 10)
+                        {
+                            pwm_heat.write(map(levelOT1, 0, 10, 5, 100));
+                        }
+                        else
+                        {
+                            pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                        }
                     }
                     else if (CMD_Data[1] == "DOWN")
                     {
                         levelOT1 = levelOT1 - DUTY_STEP;
                         if (levelOT1 < MIN_OT1 & levelOT1 != 0)
                             levelOT1 = 0; // turn ot1 off if trying to go below minimum. or use levelOT1 = MIN_HTR ?
-                        pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
-                        // #if defined(DEBUG_MODE)
-                        //                         Serial.printf("HEAT:%d\n", levelOT1);//for debug
-                        // #endif
-                        // sprintf(BLE_data_buffer_char, "#DATA_OUT,OT1,%d\n", levelOT1);
-                        // // Serial.print(BLE_data_buffer_char);
-                        // memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
-                        // // 格式转换
-                        // if (deviceConnected)
-                        // {
-                        //     pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
-                        //     pTxCharacteristic->notify();
-                        // }
+                        if (levelOT1 <= 10)
+                        {
+                            pwm_heat.write(map(levelOT1, 0, 10, 5, 100));
+                        }
+                        else
+                        {
+                            pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                        }
                     }
                     else
                     {
@@ -309,19 +299,14 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                                 levelOT1 = MAX_OT1; // don't allow OT1 to exceed maximum
                             if (levelOT1 < MIN_OT1 & levelOT1 != 0)
                                 levelOT1 = MIN_OT1; // don't allow to set less than minimum unless setting to zero
-                            pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
-                            // #if defined(DEBUG_MODE)
-                            //                             Serial.printf("HEAT:%d\n", levelOT1);//for debug
-                            // #endif
-                            // sprintf(BLE_data_buffer_char, "#DATA_OUT,OT1,%d\n", levelOT1);
-                            // // Serial.print(BLE_data_buffer_char);
-                            // memcpy(BLE_data_buffer_uint8, BLE_data_buffer_char, sizeof(BLE_data_buffer_char));
-                            // // 格式转换
-                            // if (deviceConnected)
-                            // {
-                            //     pTxCharacteristic->setValue(BLE_data_buffer_uint8, sizeof(BLE_data_buffer_uint8));
-                            //     pTxCharacteristic->notify();
-                            // }
+                            if (levelOT1 <= 10)
+                            {
+                                pwm_heat.write(map(levelOT1, 0, 10, 5, 100));
+                            }
+                            else
+                            {
+                                pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                            }
                         }
                     }
                 }
@@ -365,6 +350,14 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             levelOT1 = int(round(PID_output));
                             // levelOT1 = map(PID_output, 0, 255, 0, 100);
 
+                            if (levelOT1 <= 10)
+                            {
+                                pwm_heat.write(map(levelOT1, 0, 10, 5, 100));
+                            }
+                            else
+                            {
+                                pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                            }
                             // Serial.printf("PID ON OT1: %d;PID_output:%4.2f\n", levelOT1,PID_output);
                             pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                             // #if defined(DEBUG_MODE)

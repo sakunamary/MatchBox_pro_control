@@ -97,6 +97,9 @@ const char index_html[] PROGMEM = R"rawliteral(
        </br>
         <label>PID:D (current: %pid_D%)</label>
        </br>
+        </br>
+        <label>BT TEMP FIX (current: %bt_fix%)</label>
+       </br>
         </main>
          </div>
     </body>
