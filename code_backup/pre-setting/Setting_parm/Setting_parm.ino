@@ -36,9 +36,10 @@ DFRobot_AHT20 aht20;
 ESP32PWM pwm_heat;
 ESP32PWM pwm_fan;
 TypeK temp_K_cal;
+ExternalEEPROM I2C_EEPROM;
 
 pid_setting_t pid_parm = {
-    .pid_CT = 1.5,     // double pid_CT;
+    .pid_CT = 1.0,     // double pid_CT;
     .p = 2.01,         // double p ;
     .i = 0.12,         // double i ;
     .d = 5.0,          // double d ;
@@ -46,8 +47,7 @@ pid_setting_t pid_parm = {
     .ET_tempfix = 0.0  // double ET_tempfix;
 };
 
-ExternalEEPROM I2C_EEPROM;
-// TypeK temp_K_cal;
+
 
 void loadUserSettings();
 
@@ -114,9 +114,10 @@ void setup()
     {
         Serial.println("Initialed EEPROM,load data will be writen after 3s...");
         delay(3000);
-        I2C_EEPROM.put(LOCATION_SETTINGS, pid_parm);
+        I2C_EEPROM.put(0, pid_parm);
+        I2C_EEPROM.put(64, pid_parm);
         I2C_EEPROM.put(128, pid_parm);
-        I2C_EEPROM.put(256, pid_parm);
+        I2C_EEPROM.put(192, pid_parm);
         Serial.println("EEPROM,load data for check after 3s...");
 
         delay(3000);

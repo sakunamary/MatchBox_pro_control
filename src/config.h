@@ -48,13 +48,15 @@
 #define DUTY_STEP 2                                           // Use 1, 2, 4, 5, or 10.
 
 // PID自动整定 三个阶段的温度设置
-#define PID_TUNE_SV_1 160
-#define PID_TUNE_SV_2 185
-#define PID_TUNE_SV_3 190
+#define PID_TUNE_SV_1 100
+#define PID_TUNE_SV_2 160
+#define PID_TUNE_SV_3 175
+#define PID_TUNE_SV_4 190
 
 #define PID_TUNE_FAN_1 55
 #define PID_TUNE_FAN_2 50
 #define PID_TUNE_FAN_3 45
+#define PID_TUNE_FAN_4 45
 
 // PID自动整定的测定循环次数
 #define PID_TUNE_CYCLE 4
@@ -70,14 +72,17 @@
 #define MIN_IO3 30  // Set output % for lower limit for IO3.  0% power will always be available
 #define MAX_IO3 100 // Set output % for upper limit for IO3
 
-#define PID_STAGE_1_MAX_OUT 80 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
-#define PID_STAGE_1_MIN_OUT 50  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_1_MAX_OUT 50 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_1_MIN_OUT 10  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
 #define PID_STAGE_2_MAX_OUT 100// 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 #define PID_STAGE_2_MIN_OUT 10  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
 #define PID_STAGE_3_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 #define PID_STAGE_3_MIN_OUT 10  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+
+#define PID_STAGE_4_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_4_MIN_OUT 10  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
 #define BT_FILTER 70
 #define AMB_FILTER 70

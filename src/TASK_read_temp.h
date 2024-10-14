@@ -98,14 +98,20 @@ void Task_Thermo_get_data(void *pvParameters)
         {
             if (BT_TEMP >= PID_TUNE_SV_1)
             {
-                I2C_EEPROM.get(128, pid_parm);
+                I2C_EEPROM.get(64, pid_parm);
                 Heat_pid_controller.SetOutputLimits(PID_STAGE_2_MIN_OUT, PID_STAGE_2_MAX_OUT);
                 Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
             }
             else if (BT_TEMP >= PID_TUNE_SV_2)
             {
-                I2C_EEPROM.get(256, pid_parm);
+                I2C_EEPROM.get(128, pid_parm);
                 Heat_pid_controller.SetOutputLimits(PID_STAGE_3_MIN_OUT, PID_STAGE_3_MAX_OUT);
+                Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
+            }
+            else if (BT_TEMP >= PID_TUNE_SV_3)
+            {
+                I2C_EEPROM.get(192, pid_parm);
+                Heat_pid_controller.SetOutputLimits(PID_STAGE_4_MIN_OUT, PID_STAGE_4_MAX_OUT);
                 Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
             }
         }
@@ -171,7 +177,7 @@ void Task_PID_autotune(void *pvParameters)
     (void)pvParameters;
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
-    const TickType_t xIntervel = 3000 / portTICK_PERIOD_MS;
+    const TickType_t xIntervel = pid_parm.pid_CT / portTICK_PERIOD_MS;
     while (1)
     {
         xResult = xTaskNotifyWait(0x00,                 // 在运行前这个命令之前，先清除这几位
@@ -184,7 +190,7 @@ void Task_PID_autotune(void *pvParameters)
 
             // 开始 PID自动整定
             // Serial.println("PID AUTOTUNE");
-            for (int loop = 0; loop < 3; loop++)
+            for (int loop = 0; loop < 4; loop++)
             {
                 if (loop == 0)
                 {
@@ -278,7 +284,7 @@ void Task_PID_autotune(void *pvParameters)
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
                     pid_parm.d = tuner.getKd();
-                    I2C_EEPROM.put(128, pid_parm);
+                    I2C_EEPROM.put(64, pid_parm);
 #if defined(DEBUG_MODE)
                     Serial.printf("\nPID Auto Tune Second step Finished ...\n");
                     Serial.printf("\nPID kp:%4.2f\n", pid_parm.p);
@@ -328,7 +334,57 @@ void Task_PID_autotune(void *pvParameters)
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
                     pid_parm.d = tuner.getKd();
-                    I2C_EEPROM.put(256, pid_parm);
+                    I2C_EEPROM.put(128, pid_parm);
+#if defined(DEBUG_MODE)
+                    Serial.printf("\nPID Auto Tune Second step Finished ...\n");
+                    Serial.printf("\nPID kp:%4.2f\n", pid_parm.p);
+                    Serial.printf("\nPID ki:%4.2f\n", pid_parm.i);
+                    Serial.printf("\nPID kd:%4.2f\n", pid_parm.d);
+                    Serial.printf("\nBT fix:%4.2f", pid_parm.BT_tempfix);
+                    Serial.printf("\nET fix:%4.2f", pid_parm.ET_tempfix);
+                    Serial.printf("\nPID parms saved ...\n");
+#endif
+                }
+                else if (loop == 3)
+                {
+                    tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
+                    tuner.setTuningCycles(PID_TUNE_CYCLE);
+                    PID_TUNE_SV = PID_TUNE_SV_4;
+                    levelIO3 = PID_TUNE_FAN_4;
+                    tuner.setOutputRange(round(PID_STAGE_4_MIN_OUT * 255 / 100), round(PID_STAGE_4_MAX_OUT * 255 / 100));
+                    tuner.setTargetInputValue(PID_TUNE_SV);
+                    pwm_heat.writeScaled(0.0);
+                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                    delay(1000);
+                    while (!tuner.isFinished()) // 开始自动整定循环
+                    {
+                        prevMicroseconds = microseconds;
+                        microseconds = micros();
+
+                        if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
+                        {
+                            pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
+                            pwm_heat.write(map(pid_tune_output, 0, 255, PWM_HEAT_MIN, PWM_HEAT_MAX)); // 输出新火力pwr到SSRÍ
+                            xSemaphoreGive(xThermoDataMutex);                                         // end of lock mutex
+                        }
+#if defined(DEBUG_MODE)
+                        Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
+                        Serial.printf("PID Auto Tuneing...OUTPUT:%4.2f BT_temp:%4.2f AMB_TEMP:%4.2f\n", pid_tune_output, BT_TEMP, AMB_TEMP);
+#endif
+                        //  This loop must run at the same speed as the PID control loop being tuned
+                        while (micros() - microseconds < pid_parm.pid_CT * uS_TO_S_FACTOR) // time units : us
+                        {
+                            delayMicroseconds(1);
+                        } // time units : us
+                    }
+                    // Turn the output off here.
+                    pwm_heat.writeScaled(0.0);
+                    pwm_fan.write(300); // 降低风量 标识PID完成
+                    // Get PID gains - set your PID controller's gains to these
+                    pid_parm.p = tuner.getKp();
+                    pid_parm.i = tuner.getKi();
+                    pid_parm.d = tuner.getKd();
+                    I2C_EEPROM.put(192, pid_parm);
 #if defined(DEBUG_MODE)
                     Serial.printf("\nPID Auto Tune Second step Finished ...\n");
                     Serial.printf("\nPID kp:%4.2f\n", pid_parm.p);
