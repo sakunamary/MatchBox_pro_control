@@ -4,6 +4,9 @@
 #include <WiFi.h>
 #include <ESP32Servo.h>
 #include <StringTokenizer.h>
+
+
+
 #include "HD44780_LCD_PCF8574.h"
 #include <WiFiClient.h>
 #include <AsyncTCP.h>
@@ -32,7 +35,7 @@ PID Heat_pid_controller(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, 
 
 extern bool loopTaskWDTEnabled;
 extern TaskHandle_t loopTaskHandle;
-uint8_t HMI_HAND[HMI_BUFFER_SIZE];
+// uint8_t HMI_HAND[HMI_BUFFER_SIZE];
 int levelOT1 = 0;
 int levelIO3 = 30;
 bool pid_status = false;
@@ -145,7 +148,7 @@ void setup()
     Serial.printf("\nStart Task...");
 #endif
     Wire.begin();
-    // bme.begin();
+    // aht20.begin();
     MCP.NewConversion(); // New conversion is initiated
     I2C_EEPROM.setMemoryType(64);
 #if defined(DEBUG_MODE)

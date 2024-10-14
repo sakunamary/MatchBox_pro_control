@@ -5,6 +5,9 @@
 #include <config.h>
 #include <Wire.h>
 #include <MCP3424.h>
+// #include "TypeK.h"
+// #include "DFRobot_AHT20.h"
+
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLEUtils.h>
@@ -24,7 +27,7 @@ int32_t ftimes;     // filtered sample timestamps
 int32_t ftemps_old; // for calculating derivative
 int32_t ftimes_old; // for calculating derivative
 
-uint32_t AMB_PRESS;
+// uint32_t AMB_PRESS;
 extern int levelOT1;
 extern int levelIO3;
 extern double pid_sv;
@@ -71,14 +74,14 @@ unsigned long temp_check[3];
 /**IIC address is 0x76 when pin SDO is low */
 // BME bme(&Wire, 0x76); // select TwoWire peripheral and set sensor address
 
-#define SEA_LEVEL_PRESSURE 1015.0f
+// #define SEA_LEVEL_PRESSURE 1015.0f
 
-#define R0 100
-#define Rref 1000
+// #define R0 100
+// #define Rref 1000
 
 MCP3424 MCP(address); // Declaration of MCP3424 A2=0 A1=1 A0=0
 // DFRobot_AHT20 aht20;
-//  TypeK temp_K_cal;
+// TypeK temp_K_cal;
 
 extern pid_setting_t pid_parm;
 extern HardwareSerial Serial_HMI;
@@ -115,12 +118,9 @@ void Task_Thermo_get_data(void *pvParameters)
 
             // if (aht20.startMeasurementReady(/* crcEn = */ true))
             // {
-            // AMB_TEMP = bme.getTemperature();
-            // AMB_PRESS = bme.getPressure();
-            // AMB_RH = bme.getHumidity();
-            // #if defined(DEBUG_MODE)
-            //                 Serial.printf("raw data:AMB_TEMP:%4.2f\n", AMB_TEMP);
-            // #endif
+            // AMB_TEMP = aht20.getTemperature_C();
+            // AMB_TEMP = AMB_ft.doFilter(AMB_TEMP);
+            // AMB_RH = aht20.getHumidity_RH();
             // }
             if (!first)
             {
@@ -132,13 +132,16 @@ void Task_Thermo_get_data(void *pvParameters)
             Voltage = MCP.Measure();                      // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
             Voltage = BT_TEMP_ft.doFilter(Voltage << 10); // multiply by 1024 to create some resolution for filter
             Voltage >>= 10;
-            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+
+            BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, AMB_TEMP) + pid_parm.BT_tempfix;
+            // BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
             delay(100);
             MCP.Configuration(2, 16, 1, 1);               // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
             Voltage = MCP.Measure();                      // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
             Voltage = ET_TEMP_ft.doFilter(Voltage << 10); // multiply by 1024 to create some resolution for filter
             Voltage >>= 10;
-            ET_TEMP = pid_parm.ET_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+            ET_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, AMB_TEMP) + pid_parm.ET_tempfix;
+            // ET_TEMP = pid_parm.ET_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
 
             // cal RoR
             ftimes = millis();
