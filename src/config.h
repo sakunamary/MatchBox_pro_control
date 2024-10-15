@@ -8,7 +8,7 @@
 #define BAUDRATE 115200        // serial port baudrate
 #define VERSION "1.0.1"
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
-// #define DEBUG_MODE 
+ #define DEBUG_MODE 
 
 
 

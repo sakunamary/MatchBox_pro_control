@@ -50,8 +50,8 @@ void Task_modbus_control(void *pvParameters)
     // Initial the xLastWakeTime variable with the current time.
     xLastWakeTime = xTaskGetTickCount();
 
-    Serial.printf("\n Task_modbus_control\n");
-    Serial.println();
+    // Serial.printf("\n Task_modbus_control\n");
+    // Serial.println();
     while (1) // A Task shall never return or exit.
     {         // for loop
         vTaskDelayUntil(&xLastWakeTime, xIntervel);

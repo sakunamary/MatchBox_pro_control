@@ -30,7 +30,7 @@ extern const byte pwm_fan_out;
 extern const byte pwm_heat_out;
 
 pid_setting_t pid_parm = {
-    .pid_CT = 1.5,     // uint16_t pid_CT;
+    .pid_CT = 1.0,     // uint16_t pid_CT;
     .p = 2.0,          // double p ;
     .i = 0.12,         // double i ;
     .d = 5.0,          // double d ;

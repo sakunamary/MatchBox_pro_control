@@ -38,7 +38,7 @@ ESP32PWM pwm_fan;
 TypeK temp_K_cal;
 
 pid_setting_t pid_parm = {
-    .pid_CT = 1.5,     // double pid_CT;
+    .pid_CT = 1.0,     // double pid_CT;
     .p = 2.01,         // double p ;
     .i = 0.12,         // double i ;
     .d = 5.0,          // double d ;
@@ -63,7 +63,7 @@ void setup()
 
     Serial.println("start...\n");
     Serial.println("INIT PWM...\n");
-    vTaskDelay(30000);
+    vTaskDelay(3000);
     //  Init pwm output
 
     pwm_heat.attachPin(HEAT_OUT_PIN, frequency, resolution); // 1KHz 8 bit
