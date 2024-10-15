@@ -6,12 +6,7 @@
 #include <StringTokenizer.h>
 #include <WiFiClient.h>
 #include <WiFi.h>
-// #include <AsyncTCP.h>
-// #include <ESPAsyncWebServer.h>
-// #include <ElegantOTA.h>
 
-// #include <WebServer.h>
-// #include <ElegantOTA.h>
 #include "SparkFun_External_EEPROM.h" // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 #include <PID_v1.h>
 #include <TASK_read_temp.h>
@@ -21,8 +16,7 @@ ExternalEEPROM I2C_EEPROM;
 ESP32PWM pwm_heat;
 ESP32PWM pwm_fan;
 
-// AsyncWebServer server(80);
-//  WebServer server(80);
+
 PID Heat_pid_controller(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d, DIRECT);
 
 extern bool loopTaskWDTEnabled;
@@ -44,62 +38,6 @@ pid_setting_t pid_parm = {
     .ET_tempfix = 0.0  // uint16_t ET_tempfix;
 };
 
-// unsigned long ota_progress_millis = 0;
-
-// void onOTAStart()
-// {
-//     // Log when OTA has started
-//     // Serial.println("OTA update started!");
-//     // <Add your own code here>
-// }
-
-// void onOTAProgress(size_t current, size_t final)
-// {
-//     // Log every 1 second
-//     if (millis() - ota_progress_millis > 1000)
-//     {
-//         ota_progress_millis = millis();
-//         // Serial.printf("OTA Progress Current: %u bytes, Final: %u bytes\n", current, final);
-//     }
-// }
-
-// void onOTAEnd(bool success)
-// {
-//     // Log when OTA has finished
-//     if (success)
-//     {
-//         // Serial.println("OTA update finished successfully!");
-//     }
-//     else
-//     {
-//         // Serial.println("There was an error during OTA update!");
-//     }
-//     // <Add your own code here>
-// }
-
-// // Handle root url (/)
-// void handle_root()
-// {
-//     char index_html[2048];
-//     String ver = VERSION;
-//     snprintf(index_html, 2048,
-//              "<html>\
-// <head>\
-// <title>MATCH BOX MINI SETUP</title>\
-//     </head> \
-//     <body>\
-//         <main>\
-//         <h1 align='center'>BLE version:%s</h1>\
-//         <div align='center'><a href='/update' target='_blank'>FIRMWARE UPDATE</a>\
-//         </main>\
-//         </div>\
-//     </body>\
-// </html>\
-// ",
-//              ver);
-//     server.send(200, "text/html", index_html);
-// }
-
 String IpAddressToString(const IPAddress &ipAddress)
 {
     return String(ipAddress[0]) + String(".") +
@@ -108,14 +46,7 @@ String IpAddressToString(const IPAddress &ipAddress)
            String(ipAddress[3]);
 }
 
-String processor(const String &var)
-{
-    if (var == "version")
-    {
-        return VERSION;
-    }
-    return String();
-}
+
 
 void setup()
 {
@@ -275,20 +206,6 @@ void setup()
     Heat_pid_controller.SetOutputLimits(PID_MIN_OUT, PID_MAX_OUT);
     Heat_pid_controller.SetSampleTime(int(pid_parm.pid_CT * 1000));
 
-    // // Start ElegantOTA
-    // server.on("/", handle_root);
-    // server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-    //           { request->send(200, "text/html", index_html, processor); });
-    // ElegantOTA.begin(&server); // Start ElegantOTA
-    // // ElegantOTA callbacks
-    // ElegantOTA.onStart(onOTAStart);
-    // ElegantOTA.onProgress(onOTAProgress);
-    // ElegantOTA.onEnd(onOTAEnd);
-
-    // server.begin();
-// #if defined(DEBUG_MODE)
-//     Serial.println("HTTP server started");
-// #endif
 #if defined(DEBUG_MODE)
     Serial.printf("\nEEPROM value check ...\n");
     Serial.printf("pid_CT:%4.2f\n", pid_parm.pid_CT);
@@ -309,32 +226,6 @@ void setup()
 
 void loop()
 {
-    // ElegantOTA.loop();
-    // delay(50);
     mb.task();
 
-    //     server.handleClient();
-    //     ElegantOTA.loop();
-    //     // disconnecting
-    //     if (!deviceConnected && oldDeviceConnected)
-    //     {
-    //         delay(500);                  // give the bluetooth stack the chance to get things ready
-    //         pServer->startAdvertising(); // restart advertising
-    // #if defined(DEBUG_MODE)
-    //         Serial.println("start advertising");
-    // #endif
-    //         oldDeviceConnected = deviceConnected;
-    //     }
-    //     // connecting
-    //     if (deviceConnected && !oldDeviceConnected)
-    //     {
-    //         // do stuff here on connecting
-    //         oldDeviceConnected = deviceConnected;
-    //     }
-
-    // #if !CONFIG_ESP_TASK_WDT_INIT
-    //     // If we manually initialized the TWDT, deintialize it now
-    // esp_task_wdt_deinit();
-
-    // #endif // CONFIG_ESP_TASK_WDT_INIT
 }

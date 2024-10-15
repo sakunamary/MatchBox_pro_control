@@ -67,7 +67,14 @@ void Task_modbus_control(void *pvParameters)
                 levelIO3 = last_FAN;
                 pid_sv = 0;
                 mb.Hreg(PID_SV_HREG, 0);
-                pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                if (levelOT1 <= 10)
+                {
+                    pwm_heat.write(map(levelOT1, 0, 10, 5, 100));
+                }
+                else
+                {
+                    pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                }
 
                 // pwm_heat.write(HEAT_OUT_PIN, map(heat_pwr_to_SSR, 0, 100, 230, 850), frequency, resolution); // 输出新火力pwr到SSRÍ
                 xSemaphoreGive(xThermoDataMutex); // end of lock mutex
@@ -154,8 +161,17 @@ void Task_modbus_control(void *pvParameters)
                     }
                 }
             }
-            pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
-            // pwm_heat.write(HEAT_OUT_PIN, map(heat_pwr_to_SSR, 0, 100, 230, 850), frequency, resolution); // 输出新火力pwr到SSRÍ
+            //pwm_HEAT OUTPUT
+            if (levelOT1 <= 10)
+            {
+                pwm_heat.write(map(levelOT1, 0, 10, 5, 100));
+            }
+            else
+            {
+                pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+            }
+            // pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+            //  pwm_heat.write(HEAT_OUT_PIN, map(heat_pwr_to_SSR, 0, 100, 230, 850), frequency, resolution); // 输出新火力pwr到SSRÍ
         }
         vTaskDelay(20);
         /////////////////////////////////////////////////////////////////////////////
