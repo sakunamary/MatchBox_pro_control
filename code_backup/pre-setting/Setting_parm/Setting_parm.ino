@@ -50,8 +50,8 @@ ExternalEEPROM I2C_EEPROM;
 AsyncWebServer server(80);
 
 pid_setting_t pid_parm = {
-  .pid_CT = 1.0,      // double pid_CT;
-  .p = 1.0,           // double p ;
+  .pid_CT = 1.5,      // double pid_CT;
+  .p = 2.0,           // double p ;
   .i = 0.12,          // double i ;
   .d = 5.0,           // double d ;
   .BT_tempfix = 0.0,  // double BT_tempfix;

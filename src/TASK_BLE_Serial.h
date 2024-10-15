@@ -175,7 +175,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     CMD_String.trim();
                     CMD_String.toUpperCase();
 #if defined(DEBUG_MODE)
-                    Serial.println(CMD_String); // for debug
+                   // Serial.println(CMD_String); // for debug
 #endif
 
                     // cmd from BLE cleaning
