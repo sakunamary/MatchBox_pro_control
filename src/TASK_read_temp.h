@@ -96,19 +96,19 @@ void Task_Thermo_get_data(void *pvParameters)
 #if defined(PID_AUTO_SHIFT)
         if (pid_status && !PID_TUNNING)
         {
-            if (BT_TEMP >= PID_TUNE_SV_1)
+            if (BT_TEMP >= PID_TUNE_SV_1+30)
             {
                 I2C_EEPROM.get(64, pid_parm);
                 Heat_pid_controller.SetOutputLimits(PID_STAGE_2_MIN_OUT, PID_STAGE_2_MAX_OUT);
                 Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
             }
-            else if (BT_TEMP >= PID_TUNE_SV_2)
+            else if (BT_TEMP >= PID_TUNE_SV_2+15)
             {
                 I2C_EEPROM.get(128, pid_parm);
                 Heat_pid_controller.SetOutputLimits(PID_STAGE_3_MIN_OUT, PID_STAGE_3_MAX_OUT);
                 Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
             }
-            else if (BT_TEMP >= PID_TUNE_SV_3)
+            else if (BT_TEMP >= PID_TUNE_SV_3+10)
             {
                 I2C_EEPROM.get(192, pid_parm);
                 Heat_pid_controller.SetOutputLimits(PID_STAGE_4_MIN_OUT, PID_STAGE_4_MAX_OUT);
@@ -198,7 +198,7 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.setTuningCycles(PID_TUNE_CYCLE);
                     PID_TUNE_SV = PID_TUNE_SV_1;
                     levelIO3 = PID_TUNE_FAN_1;
-                    tuner.setOutputRange(round(PID_STAGE_1_MIN_OUT * 255 / 100), round(PID_STAGE_1_MAX_OUT * 255 / 100));
+                    tuner.setOutputRange(round(PID_STAGE_1_MIN_OUT * 255 / 100), round(PID_STAGE_1_MAX_OUT * 255 / 100)); // (0-)
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
@@ -212,8 +212,16 @@ void Task_PID_autotune(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
+                            levelOT1 = map(pid_tune_output, 0, 255, 0, 100);
+                            if (levelOT1 <= 10)
+                            {
+                                pwm_heat.write(map(levelOT1, 0, 10, 5, 100));
+                            }
+                            else
+                            {
+                                pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                            }
 
-                            pwm_heat.write(map(pid_tune_output, 0, 255, PWM_HEAT_MIN, PWM_HEAT_MAX));
                             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
 #if defined(DEBUG_MODE)
@@ -263,8 +271,18 @@ void Task_PID_autotune(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
-                            pwm_heat.write(map(pid_tune_output, 0, 255, PWM_HEAT_MIN, PWM_HEAT_MAX)); // 输出新火力pwr到SSRÍ
-                            xSemaphoreGive(xThermoDataMutex);                                         // end of lock mutex
+
+                            levelOT1 = map(pid_tune_output, 0, 255, 0, 100);
+                            if (levelOT1 <= 10)
+                            {
+                                pwm_heat.write(map(levelOT1, 0, 10, 5, 100));
+                            }
+                            else
+                            {
+                                pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                            }
+
+                            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
 #if defined(DEBUG_MODE)
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
@@ -314,8 +332,16 @@ void Task_PID_autotune(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
-                            pwm_heat.write(map(pid_tune_output, 0, 255, PWM_HEAT_MIN, PWM_HEAT_MAX)); // 输出新火力pwr到SSRÍ
-                            xSemaphoreGive(xThermoDataMutex);                                         // end of lock mutex
+                            levelOT1 = map(pid_tune_output, 0, 255, 0, 100);
+                            if (levelOT1 <= 10)
+                            {
+                                pwm_heat.write(map(levelOT1, 0, 10, 5, 100));
+                            }
+                            else
+                            {
+                                pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                            }
+                            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
 #if defined(DEBUG_MODE)
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
@@ -364,8 +390,16 @@ void Task_PID_autotune(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             pid_tune_output = tuner.tunePID(BT_TEMP, microseconds);
-                            pwm_heat.write(map(pid_tune_output, 0, 255, PWM_HEAT_MIN, PWM_HEAT_MAX)); // 输出新火力pwr到SSRÍ
-                            xSemaphoreGive(xThermoDataMutex);                                         // end of lock mutex
+                            levelOT1 = map(pid_tune_output, 0, 255, 0, 100);
+                            if (levelOT1 <= 10)
+                            {
+                                pwm_heat.write(map(levelOT1, 0, 10, 5, 100));
+                            }
+                            else
+                            {
+                                pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                            }
+                            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
 #if defined(DEBUG_MODE)
                         Serial.printf("PID set1 :PID SV %4.2f \n", PID_TUNE_SV);
