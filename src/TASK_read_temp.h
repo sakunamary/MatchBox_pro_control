@@ -116,6 +116,32 @@ void Task_Thermo_get_data(void *pvParameters)
             }
         }
 
+#if defined(PID_PWR_SHIFT)
+
+        if (pid_status && !PID_TUNNING)
+        {
+            if (BT_TEMP < PID_TUNE_SV_1)
+            {
+                Heat_pid_controller.SetOutputLimits(PID_STAGE_1_MIN_OUT, PID_STAGE_1_MAX_OUT); 
+            }
+            else if (BT_TEMP >= PID_TUNE_SV_1)
+            {
+
+                Heat_pid_controller.SetOutputLimits(PID_STAGE_2_MIN_OUT, PID_STAGE_2_MAX_OUT);
+            }
+            else if (BT_TEMP >= PID_TUNE_SV_2)
+            {
+                Heat_pid_controller.SetOutputLimits(PID_STAGE_3_MIN_OUT, PID_STAGE_3_MAX_OUT);
+            }
+            else if (BT_TEMP >= PID_TUNE_SV_3)
+            {
+
+                Heat_pid_controller.SetOutputLimits(PID_STAGE_4_MIN_OUT, PID_STAGE_4_MAX_OUT);
+            }
+        }
+
+#endif
+
 #endif
         // 检查温度是否达到降温降风
         if (PID_TUNNING == false && pid_status == false)
