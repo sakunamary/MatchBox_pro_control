@@ -81,7 +81,7 @@ unsigned long temp_check[3];
 
 MCP3424 MCP(address); // Declaration of MCP3424 A2=0 A1=1 A0=0
 // DFRobot_AHT20 aht20;
-// TypeK temp_K_cal;
+ TypeK temp_K_cal;
 
 extern pid_setting_t pid_parm;
 extern HardwareSerial Serial_HMI;

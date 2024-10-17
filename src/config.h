@@ -16,7 +16,7 @@
 #define BLE_BUFFER_SIZE 64
 #define HMI_BUFFER_SIZE 17
 
-#define VERSION "1.1.9b"
+#define VERSION "1.1.9c"
 #define BANNER "MATCHBOX H7"
 
 

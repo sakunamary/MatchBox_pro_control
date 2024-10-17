@@ -10,7 +10,7 @@
 #include "Wire.h"
 #include <MCP3424.h>
 #include <ESP32Servo.h>
-// #include "TypeK.h"
+#include "TypeK.h"
 #include "DFRobot_BME280.h"
 #include "SparkFun_External_EEPROM.h"  // Click here to get the library: http://librarymanager/All#SparkFun_External_EEPROM
 
@@ -49,7 +49,7 @@ ESP32PWM pwm_heat;
 ESP32PWM pwm_fan;
 
 pid_setting_t pid_parm = {
-  .pid_CT = 1.0,      // double pid_CT;
+  .pid_CT = 1.5,      // double pid_CT;
   .p = 1.0,           // double p ;
   .i = 0.17,          // double i ;
   .d = 5.0,           // double d ;
@@ -58,7 +58,7 @@ pid_setting_t pid_parm = {
 };
 
 ExternalEEPROM I2C_EEPROM;
-// TypeK temp_K_cal;
+TypeK temp_K_cal;
 
 void setup() {
 
@@ -107,16 +107,18 @@ void setup() {
   vTaskDelay(200);
   ADC_MCP3424.Configuration(1, 16, 1, 1);  // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
   Voltage = ADC_MCP3424.Measure();         // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
-  BT_TEMP = ((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083);
+  BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, AMB_TEMP);
+  //BT_TEMP = ((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083);
   vTaskDelay(200);
   ADC_MCP3424.Configuration(2, 16, 1, 1);  // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
   Voltage = ADC_MCP3424.Measure();         // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
-  ET_TEMP = ((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083);
+  ET_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, AMB_TEMP);
+  //ET_TEMP = ((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083);
 
   Serial.printf("Temp raw:: AMB_TEMP:%4.2f;BT:%4.2f;ET:%4.2f\n", AMB_TEMP, BT_TEMP, ET_TEMP);
 
   pid_parm.BT_tempfix = AMB_TEMP - BT_TEMP;
-  pid_parm.ET_tempfix = AMB_TEMP - BT_TEMP;
+  pid_parm.ET_tempfix = AMB_TEMP - ET_TEMP;
 
   Serial.printf("Temp fix::BT fix:%4.2f;ET fix:%4.2f\n", pid_parm.BT_tempfix, pid_parm.ET_tempfix);
   Serial.println("Pharse II:Done\n");
@@ -143,7 +145,7 @@ void setup() {
     Serial.printf("PID kd:%4.2f\n", pid_parm.d);
     Serial.printf("BT fix:%4.2f\n", pid_parm.BT_tempfix);
     Serial.printf("ET fix:%4.2f\n", pid_parm.ET_tempfix);
-    Serial.printf("DATA LENGHT:%d\n",sizeof(pid_parm));
+    Serial.printf("DATA LENGHT:%d\n", sizeof(pid_parm));
   }
 }
 
