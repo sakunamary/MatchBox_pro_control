@@ -16,7 +16,7 @@
 #define BLE_BUFFER_SIZE 128
 #define HMI_BUFFER_SIZE 17
 
-#define VERSION "1.1.9b"
+#define VERSION "1.1.9c"
 
 
 
@@ -42,8 +42,8 @@
 #define PWM_RESOLUTION 10 // 0-1024
 
 
-#define PWM_FAN_MIN 600
-#define PWM_HEAT_MIN 400
+#define PWM_FAN_MIN 200
+#define PWM_HEAT_MIN 100
 
 #define PWM_FAN_MAX 1000
 #define PWM_HEAT_MAX 1000
@@ -63,7 +63,7 @@
 #define MIN_OT1 0   // Set output % for lower limit for OT1.  0% power will always be available
 #define MAX_OT1 100 // Set output % for upper limit for OT1
 
-#define MIN_IO3 30  // Set output % for lower limit for IO3.  0% power will always be available
+#define MIN_IO3 10  // Set output % for lower limit for IO3.  0% power will always be available
 #define MAX_IO3 100 // Set output % for upper limit for IO3
 
 // PID自动整定 三个阶段的温度设置
