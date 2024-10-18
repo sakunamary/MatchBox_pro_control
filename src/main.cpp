@@ -5,8 +5,6 @@
 #include <ESP32Servo.h>
 #include <StringTokenizer.h>
 
-
-
 #include "HD44780_LCD_PCF8574.h"
 #include <WiFiClient.h>
 #include <AsyncTCP.h>
@@ -106,13 +104,20 @@ String IpAddressToString(const IPAddress &ipAddress)
            String(ipAddress[3]);
 }
 
-String processor(const String &var)
-{
-    if (var == "version")
-    {
-        return VERSION;
-    }
-    return String();
+
+String processor(const String &var) {
+  if (var == "version") {
+    return VERSION;
+  } else if (var == "pid_CT") {
+    return String(pid_parm.pid_CT);
+  } else if (var == "pid_P") {
+    return String(pid_parm.p);
+  } else if (var == "pid_I") {
+    return String(pid_parm.i);
+  } else if (var == "pid_D") {
+    return String(pid_parm.d);
+  }
+  return String();
 }
 
 void setup()
@@ -123,8 +128,8 @@ void setup()
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);
     pwm_fan.attachPin(pwm_fan_out, frequency, resolution); // 1KHz 8 bit
-    pwm_fan.write(700);
-    pwm_heat.attachPin(pwm_heat_out, 50, resolution); // 1KHz 8 bit
+    pwm_fan.write(600);
+    pwm_heat.attachPin(pwm_heat_out, 1000, resolution); // 1KHz 8 bit
     pwm_heat.write(1);
 
     LCD.PCF8574_LCDInit(LCD.LCDCursorTypeOff);
@@ -133,6 +138,7 @@ void setup()
 
     BT_TEMP_ft.init(BT_FILTER);
     ET_TEMP_ft.init(ET_FILTER);
+    AMB_ft.init(AMB_FILTER);
     fRise.init(RISE_FILTER); // digital filtering for RoR calculation
     fRoR.init(ROR_FILTER);   // post-filtering on RoR values
     first = true;
@@ -147,8 +153,8 @@ void setup()
 
     Serial.printf("\nStart Task...");
 #endif
-    Wire.begin();
-    // aht20.begin();
+    // Wire.begin();
+    aht20.begin();
     MCP.NewConversion(); // New conversion is initiated
     I2C_EEPROM.setMemoryType(64);
 #if defined(DEBUG_MODE)

@@ -16,7 +16,7 @@
 #define BLE_BUFFER_SIZE 64
 #define HMI_BUFFER_SIZE 17
 
-#define VERSION "1.1.9c"
+#define VERSION "1.1.9d"
 #define BANNER "MATCHBOX H7"
 
 
@@ -43,8 +43,8 @@
 #define PWM_RESOLUTION 10 // 0-1024
 
 
-#define PWM_FAN_MIN 600
-#define PWM_HEAT_MIN 400
+#define PWM_FAN_MIN 200
+#define PWM_HEAT_MIN 100
 
 #define PWM_FAN_MAX 1000
 #define PWM_HEAT_MAX 1000
@@ -64,7 +64,7 @@
 #define MIN_OT1 0   // Set output % for lower limit for OT1.  0% power will always be available
 #define MAX_OT1 100 // Set output % for upper limit for OT1
 
-#define MIN_IO3 30  // Set output % for lower limit for IO3.  0% power will always be available
+#define MIN_IO3 10  // Set output % for lower limit for IO3.  0% power will always be available
 #define MAX_IO3 100 // Set output % for upper limit for IO3
 
 // PID自动整定 三个阶段的温度设置
@@ -88,7 +88,7 @@
 #define PID_TUNE_CYCLE 10
 
 // PID 自动切换模式，注释就只用eeprom内第一组pid参数
-#define PID_AUTO_SHIFT
+//#define PID_AUTO_SHIFT
 
 ////////////////////
 // Analogue inputs (optional)
@@ -101,6 +101,7 @@
 
 #define BT_FILTER 80
 #define ET_FILTER 80
+#define AMB_FILTER 70
 #define D_MULT 0.001 
 #define RISE_FILTER 85 // heavy filtering on non-displayed BT for RoR calculations
 #define ROR_FILTER 80 // post-filtering for the computed RoR values

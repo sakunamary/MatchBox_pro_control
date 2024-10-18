@@ -5,8 +5,8 @@
 #include <config.h>
 #include <Wire.h>
 #include <MCP3424.h>
-// #include "TypeK.h"
-// #include "DFRobot_AHT20.h"
+#include "TypeK.h"
+#include "DFRobot_AHT20.h"
 
 #include <BLEDevice.h>
 #include <BLEServer.h>
@@ -47,6 +47,7 @@ int32_t old_reading_anlg2; // previous analogue reading
 
 extern ExternalEEPROM I2C_EEPROM;
 extern PID Heat_pid_controller;
+filterRC AMB_ft;
 filterRC BT_TEMP_ft;
 filterRC ET_TEMP_ft;
 filterRC fRise;
@@ -80,8 +81,8 @@ unsigned long temp_check[3];
 // #define Rref 1000
 
 MCP3424 MCP(address); // Declaration of MCP3424 A2=0 A1=1 A0=0
-// DFRobot_AHT20 aht20;
- TypeK temp_K_cal;
+DFRobot_AHT20 aht20;
+TypeK temp_K_cal;
 
 extern pid_setting_t pid_parm;
 extern HardwareSerial Serial_HMI;
@@ -116,12 +117,12 @@ void Task_Thermo_get_data(void *pvParameters)
         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
 
-            // if (aht20.startMeasurementReady(/* crcEn = */ true))
-            // {
-            // AMB_TEMP = aht20.getTemperature_C();
-            // AMB_TEMP = AMB_ft.doFilter(AMB_TEMP);
-            // AMB_RH = aht20.getHumidity_RH();
-            // }
+            if (aht20.startMeasurementReady(/* crcEn = */ true))
+            {
+                AMB_TEMP = aht20.getTemperature_C();
+                AMB_TEMP = AMB_ft.doFilter(AMB_TEMP);
+                // AMB_RH = aht20.getHumidity_RH();
+            }
             if (!first)
             {
                 ftemps_old = ftemps; // save old filtered temps for RoR calcs
@@ -189,52 +190,53 @@ void Task_Thermo_get_data(void *pvParameters)
                 Heat_pid_controller.SetOutputLimits(PID_STAGE_3_MIN_OUT, PID_STAGE_3_MAX_OUT);
                 Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
             }
+        }
 
 #endif
-            // step4:
-            //  检查温度是否达到降温降风
-            if (PID_TUNNING == false && pid_status == false)
+        // step4:
+        //  检查温度是否达到降温降风
+        if (PID_TUNNING == false && pid_status == false)
+        {
+            if (BT_TEMP > 50 && BT_TEMP < 60)
             {
-                if (BT_TEMP > 50 && BT_TEMP < 60)
-                {
-                    temp_check[0] = millis();
+                temp_check[0] = millis();
 #if defined(DEBUG_MODE)
-                    Serial.printf("\nTempCheck[0]:%ld\n", temp_check[0]);
+                Serial.printf("\nTempCheck[0]:%ld\n", temp_check[0]);
 #endif
-                }
-                if (BT_TEMP > 120 && BT_TEMP < 135)
-                {
-                    temp_check[1] = millis();
+            }
+            if (BT_TEMP > 120 && BT_TEMP < 135)
+            {
+                temp_check[1] = millis();
 #if defined(DEBUG_MODE)
-                    Serial.printf("\nTempCheck[1]:%ld\n", temp_check[1]);
+                Serial.printf("\nTempCheck[1]:%ld\n", temp_check[1]);
 #endif
-                }
-                if (BT_TEMP > 180)
-                {
-                    temp_check[2] = millis();
+            }
+            if (BT_TEMP > 180)
+            {
+                temp_check[2] = millis();
 #if defined(DEBUG_MODE)
-                    Serial.printf("\nTempCheck[2]:%ld\n", temp_check[2]);
+                Serial.printf("\nTempCheck[2]:%ld\n", temp_check[2]);
 #endif
-                }
+            }
 
-                if (temp_check[2] != 0 && temp_check[1] != 0 && temp_check[0] != 0) // 确认是机器运行中
+            if (temp_check[2] != 0 && temp_check[1] != 0 && temp_check[0] != 0) // 确认是机器运行中
+            {
+                if (temp_check[2] < temp_check[1] && temp_check[1] < temp_check[0]) // 判断温度趋势是下降
                 {
-                    if (temp_check[2] < temp_check[1] && temp_check[1] < temp_check[0]) // 判断温度趋势是下降
-                    {
 #if defined(DEBUG_MODE)
-                        Serial.printf("\n Turn Down fan t0:%ld t1:%ld t2:%ld\n", temp_check[0], temp_check[1], temp_check[2]);
+                    Serial.printf("\n Turn Down fan t0:%ld t1:%ld t2:%ld\n", temp_check[0], temp_check[1], temp_check[2]);
 #endif
-                        levelIO3 = 35;
-                        pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
-                        pwm_heat.write(1); // for safe
-                        temp_check[2] = 0;
-                        temp_check[1] = 0;
-                        temp_check[0] = 0;
-                    }
+                    levelIO3 = 35;
+                    pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                    pwm_heat.write(1); // for safe
+                    temp_check[2] = 0;
+                    temp_check[1] = 0;
+                    temp_check[0] = 0;
                 }
             }
         }
-    }
+
+    } // while loop
 } // function
 
 void Task_PID_autotune(void *pvParameters)
@@ -266,8 +268,8 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.setTuningCycles(PID_TUNE_CYCLE);
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
-                    // pwm_fan.writeScaled(0.6);
-                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+
+                    pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     vTaskDelay(1000);
                     while (!tuner.isFinished()) // 开始自动整定循环
                     {
@@ -292,7 +294,7 @@ void Task_PID_autotune(void *pvParameters)
                     }
                     // Turn the output off here.
                     pwm_heat.writeScaled(0.0);
-                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                    pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     // Get PID gains - set your PID controller's gains to these
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
@@ -318,8 +320,8 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
-                    // pwm_fan.writeScaled(0.55);
-                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+
+                    pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     vTaskDelay(1000);
                     while (!tuner.isFinished()) // 开始自动整定循环
                     {
@@ -344,7 +346,7 @@ void Task_PID_autotune(void *pvParameters)
                     }
                     // Turn the output off here.
                     pwm_heat.writeScaled(0.0);
-                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                    pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     // Get PID gains - set your PID controller's gains to these
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
@@ -369,8 +371,8 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.setOutputRange(round(PID_STAGE_3_MIN_OUT * 255 / 100), round(PID_STAGE_3_MAX_OUT * 255 / 100));
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
-                    // pwm_fan.writeScaled(0.5);
-                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+
+                    pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     vTaskDelay(1000);
                     while (!tuner.isFinished()) // 开始自动整定循环
                     {
@@ -396,7 +398,7 @@ void Task_PID_autotune(void *pvParameters)
                     // Turn the output off here.
                     levelIO3 = 30;
                     pwm_heat.writeScaled(0.0);
-                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                    pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     // Get PID gains - set your PID controller's gains to these
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
@@ -492,7 +494,7 @@ void readAnlg2()
         {                                // did it change?
             old_reading_anlg2 = reading; // save reading for next time
             levelIO3 = reading;
-            pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+            pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
         }
     }
 }

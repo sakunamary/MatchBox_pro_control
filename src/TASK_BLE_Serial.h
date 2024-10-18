@@ -198,7 +198,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             levelIO3 = MAX_IO3; // don't allow OT1 to exceed maximum
                         if (levelIO3 < MIN_IO3)
                             levelIO3 = MIN_IO3; // don't allow OT1 to turn on less than minimum
-                        pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                         pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                      
 
                     }
@@ -207,7 +207,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         levelIO3 = levelIO3 - DUTY_STEP;
                         if (levelIO3 < MIN_IO3 & levelIO3 != 0)
                             levelIO3 = 0; // turn ot1 off if trying to go below minimum. or use levelOT1 = MIN_HTR ?
-                        pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                         pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     
 
                     }
@@ -221,7 +221,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                                 levelIO3 = MAX_IO3; // don't allow OT1 to exceed maximum
                             if (levelIO3 < MIN_IO3 & levelIO3 != 0)
                                 levelIO3 = MIN_IO3; // don't allow to set less than minimum unless setting to zero
-                            pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                             pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
   
                         }
                     }
