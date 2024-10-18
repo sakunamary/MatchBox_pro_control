@@ -127,7 +127,7 @@ void setup()
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);
     pwm_fan.attachPin(pwm_fan_out, frequency, resolution); // 1KHz 8 bit
-    pwm_fan.write(700);
+    pwm_fan.write(600);
     pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
     pwm_heat.write(1);
 
@@ -326,7 +326,7 @@ void setup()
     // INIT OTA service
     // server.on("/", handle_root);
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send_P(200, "text/html", index_html, processor); });
+              { request->send(200, "text/html", index_html, processor); });
     ElegantOTA.begin(&server); // Start ElegantOTA
     // ElegantOTA callbacks
     ElegantOTA.onStart(onOTAStart);
