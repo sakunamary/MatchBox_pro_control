@@ -13,7 +13,7 @@
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
 // #define DEBUG_MODE
 
-#define BLE_BUFFER_SIZE 128
+#define BLE_BUFFER_SIZE 64
 #define HMI_BUFFER_SIZE 17
 
 #define VERSION "1.1.9d"
