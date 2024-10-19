@@ -337,10 +337,4 @@ void loop()
         // do stuff here on connecting
         oldDeviceConnected = deviceConnected;
     }
-
-    // #if !CONFIG_ESP_TASK_WDT_INIT
-    //     // If we manually initialized the TWDT, deintialize it now
-    // esp_task_wdt_deinit();
-
-    // #endif // CONFIG_ESP_TASK_WDT_INIT
 }
