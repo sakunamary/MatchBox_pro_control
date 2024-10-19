@@ -201,7 +201,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             levelIO3 = MAX_IO3; // don't allow OT1 to exceed maximum
                         if (levelIO3 < MIN_IO3)
                             levelIO3 = MIN_IO3; // don't allow OT1 to turn on less than minimum
-                        pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                        pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
 
                     }
                     else if (CMD_Data[1] == "DOWN")
@@ -209,7 +209,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         levelIO3 = levelIO3 - DUTY_STEP;
                         if (levelIO3 < MIN_IO3 & levelIO3 != 0)
                             levelIO3 = 0; // turn ot1 off if trying to go below minimum. or use levelOT1 = MIN_HTR ?
-                        pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                        pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
 
                     }
                     else
@@ -222,7 +222,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                                 levelIO3 = MAX_IO3; // don't allow OT1 to exceed maximum
                             if (levelIO3 < MIN_IO3 & levelIO3 != 0)
                                 levelIO3 = MIN_IO3; // don't allow to set less than minimum unless setting to zero
-                            pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                            pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
 
                         }
                     }
@@ -243,7 +243,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         }
                         else
                         {
-                            pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                            pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                         }
                     }
                     else if (CMD_Data[1] == "DOWN")
@@ -257,7 +257,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         }
                         else
                         {
-                            pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                            pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                         }
                     }
                     else
@@ -276,7 +276,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             }
                             else
                             {
-                                pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                                pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                             }
                         }
                     }
@@ -315,10 +315,10 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             }
                             else
                             {
-                                pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                                pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                             }
                             // Serial.printf("PID ON OT1: %d;PID_output:%4.2f\n", levelOT1,PID_output);
-                            pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                            //pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                         }
                     }
                     else if (CMD_Data[1] == "TUNE")

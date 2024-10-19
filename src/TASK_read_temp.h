@@ -88,7 +88,6 @@ void Task_Thermo_get_data(void *pvParameters)
             // MCP.Configuration(2, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
             // Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
             // ET_TEMP = pid_parm.ET_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
-
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
 
@@ -174,8 +173,8 @@ void Task_Thermo_get_data(void *pvParameters)
 #if defined(DEBUG_MODE)
                     Serial.printf("\n Turn Down fan t0:%ld t1:%ld t2:%ld\n", temp_check[0], temp_check[1], temp_check[2]);
 #endif
-                    levelIO3 = 35;
-                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                    levelIO3 = MIN_IO3;
+                    pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     pwm_heat.write(1); // for safe
                     temp_check[2] = 0;
                     temp_check[1] = 0;
@@ -245,7 +244,7 @@ void Task_PID_autotune(void *pvParameters)
                             }
                             else
                             {
-                                pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                                pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                             }
 
                             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
@@ -303,7 +302,7 @@ void Task_PID_autotune(void *pvParameters)
                             }
                             else
                             {
-                                pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                                pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                             }
 
                             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
@@ -363,7 +362,7 @@ void Task_PID_autotune(void *pvParameters)
                             }
                             else
                             {
-                                pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                                pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                             }
                             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
@@ -421,7 +420,7 @@ void Task_PID_autotune(void *pvParameters)
                             }
                             else
                             {
-                                pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                                pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                             }
                             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
@@ -443,7 +442,7 @@ void Task_PID_autotune(void *pvParameters)
                         PID_TUNNING = false;
                         pid_status = false;
                         pid_sv = 0.0;
-                        pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                        pwm_heat.write(0);
                         pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                         xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                     }

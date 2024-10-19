@@ -62,7 +62,7 @@
 #define PID_TUNE_CYCLE 4
 
 // PID 自动切换模式，注释就只用eeprom内第一组pid参数
- //#define PID_AUTO_SHIFT
+ #define PID_AUTO_SHIFT
 
 
 #define PID_PWR_SHIFT
