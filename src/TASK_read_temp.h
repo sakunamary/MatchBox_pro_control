@@ -176,7 +176,7 @@ void Task_Thermo_get_data(void *pvParameters)
         // step3:
         //  检查温度是否达到切换PID参数
 #if defined(PID_AUTO_SHIFT)
-        if (pid_status && !PID_TUNNING)
+        if (pid_status == true && PID_TUNNING == false)
         {
             if (BT_TEMP >= PID_TUNE_SV_1)
             {
