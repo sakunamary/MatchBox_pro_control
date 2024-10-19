@@ -107,7 +107,7 @@ void Task_Thermo_get_data(void *pvParameters)
         }
         // 检查温度是否达到切换PID参数
 #if defined(PID_AUTO_SHIFT)
-        if (pid_status && !PID_TUNNING)
+        if (pid_status == true && PID_TUNNING == false)
         {
             if (BT_TEMP >= PID_TUNE_SV_1)
             {
@@ -215,7 +215,7 @@ void Task_PID_autotune(void *pvParameters)
     (void)pvParameters;
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
-    const TickType_t xIntervel = 3000 / portTICK_PERIOD_MS;
+    const TickType_t xIntervel = 250 / portTICK_PERIOD_MS;
 
     while (1)
     {
@@ -370,6 +370,8 @@ void Task_PID_autotune(void *pvParameters)
 
                         levelIO3 = 30;
                         levelOT1 = 0;
+                        PID_TUNNING = false;
+                        pid_status = false;
                         pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                         pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                         xSemaphoreGive(xThermoDataMutex); // end of lock mutex
