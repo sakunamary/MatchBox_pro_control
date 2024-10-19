@@ -39,6 +39,7 @@ extern double BT_TEMP;
 extern double ET_TEMP;
 extern double AMB_RH;
 extern double AMB_TEMP;
+extern char line3[20];
 
 extern double PID_output;
 extern double pid_sv;
@@ -301,6 +302,9 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             pid_sv = 0;
                             levelOT1 = 0;
                             LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberThree);
+                            sprintf(line3, "HTR:%4d ", (int)round(levelOT1));
+                            LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberThree, 0);
+                            LCD.PCF8574_LCDSendString(line3);
                             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
                     }
