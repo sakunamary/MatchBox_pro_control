@@ -47,12 +47,12 @@ void TASK_LCD(void *pvParameters)
 
             if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
             {
-                LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberOne);
+               // LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberOne);
                 sprintf(line1, "MODE:PID     ET:%4d", (int)round(ET_TEMP));
                 LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberOne, 0);
                 LCD.PCF8574_LCDSendString(line1);
-                LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberThree);
-                sprintf(line3, "HTR:%3d      SV:%4d", (int)round(levelOT1), (int)round(pid_sv));
+                //LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberThree);
+                sprintf(line3, "HTR:%4d     SV:%4d", (int)round(levelOT1), (int)round(pid_sv));
                 LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberThree, 0);
                 LCD.PCF8574_LCDSendString(line3);
                 xSemaphoreGive(xThermoDataMutex); // end of lock mutex
@@ -62,13 +62,13 @@ void TASK_LCD(void *pvParameters)
         {
             if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
             {
-                LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberOne);
+               // LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberOne);
                 sprintf(line1, "MODE:MAN     ET:%4d", (int)round(ET_TEMP));
                 LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberOne, 0);
                 LCD.PCF8574_LCDSendString(line1);
 
-                LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberThree);
-                sprintf(line3, "HTR:%3d ", (int)round(levelOT1));
+                //LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberThree);
+                sprintf(line3, "HTR:%4d ", (int)round(levelOT1));
                 LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberThree, 0);
                 LCD.PCF8574_LCDSendString(line3);
                 xSemaphoreGive(xThermoDataMutex); // end of lock mutex
@@ -77,10 +77,10 @@ void TASK_LCD(void *pvParameters)
 
         if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
-            sprintf(line2, "RoR:%3d      BT:%4d", (int)round(ror), (int)round(BT_TEMP));
+            sprintf(line2, "RoR:%4d     BT:%4d", (int)round(ror), (int)round(BT_TEMP));
             LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberTwo, 0);
             LCD.PCF8574_LCDSendString(line2);
-            sprintf(line4, "FAN:%3d  ", (int)round(levelIO3));
+            sprintf(line4, "FAN:%4d  ", (int)round(levelIO3));
             LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberFour, 0);
             LCD.PCF8574_LCDSendString(line4);
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex

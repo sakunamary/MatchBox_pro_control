@@ -294,7 +294,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     {
                         // Heat_pid_controller.stop();
                         Heat_pid_controller.SetMode(MANUAL);
-                        pid_status = false;
+                        pid_status = true;
                         pid_sv = 0;
                         PID_TUNNING = true;
                         vTaskResume(xTask_PID_autotune);
