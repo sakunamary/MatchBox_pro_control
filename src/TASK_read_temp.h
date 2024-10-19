@@ -81,8 +81,8 @@ void Task_Thermo_get_data(void *pvParameters)
             // Voltage = BT_TEMP_ft.doFilter(Voltage << 10); // multiply by 1024 to create some resolution for filter
             // Voltage >>= 10;
 
-             BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
-            //BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, AMB_TEMP) + pid_parm.BT_tempfix;
+            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+            // BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, AMB_TEMP) + pid_parm.BT_tempfix;
             ET_TEMP = 0.0;
             // delay(200);
             // MCP.Configuration(2, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
@@ -94,21 +94,21 @@ void Task_Thermo_get_data(void *pvParameters)
 
         // 检查温度是否达到切换PID参数
 #if defined(PID_AUTO_SHIFT)
-        if (pid_status && !PID_TUNNING)
+        if (pid_status == true  && PID_TUNNING == false )
         {
-            if (BT_TEMP >= PID_TUNE_SV_1 + 30)
+            if (BT_TEMP >= PID_TUNE_SV_1)
             {
                 I2C_EEPROM.get(64, pid_parm);
                 Heat_pid_controller.SetOutputLimits(PID_STAGE_2_MIN_OUT, PID_STAGE_2_MAX_OUT);
                 Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
             }
-            else if (BT_TEMP >= PID_TUNE_SV_2 + 15)
+            else if (BT_TEMP >= PID_TUNE_SV_2)
             {
                 I2C_EEPROM.get(128, pid_parm);
                 Heat_pid_controller.SetOutputLimits(PID_STAGE_3_MIN_OUT, PID_STAGE_3_MAX_OUT);
                 Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
             }
-            else if (BT_TEMP >= PID_TUNE_SV_3 + 10)
+            else if (BT_TEMP >= PID_TUNE_SV_3)
             {
                 I2C_EEPROM.get(192, pid_parm);
                 Heat_pid_controller.SetOutputLimits(PID_STAGE_4_MIN_OUT, PID_STAGE_4_MAX_OUT);
@@ -117,12 +117,11 @@ void Task_Thermo_get_data(void *pvParameters)
         }
 
 #if defined(PID_PWR_SHIFT)
-
-        if (pid_status && !PID_TUNNING)
+        if (pid_status == true )
         {
             if (BT_TEMP < PID_TUNE_SV_1)
             {
-                Heat_pid_controller.SetOutputLimits(PID_STAGE_1_MIN_OUT, PID_STAGE_1_MAX_OUT); 
+                Heat_pid_controller.SetOutputLimits(PID_STAGE_1_MIN_OUT, PID_STAGE_1_MAX_OUT);
             }
             else if (BT_TEMP >= PID_TUNE_SV_1)
             {
@@ -203,7 +202,7 @@ void Task_PID_autotune(void *pvParameters)
     (void)pvParameters;
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
-    const TickType_t xIntervel = 3000 / portTICK_PERIOD_MS;
+    const TickType_t xIntervel = 250 / portTICK_PERIOD_MS;
     PID_TUNNING = true;
     while (1)
     {
@@ -228,7 +227,7 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.setOutputRange(round(PID_STAGE_1_MIN_OUT * 255 / 100), round(PID_STAGE_1_MAX_OUT * 255 / 100)); // (0-)
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
-                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                    pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     // pwm_fan.writeScaled(0.6);
                     delay(1000);
                     while (!tuner.isFinished()) // 开始自动整定循环
@@ -263,7 +262,7 @@ void Task_PID_autotune(void *pvParameters)
                     }
                     // Turn the output off here.
                     // pwm_heat.writeScaled(0.0);
-                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                    pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     // Get PID gains - set your PID controller's gains to these
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
@@ -288,7 +287,7 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.setOutputRange(round(PID_STAGE_2_MIN_OUT * 255 / 100), round(PID_STAGE_2_MAX_OUT * 255 / 100));
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     // pwm_heat.writeScaled(0.0);
-                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                    pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     delay(1000);
                     while (!tuner.isFinished()) // 开始自动整定循环
                     {
@@ -322,7 +321,7 @@ void Task_PID_autotune(void *pvParameters)
                     // Turn the output off here.
                     levelIO3 = 30;
                     // pwm_heat.writeScaled(0.0);
-                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                    pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     // Get PID gains - set your PID controller's gains to these
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
@@ -347,7 +346,7 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.setOutputRange(round(PID_STAGE_3_MIN_OUT * 255 / 100), round(PID_STAGE_3_MAX_OUT * 255 / 100));
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     pwm_heat.writeScaled(0.0);
-                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                    pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     delay(1000);
                     while (!tuner.isFinished()) // 开始自动整定循环
                     {
@@ -405,7 +404,7 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.setOutputRange(round(PID_STAGE_4_MIN_OUT * 255 / 100), round(PID_STAGE_4_MAX_OUT * 255 / 100));
                     tuner.setTargetInputValue(PID_TUNE_SV);
                     // pwm_heat.writeScaled(0.0);
-                    pwm_fan.write(map(levelIO3, 0, 100, PWM_FAN_MIN, PWM_FAN_MAX));
+                    pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     delay(1000);
                     while (!tuner.isFinished()) // 开始自动整定循环
                     {
@@ -436,9 +435,19 @@ void Task_PID_autotune(void *pvParameters)
                             delayMicroseconds(1);
                         } // time units : us
                     }
-                    // Turn the output off here.
-                    pwm_heat.writeScaled(0.0);
-                    pwm_fan.write(300); // 降低风量 标识PID完成
+
+                    if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
+                    {
+                        levelIO3 = 30;
+                        levelOT1 = 0;
+                        PID_TUNNING = false;
+                        pid_status = false;
+                        pid_sv = 0.0;
+                        pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                        pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                        xSemaphoreGive(xThermoDataMutex); // end of lock mutex
+                    }
+
                     // Get PID gains - set your PID controller's gains to these
                     pid_parm.p = tuner.getKp();
                     pid_parm.i = tuner.getKi();
