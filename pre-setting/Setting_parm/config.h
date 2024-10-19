@@ -1,13 +1,13 @@
 
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
-//MATCH BOX MINI 
+// MATCH BOX MINI
 #include <Wire.h>
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
 
-//#define DEBUG_MODE
+// #define DEBUG_MODE
 #define BLE_BUFFER_SIZE 64
 #define HMI_BUFFER_SIZE 16
 
@@ -29,7 +29,7 @@
 // pwm setting
 #define PWM_FAN 5
 #define PWM_HEAT 2
-#define PWM_FREQ 3922
+#define PWM_FREQ 4000
 #define PWM_RESOLUTION 10 // 0-1024
 
 #define PID_MAX_OUT 100
@@ -39,14 +39,14 @@
 #define MAX_SLEW 25                                           // percent per second
 #define SLEW_STEP 3                                           // increase in steps of 5% for smooth transition
 #define SLEW_STEP_TIME (uint32_t)(SLEW_STEP * 500 / MAX_SLEW) // min ms delay between steps
-#define DUTY_STEP 2                                         // Use 1, 2, 4, 5, or 10.
+#define DUTY_STEP 2                                           // Use 1, 2, 4, 5, or 10.
 
 ////////////////////
 // Heater and Fan Limits/Options
-#define MIN_OT1 0   // Set output % for lower limit for OT1.  0% power will always be available
+#define MIN_OT1 0  // Set output % for lower limit for OT1.  0% power will always be available
 #define MAX_OT1 95 // Set output % for upper limit for OT1
 
-#define MIN_IO3 30  // Set output % for lower limit for IO3.  0% power will always be available
+#define MIN_IO3 30 // Set output % for lower limit for IO3.  0% power will always be available
 #define MAX_IO3 95 // Set output % for upper limit for IO3
 
 //
@@ -59,7 +59,6 @@ typedef struct eeprom_settings
     double BT_tempfix;
     double ET_tempfix;
 } pid_setting_t;
-
 
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
@@ -77,5 +76,34 @@ typedef struct eeprom_settings
 
 // QueueHandle_t queueCMD_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
 // QueueHandle_t queue_data_to_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
+
+const char index_html[] PROGMEM = R"rawliteral(
+
+<!doctype html><html lang='cn'>
+ <head>
+<title>MATCH BOX MINI SETUP</title>
+</head> 
+ <body>
+<main>
+    <h1 align='center'>BLE version:%version%</h1>
+       <div align='center'><a href='/update' target='_blank'>FIRMWARE UPDATE</a>
+        </br>
+        </br>
+        <label>PID:CT (current: %pid_CT%)</label>
+       </br>
+       <label>PID:P (current: %pid_P%)</label>
+       </br>
+        <label>PID:I (current: %pid_I%)</label>
+       </br>
+        <label>PID:D (current: %pid_D%)</label>
+       </br>
+        </br>
+        <label>BT TEMP FIX (current: %bt_fix%)</label>
+       </br>
+        </main>
+         </div>
+    </body>
+ </html>
+)rawliteral";
 
 #endif

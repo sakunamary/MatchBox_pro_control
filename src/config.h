@@ -16,7 +16,7 @@
 #define BLE_BUFFER_SIZE 128
 #define HMI_BUFFER_SIZE 17
 
-#define VERSION "1.1.9c"
+#define VERSION "1.1.9d"
 
 
 
@@ -71,8 +71,8 @@
 #define PID_TUNE_SV_2 190
 #define PID_TUNE_SV_1 160
 
-#define PID_TUNE_FAN_3 50
-#define PID_TUNE_FAN_2 53
+#define PID_TUNE_FAN_3 45
+#define PID_TUNE_FAN_2 50
 #define PID_TUNE_FAN_1 55
 
 #define PID_STAGE_1_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
@@ -84,7 +84,7 @@
 #define PID_STAGE_3_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 #define PID_STAGE_3_MIN_OUT 10  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 // PID自动整定的测定循环次数
-#define PID_TUNE_CYCLE 10
+#define PID_TUNE_CYCLE 4
 
 // PID 自动切换模式，注释就只用eeprom内第一组pid参数
 #define PID_AUTO_SHIFT

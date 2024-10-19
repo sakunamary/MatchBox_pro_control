@@ -128,14 +128,13 @@ void setup()
     ESP32PWM::allocateTimer(1);
     pwm_fan.attachPin(pwm_fan_out, frequency, resolution); // 1KHz 8 bit
     pwm_fan.write(600);
-    pwm_heat.attachPin(pwm_heat_out, frequency, resolution); // 1KHz 8 bit
+    pwm_heat.attachPin(pwm_heat_out, 1000, resolution); // 1KHz 8 bit
     pwm_heat.write(1);
 
     BT_TEMP_ft.init(BT_FILTER);
     ET_TEMP_ft.init(ET_FILTER);
 
     Serial.begin(HMI_BAUDRATE);
-    // Serial_HMI.setBuffer();
     Serial_HMI.begin(HMI_BAUDRATE, SERIAL_8N1, RXD_HMI, TXD_HMI);
 
 #if defined(DEBUG_MODE)
@@ -308,12 +307,6 @@ void setup()
     Heat_pid_controller.SetOutputLimits(PID_MIN_OUT, PID_MAX_OUT);
     Heat_pid_controller.SetSampleTime(int(pid_parm.pid_CT * 1000));
 
-    // Heat_pid_controller.begin(&BT_TEMP, &PID_output, &pid_sv, pid_parm.p, pid_parm.i, pid_parm.d);
-    // Heat_pid_controller.setSampleTime(pid_parm.pid_CT * 1000); // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
-    // Heat_pid_controller.setOutputLimits(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
-    // Heat_pid_controller.setBias(255.0 / 2.0);
-    // Heat_pid_controller.setWindUpLimits(2, 2); // Groth bounds for the integral term to prevent integral wind-up
-    // Heat_pid_controller.start();
 
     // INIT PID AUTOTUNE
 
