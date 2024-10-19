@@ -40,6 +40,7 @@ long microseconds;
 double pid_tune_output;
 extern bool first;
 
+
 uint8_t anlg1 = ANIN1;     // analog input pins
 int32_t old_reading_anlg1; // previous analogue reading
 uint8_t anlg2 = ANIN2;     // analog input pins
@@ -47,6 +48,8 @@ int32_t old_reading_anlg2; // previous analogue reading
 
 extern ExternalEEPROM I2C_EEPROM;
 extern PID Heat_pid_controller;
+extern HD44780LCD LCD;
+
 filterRC AMB_ft;
 filterRC BT_TEMP_ft;
 filterRC ET_TEMP_ft;
@@ -407,7 +410,7 @@ void Task_PID_autotune(void *pvParameters)
                         levelOT1 = 0;
                         PID_TUNNING = false;
                         pid_status = false;
-                        pid_sv = 0.0; 
+                        pid_sv = 0.0;
                         pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                         pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                         xSemaphoreGive(xThermoDataMutex); // end of lock mutex
@@ -437,6 +440,12 @@ void Task_PID_autotune(void *pvParameters)
     PID_TUNNING = false;
     pid_status = false;
     pid_sv = 0.0;
+    LCD.PCF8574_LCDClearScreen();
+    LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberOne, 0);
+    LCD.PCF8574_LCDSendString("PID TUNE DONE.");
+    LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberTwo, 0);
+    LCD.PCF8574_LCDSendString("PLS PWR OFF."); 
+
     delay(3000);
     ESP.restart();
     vTaskResume(xTASK_BLE_CMD_handle);

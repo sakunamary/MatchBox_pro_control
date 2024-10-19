@@ -6,6 +6,9 @@
 // MATCH BOX H& 2004LCD
 #include <Wire.h>
 
+#define BANNER "MATCHBOX H7 v2"
+#define VERSION "1.1.9j"
+
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
 #define HMI_BAUDRATE 9600        // serial port baudrate
@@ -15,9 +18,6 @@
 
 #define BLE_BUFFER_SIZE 64
 #define HMI_BUFFER_SIZE 17
-
-#define VERSION "1.1.9g"
-#define BANNER "MATCHBOX H7"
 
 // 下面代码不要动，主板硬件IO对应。已测试。
 #define SPI_SCK 8
