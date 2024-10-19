@@ -110,12 +110,6 @@ void loadUserSettings();
 
 void setup() {
 
-  // ESP32PWM::allocateTimer(0);
-  // ESP32PWM::allocateTimer(1);
-  // ESP32PWM::allocateTimer(2);
-  // ESP32PWM::allocateTimer(3);
-
-
   //  Init pwm output
 
   pwm_heat.attachPin(HEAT_OUT_PIN, frequency, resolution);  // 1KHz 8 bit
@@ -172,7 +166,7 @@ void setup() {
     request->send(200, "text/html", index_html, processor);
   });
 
-  // server.on("/", handle_root);
+
   ElegantOTA.begin(&server);  // Start ElegantOTA
   // ElegantOTA callbacks
   ElegantOTA.onStart(onOTAStart);
