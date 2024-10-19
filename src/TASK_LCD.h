@@ -29,7 +29,7 @@ void TASK_LCD(void *pvParameters)
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
     TickType_t xLastWakeTime;
-    const TickType_t timeOut = 200 / portTICK_PERIOD_MS;
+    const TickType_t timeOut = 500 / portTICK_PERIOD_MS;
     // for start banner
     LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberOne, 0);
     LCD.PCF8574_LCDSendString(BANNER);
@@ -41,38 +41,33 @@ void TASK_LCD(void *pvParameters)
     while (1)
     {
         vTaskDelayUntil(&xLastWakeTime, xIntervel);
-
-        if (pid_status)
+        if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
-
-            if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
+            if (pid_status == true)
             {
-               // LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberOne);
+
+                // LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberOne);
                 sprintf(line1, "MODE:PID     ET:%4d", (int)round(ET_TEMP));
                 LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberOne, 0);
                 LCD.PCF8574_LCDSendString(line1);
-                //LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberThree);
+                // LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberThree);
                 sprintf(line3, "HTR:%4d     SV:%4d", (int)round(levelOT1), (int)round(pid_sv));
                 LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberThree, 0);
                 LCD.PCF8574_LCDSendString(line3);
-                xSemaphoreGive(xThermoDataMutex); // end of lock mutex
             }
-        }
-        else // pid_status = false
-        {
-            if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
+            else // pid_status = false
             {
-               // LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberOne);
+                // LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberOne);
                 sprintf(line1, "MODE:MAN     ET:%4d", (int)round(ET_TEMP));
                 LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberOne, 0);
                 LCD.PCF8574_LCDSendString(line1);
 
-                //LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberThree);
+                // LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberThree);
                 sprintf(line3, "HTR:%4d ", (int)round(levelOT1));
                 LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberThree, 0);
                 LCD.PCF8574_LCDSendString(line3);
-                xSemaphoreGive(xThermoDataMutex); // end of lock mutex
             }
+            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
 
         if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据

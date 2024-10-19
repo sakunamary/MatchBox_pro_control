@@ -16,10 +16,8 @@
 #define BLE_BUFFER_SIZE 64
 #define HMI_BUFFER_SIZE 17
 
-#define VERSION "1.1.9f"
+#define VERSION "1.1.9g"
 #define BANNER "MATCHBOX H7"
-
-
 
 // 下面代码不要动，主板硬件IO对应。已测试。
 #define SPI_SCK 8
