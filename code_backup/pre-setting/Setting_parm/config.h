@@ -11,7 +11,13 @@
 #define BLE_BUFFER_SIZE 64
 #define HMI_BUFFER_SIZE 16
 
-#define VERSION "1.1.0"
+//下面Thermo 选项 只能选择其中一个
+// thermocouple on typeK / PT100
+//#define TC_TYPE_K
+//thermocouple on PT100
+#define TC_PT100   
+
+#define VERSION "1.1.0a"
 
 #define SPI_SCK 8
 #define SPI_MISO 9
