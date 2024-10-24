@@ -6,8 +6,11 @@
 #include <Wire.h>
 #include <PID_v1.h>
 #include <MCP3424.h>
+
+#if defined(TC_TYPE_K)
 #include "TypeK.h"
 #include "DFRobot_AHT20.h"
+#endif
 
 double BT_TEMP;
 double ET_TEMP;
@@ -40,8 +43,11 @@ unsigned long temp_check[3];
 #define Rref 1000
 
 MCP3424 MCP(address); // Declaration of MCP3424 A2=0 A1=1 A0=0
+
+#if defined(TC_TYPE_K)
 DFRobot_AHT20 aht20;
 TypeK temp_K_cal;
+#endif
 extern ExternalEEPROM I2C_EEPROM;
 
 void Task_Thermo_get_data(void *pvParameters)
@@ -67,12 +73,15 @@ void Task_Thermo_get_data(void *pvParameters)
         vTaskDelayUntil(&xLastWakeTime, xIntervel);
         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
+
+#if defined(TC_TYPE_K)
             if (aht20.startMeasurementReady(/* crcEn = */ true))
             {
                 AMB_TEMP = aht20.getTemperature_C();
                 AMB_TEMP = AMB_ft.doFilter(AMB_TEMP);
                 // AMB_RH = aht20.getHumidity_RH();
             }
+#endif
             delay(200);
             MCP.Configuration(1, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
 
@@ -80,9 +89,13 @@ void Task_Thermo_get_data(void *pvParameters)
             Voltage = BT_TEMP_ft.doFilter(Voltage);
             // Voltage = BT_TEMP_ft.doFilter(Voltage << 10); // multiply by 1024 to create some resolution for filter
             // Voltage >>= 10;
+#if defined(TC_TYPE_K)
+            BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, AMB_TEMP) + pid_parm.BT_tempfix;
+#endif
 
+#if defined(TC_PT100  )
             BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
-            // BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, AMB_TEMP) + pid_parm.BT_tempfix;
+#endif
             ET_TEMP = 0.0;
             // delay(200);
             // MCP.Configuration(2, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
@@ -93,7 +106,7 @@ void Task_Thermo_get_data(void *pvParameters)
 
         // 检查温度是否达到切换PID参数
 #if defined(PID_AUTO_SHIFT)
-        if (pid_status == true  && PID_TUNNING == false )
+        if (pid_status == true && PID_TUNNING == false)
         {
             if (BT_TEMP >= PID_TUNE_SV_1)
             {
@@ -116,7 +129,7 @@ void Task_Thermo_get_data(void *pvParameters)
         }
 
 #if defined(PID_PWR_SHIFT)
-        if (pid_status == true )
+        if (pid_status == true)
         {
             if (BT_TEMP < PID_TUNE_SV_1)
             {

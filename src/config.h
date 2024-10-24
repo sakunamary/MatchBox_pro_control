@@ -6,9 +6,16 @@
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
-#define VERSION "1.1.2i"
+#define VERSION "1.1.2j"
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
 #define DEBUG_MODE
+
+
+//下面Thermo 选项 只能选择其中一个
+// thermocouple on typeK / PT100
+//#define TC_TYPE_K
+//thermocouple on PT100
+#define TC_PT100   
 
 // 下面代码不要动，主板硬件IO对应。已测试。
 #define BLE_BUFFER_SIZE 64
@@ -62,8 +69,7 @@
 #define PID_TUNE_CYCLE 4
 
 // PID 自动切换模式，注释就只用eeprom内第一组pid参数
- #define PID_AUTO_SHIFT
-
+#define PID_AUTO_SHIFT
 
 #define PID_PWR_SHIFT
 

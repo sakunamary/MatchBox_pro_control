@@ -141,7 +141,11 @@ void setup()
     // start Serial
     Serial.printf("\nStart Task...");
 #endif
+
+#if defined(TC_TYPE_K)
     aht20.begin();
+#endif   
+
     MCP.NewConversion(); // New conversion is initiated
     I2C_EEPROM.setMemoryType(64);
 
