@@ -171,7 +171,7 @@ void Task_Thermo_get_data(void *pvParameters)
 
             // 获取 旋钮数值
             readAnlg1();
-            delay(50);  // IO1
+            delay(50);   // IO1
             readAnlg2(); // OT3
             // end of 获取 旋钮数值
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
@@ -259,7 +259,6 @@ void Task_PID_autotune(void *pvParameters)
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
     const TickType_t xIntervel = 250 / portTICK_PERIOD_MS;
-
     while (1)
     {
         xResult = xTaskNotifyWait(0x00,                 // 在运行前这个命令之前，先清除这几位
@@ -270,7 +269,7 @@ void Task_PID_autotune(void *pvParameters)
         if (xResult == pdTRUE)
         {
             // 开始 PID自动整定
-
+            vTaskSuspend(xTASK_BLE_CMD_handle);
             for (int loop = 0; loop < 3; loop++)
             {
                 if (loop == 0)
@@ -458,7 +457,7 @@ void Task_PID_autotune(void *pvParameters)
     LCD.PCF8574_LCDSendString("PLS PWR OFF.");
 
     delay(3000);
-    //vTaskResume(xTASK_BLE_CMD_handle);
+    // vTaskResume(xTASK_BLE_CMD_handle);
     vTaskSuspend(xTask_PID_autotune);
 }
 
