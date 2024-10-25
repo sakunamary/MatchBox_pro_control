@@ -131,11 +131,11 @@ void TASK_BLE_CMD_handle(void *pvParameters)
     uint8_t BLE_CMD_Buffer[BLE_BUFFER_SIZE];
     char BLE_data_buffer_char[BLE_BUFFER_SIZE];
     uint8_t BLE_data_buffer_uint8[BLE_BUFFER_SIZE];
-    const TickType_t timeOut = 250 / portTICK_PERIOD_MS;
+    const TickType_t timeOut = 300 / portTICK_PERIOD_MS;
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
     TickType_t xLastWakeTime;
-    const TickType_t xIntervel = 250 / portTICK_PERIOD_MS;
+    const TickType_t xIntervel = 300 / portTICK_PERIOD_MS;
     int i = 0;
     int j = 0;
     String TC4_data_String;
@@ -285,19 +285,19 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     {
                         if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
+                            Heat_pid_controller.SetMode(AUTOMATIC);
                             pid_status = true;
                             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
-                        Heat_pid_controller.SetMode(AUTOMATIC);
+
                         // Heat_pid_controller.start();
                     }
                     else if (CMD_Data[1] == "OFF")
                     {
-                        Heat_pid_controller.SetMode(MANUAL);
-                        I2C_EEPROM.get(0, pid_parm);
-                        Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
+
                         if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
+                            Heat_pid_controller.SetMode(MANUAL);
                             pid_status = false;
                             pid_sv = 0;
                             levelOT1 = 0;
@@ -307,6 +307,8 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             LCD.PCF8574_LCDSendString(line3);
                             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
+                        I2C_EEPROM.get(0, pid_parm);
+                        Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
                     }
                     else if (CMD_Data[1] == "SV")
                     {
@@ -327,6 +329,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             // Heat_pid_controller.stop();
+                            vTaskSuspend(xTASK_BLE_CMD_handle);
                             Heat_pid_controller.SetMode(MANUAL);
                             pid_status = true;
                             pid_sv = 0;
@@ -336,7 +339,6 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         vTaskResume(xTask_PID_autotune);
                         delay(100);
                         xTaskNotify(xTask_PID_autotune, 0, eIncrement); // 通知处理任务干活
-                        vTaskSuspend(xTASK_BLE_CMD_handle);
                     }
                 }
             }

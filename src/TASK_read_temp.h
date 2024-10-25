@@ -5,8 +5,6 @@
 #include <config.h>
 #include <Wire.h>
 #include <MCP3424.h>
-#include "TypeK.h"
-#include "DFRobot_AHT20.h"
 
 #include <BLEDevice.h>
 #include <BLEServer.h>
@@ -14,6 +12,10 @@
 #include <BLE2902.h>
 
 // #include "DFRobot_BME280.h"
+#if defined(TC_TYPE_K)
+#include "TypeK.h"
+#include "DFRobot_AHT20.h"
+#endif
 
 double BT_TEMP;
 double ET_TEMP;
@@ -39,7 +41,6 @@ long prevMicroseconds;
 long microseconds;
 double pid_tune_output;
 extern bool first;
-
 
 uint8_t anlg1 = ANIN1;     // analog input pins
 int32_t old_reading_anlg1; // previous analogue reading
@@ -84,8 +85,10 @@ unsigned long temp_check[3];
 // #define Rref 1000
 
 MCP3424 MCP(address); // Declaration of MCP3424 A2=0 A1=1 A0=0
+#if defined(TC_TYPE_K)
 DFRobot_AHT20 aht20;
 TypeK temp_K_cal;
+#endif
 
 extern pid_setting_t pid_parm;
 extern HardwareSerial Serial_HMI;
@@ -119,13 +122,14 @@ void Task_Thermo_get_data(void *pvParameters)
         // step1:
         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
-
+#if defined(TC_TYPE_K)
             if (aht20.startMeasurementReady(/* crcEn = */ true))
             {
                 AMB_TEMP = aht20.getTemperature_C();
                 AMB_TEMP = AMB_ft.doFilter(AMB_TEMP);
                 // AMB_RH = aht20.getHumidity_RH();
             }
+#endif
             if (!first)
             {
                 ftemps_old = ftemps; // save old filtered temps for RoR calcs
@@ -136,16 +140,23 @@ void Task_Thermo_get_data(void *pvParameters)
             Voltage = MCP.Measure();                      // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
             Voltage = BT_TEMP_ft.doFilter(Voltage << 10); // multiply by 1024 to create some resolution for filter
             Voltage >>= 10;
-
+#if defined(TC_TYPE_K)
             BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, AMB_TEMP) + pid_parm.BT_tempfix;
-            // BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+#else
+            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+#endif
+
             delay(100);
             MCP.Configuration(2, 16, 1, 1);               // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
             Voltage = MCP.Measure();                      // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
             Voltage = ET_TEMP_ft.doFilter(Voltage << 10); // multiply by 1024 to create some resolution for filter
             Voltage >>= 10;
+
+#if defined(TC_TYPE_K)
             ET_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, AMB_TEMP) + pid_parm.ET_tempfix;
-            // ET_TEMP = pid_parm.ET_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+#else
+            ET_TEMP = pid_parm.ET_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+#endif
 
             // cal RoR
             ftimes = millis();
@@ -160,7 +171,7 @@ void Task_Thermo_get_data(void *pvParameters)
 
             // 获取 旋钮数值
             readAnlg1();
-            delay(100);  // IO1
+            delay(50);  // IO1
             readAnlg2(); // OT3
             // end of 获取 旋钮数值
             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
@@ -444,12 +455,11 @@ void Task_PID_autotune(void *pvParameters)
     LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberOne, 0);
     LCD.PCF8574_LCDSendString("PID TUNE DONE.");
     LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberTwo, 0);
-    LCD.PCF8574_LCDSendString("PLS PWR OFF."); 
+    LCD.PCF8574_LCDSendString("PLS PWR OFF.");
 
     delay(3000);
-    ESP.restart();
-    vTaskResume(xTASK_BLE_CMD_handle);
-    vTaskSuspend(NULL);
+    //vTaskResume(xTASK_BLE_CMD_handle);
+    vTaskSuspend(xTask_PID_autotune);
 }
 
 int32_t getAnalogValue(uint8_t CH)
