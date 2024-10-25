@@ -70,6 +70,10 @@ void onOTAStart()
     // Log when OTA has started
     // Serial.println("OTA update started!");
     // <Add your own code here>
+
+    vTaskDelete(xTask_PID_autotune);
+    vTaskDelete(xTASK_BLE_CMD_handle);
+    vTaskDelete(xTASK_data_to_BLE);
 }
 
 void onOTAProgress(size_t current, size_t final)
