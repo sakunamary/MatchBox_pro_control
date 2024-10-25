@@ -301,6 +301,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             pid_status = false;
                             pid_sv = 0;
                             levelOT1 = 0;
+                            levelIO3 = 60;
                             LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberThree);
                             sprintf(line3, "HTR:%4d ", (int)round(levelOT1));
                             LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberThree, 0);
