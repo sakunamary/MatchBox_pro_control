@@ -36,13 +36,14 @@
 #define PWM_FAN 5
 #define PWM_HEAT 2
 
+#define WS_PIN D6
 // 上面代码不要动，主板硬件IO对应。已测试。
 
 // pwm setting
 #define PWM_FREQ 4000     // PWM 信号频率 单位：Hz
 #define PWM_RESOLUTION 10 // 0-1024 PWM 信号分辨率 10bit 是0-1024级 ，12bit 是 0-4096级，改了主程序的分辨率输出map函数也要相应调整
 
-#define PWM_FAN_MIN 300
+#define PWM_FAN_MIN 500
 #define PWM_HEAT_MIN 350
 
 #define PWM_FAN_MAX 1000  // 最大值，对应10bit的1024 ，pwm满载需要保留一点空隙。不能到1024
