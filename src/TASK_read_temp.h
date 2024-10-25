@@ -81,8 +81,8 @@ unsigned long temp_check[3];
 
 // #define SEA_LEVEL_PRESSURE 1015.0f
 
-// #define R0 100
-// #define Rref 1000
+#define R0 100
+#define Rref 1000
 
 MCP3424 MCP(address); // Declaration of MCP3424 A2=0 A1=1 A0=0
 #if defined(TC_TYPE_K)
