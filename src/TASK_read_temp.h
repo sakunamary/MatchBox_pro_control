@@ -213,7 +213,6 @@ void Task_PID_autotune(void *pvParameters)
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
     const TickType_t xIntervel = 250 / portTICK_PERIOD_MS;
-    PID_TUNNING = true;
     while (1)
     {
         xResult = xTaskNotifyWait(0x00,                 // 在运行前这个命令之前，先清除这几位
@@ -223,6 +222,7 @@ void Task_PID_autotune(void *pvParameters)
 
         if (xResult == pdTRUE)
         {
+            PID_TUNNING = true;
             vTaskSuspend(xTASK_BLE_CMD_handle);
             // 开始 PID自动整定
             // Serial.println("PID AUTOTUNE");

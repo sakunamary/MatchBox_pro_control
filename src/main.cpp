@@ -280,6 +280,9 @@ void setup()
         &xTask_PID_autotune // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
     vTaskSuspend(xTask_PID_autotune); //
+
+    PID_TUNNING = false;
+
 #if defined(DEBUG_MODE)
     Serial.printf("\nTASK=8:PID autotune OK\n");
 #endif
