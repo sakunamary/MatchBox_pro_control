@@ -1,15 +1,17 @@
 
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
-//MATCH BOX MINI 
+//MATCH BOX MINI  ARTISAN
 #include <Wire.h>
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
-#define VERSION "1.0.1"
+#define VERSION "1.0.2"
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
  #define DEBUG_MODE 
 
+ //注释下面就是选用PT100 
+#define TC_TYPEK
 
 
 // 下面代码不要动，主板硬件IO对应。已测试。

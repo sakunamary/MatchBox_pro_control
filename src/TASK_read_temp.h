@@ -6,10 +6,14 @@
 #include <Wire.h>
 #include <PID_v1.h>
 #include <MCP3424.h>
-#include "TypeK.h"
-#include "DFRobot_AHT20.h"
+
 #include <WiFi.h>
 #include <ModbusIP_ESP8266.h>
+
+#if defined(TC_TYPEK)
+#include "TypeK.h"
+#include "DFRobot_AHT20.h"
+#endif
 
 extern PID Heat_pid_controller;
 ModbusIP mb; // declear object
@@ -42,9 +46,12 @@ long temp_check[3];
 #define Rref 1000
 
 MCP3424 MCP(address); // Declaration of MCP3424 A2=0 A1=1 A0=0
+extern ExternalEEPROM I2C_EEPROM;
+
+#if defined(TC_TYPEK)
 DFRobot_AHT20 aht20;
 TypeK temp_K_cal;
-extern ExternalEEPROM I2C_EEPROM;
+#endif
 
 // Modbus Registers Offsets
 const uint16_t BT_HREG = 3001;
@@ -74,16 +81,21 @@ void Task_Thermo_get_data(void *pvParameters)
         vTaskDelayUntil(&xLastWakeTime, xIntervel);
         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
+#if defined(TC_TYPEK)
             if (aht20.startMeasurementReady(/* crcEn = */ true))
             {
                 AMB_TEMP = aht20.getTemperature_C();
                 AMB_RH = aht20.getHumidity_RH();
             }
+#endif
             delay(200);
             MCP.Configuration(1, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
             Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
-           // BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
-             BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, aht20.getTemperature_C()) + pid_parm.BT_tempfix;
+#if defined(TC_TYPEK)
+            BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, aht20.getTemperature_C()) + pid_parm.BT_tempfix;
+#else
+            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+#endif
             //  ET_TEMP = BT_TEMP;
             //  delay(200);
             //  MCP.Configuration(2, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
@@ -102,7 +114,7 @@ void Task_Thermo_get_data(void *pvParameters)
         // #endif
 
         // update  Hreg data
-        //mb.Hreg(BT_HREG, int(round(BT_TEMP * 10))); // 初始化赋值
+        // mb.Hreg(BT_HREG, int(round(BT_TEMP * 10))); // 初始化赋值
         // mb.Hreg(AMB_RH_HREG, int(round(AMB_RH * 10)));     // 初始化赋值
         // mb.Hreg(AMB_TEMP_HREG, int(round(AMB_TEMP * 10))); // 初始化赋值
         //  // 封装BLE 数据格式
