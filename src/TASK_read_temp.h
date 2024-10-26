@@ -187,7 +187,7 @@ void Task_Thermo_get_data(void *pvParameters)
                     Serial.printf("\n Turn Down fan t0:%ld t1:%ld t2:%ld\n", temp_check[0], temp_check[1], temp_check[2]);
 #endif
                     levelIO3 = MIN_IO3;
-                    pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                    pwm_fan.write(300);
                     pwm_heat.write(1); // for safe
                     temp_check[2] = 0;
                     temp_check[1] = 0;

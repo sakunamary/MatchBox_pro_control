@@ -68,6 +68,9 @@ void onOTAStart()
     // Log when OTA has started
     // Serial.println("OTA update started!");
     // <Add your own code here>
+    vTaskDelete(xTASK_data_to_BLE);
+    vTaskDelete(xTASK_BLE_CMD_handle);
+    vTaskDelete(xTask_PID_autotune);
 }
 
 void onOTAProgress(size_t current, size_t final)
@@ -94,7 +97,6 @@ void onOTAEnd(bool success)
     // <Add your own code here>
 }
 
-
 String IpAddressToString(const IPAddress &ipAddress)
 {
     return String(ipAddress[0]) + String(".") +
@@ -103,19 +105,29 @@ String IpAddressToString(const IPAddress &ipAddress)
            String(ipAddress[3]);
 }
 
-String processor(const String &var) {
-  if (var == "version") {
-    return VERSION;
-  } else if (var == "pid_CT") {
-    return String(pid_parm.pid_CT);
-  } else if (var == "pid_P") {
-    return String(pid_parm.p);
-  } else if (var == "pid_I") {
-    return String(pid_parm.i);
-  } else if (var == "pid_D") {
-    return String(pid_parm.d);
-  }
-  return String();
+String processor(const String &var)
+{
+    if (var == "version")
+    {
+        return VERSION;
+    }
+    else if (var == "pid_CT")
+    {
+        return String(pid_parm.pid_CT);
+    }
+    else if (var == "pid_P")
+    {
+        return String(pid_parm.p);
+    }
+    else if (var == "pid_I")
+    {
+        return String(pid_parm.i);
+    }
+    else if (var == "pid_D")
+    {
+        return String(pid_parm.d);
+    }
+    return String();
 }
 void setup()
 {
@@ -144,7 +156,7 @@ void setup()
 
 #if defined(TC_TYPE_K)
     aht20.begin();
-#endif   
+#endif
 
     MCP.NewConversion(); // New conversion is initiated
     I2C_EEPROM.setMemoryType(64);
@@ -277,7 +289,6 @@ void setup()
     Heat_pid_controller.SetMode(MANUAL);
     Heat_pid_controller.SetOutputLimits(PID_STAGE_1_MIN_OUT, PID_STAGE_1_MAX_OUT);
     Heat_pid_controller.SetSampleTime(int(pid_parm.pid_CT * 1000));
-
 
     // INIT PID AUTOTUNE
     tuner.setTargetInputValue(PID_TUNE_SV_1);

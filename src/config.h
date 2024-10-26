@@ -6,7 +6,7 @@
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
-#define VERSION "1.1.2j"
+#define VERSION "1.1.2k"
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
 #define DEBUG_MODE
 
