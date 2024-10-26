@@ -235,7 +235,7 @@ void Task_PID_autotune(void *pvParameters)
                     PID_TUNE_SV = PID_TUNE_SV_1;
                     levelIO3 = PID_TUNE_FAN_1;
                     tuner.setOutputRange(round(PID_STAGE_1_MIN_OUT * 255 / 100), round(PID_STAGE_1_MAX_OUT * 255 / 100)); // (0-)
-                    tuner.setTargetInputValue(PID_TUNE_SV);
+                    tuner.setTargetInputValue(PID_TUNE_SV_1);
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     // pwm_fan.writeScaled(0.6);
@@ -295,7 +295,7 @@ void Task_PID_autotune(void *pvParameters)
                     PID_TUNE_SV = PID_TUNE_SV_2;
                     levelIO3 = PID_TUNE_FAN_2;
                     tuner.setOutputRange(round(PID_STAGE_2_MIN_OUT * 255 / 100), round(PID_STAGE_2_MAX_OUT * 255 / 100));
-                    tuner.setTargetInputValue(PID_TUNE_SV);
+                    tuner.setTargetInputValue(PID_TUNE_SV_2);
                     // pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     delay(1000);
@@ -354,7 +354,7 @@ void Task_PID_autotune(void *pvParameters)
                     PID_TUNE_SV = PID_TUNE_SV_3;
                     levelIO3 = PID_TUNE_FAN_3;
                     tuner.setOutputRange(round(PID_STAGE_3_MIN_OUT * 255 / 100), round(PID_STAGE_3_MAX_OUT * 255 / 100));
-                    tuner.setTargetInputValue(PID_TUNE_SV);
+                    tuner.setTargetInputValue(PID_TUNE_SV_3);
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     delay(1000);
@@ -412,7 +412,7 @@ void Task_PID_autotune(void *pvParameters)
                     PID_TUNE_SV = PID_TUNE_SV_4;
                     levelIO3 = PID_TUNE_FAN_4;
                     tuner.setOutputRange(round(PID_STAGE_4_MIN_OUT * 255 / 100), round(PID_STAGE_4_MAX_OUT * 255 / 100));
-                    tuner.setTargetInputValue(PID_TUNE_SV);
+                    tuner.setTargetInputValue(PID_TUNE_SV_4);
                     // pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     delay(1000);
@@ -453,7 +453,7 @@ void Task_PID_autotune(void *pvParameters)
                         PID_TUNNING = false;
                         pid_status = false;
                         pid_sv = 0.0;
-                        pwm_heat.write(0);
+                        pwm_heat.write(1);
                         pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                         xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                     }
