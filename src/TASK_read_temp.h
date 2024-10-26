@@ -127,6 +127,7 @@ void Task_Thermo_get_data(void *pvParameters)
                 Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
             }
         }
+#endif
 
 #if defined(PID_PWR_SHIFT)
         if (pid_status == true)
@@ -150,9 +151,6 @@ void Task_Thermo_get_data(void *pvParameters)
                 Heat_pid_controller.SetOutputLimits(PID_STAGE_4_MIN_OUT, PID_STAGE_4_MAX_OUT);
             }
         }
-
-#endif
-
 #endif
         // 检查温度是否达到降温降风
         if (PID_TUNNING == false && pid_status == false)
@@ -160,33 +158,33 @@ void Task_Thermo_get_data(void *pvParameters)
             if (BT_TEMP > 50 && BT_TEMP < 60)
             {
                 temp_check[0] = millis();
-#if defined(DEBUG_MODE)
+// #if defined(DEBUG_MODE)
                 Serial.printf("\nTempCheck[0]:%ld\n", temp_check[0]);
-#endif
+// #endif
             }
             if (BT_TEMP > 120 && BT_TEMP < 135)
             {
                 temp_check[1] = millis();
-#if defined(DEBUG_MODE)
+// #if defined(DEBUG_MODE)
                 Serial.printf("\nTempCheck[1]:%ld\n", temp_check[1]);
-#endif
+// #endif
             }
             if (BT_TEMP > 180)
             {
                 temp_check[2] = millis();
-#if defined(DEBUG_MODE)
+// #if defined(DEBUG_MODE)
                 Serial.printf("\nTempCheck[2]:%ld\n", temp_check[2]);
-#endif
+// #endif
             }
 
             if (temp_check[2] != 0 && temp_check[1] != 0 && temp_check[0] != 0) // 确认是机器运行中
             {
                 if (temp_check[2] < temp_check[1] && temp_check[1] < temp_check[0]) // 判断温度趋势是下降
                 {
-#if defined(DEBUG_MODE)
+// #if defined(DEBUG_MODE)
                     Serial.printf("\n Turn Down fan t0:%ld t1:%ld t2:%ld\n", temp_check[0], temp_check[1], temp_check[2]);
-#endif
-                    levelIO3 = MIN_IO3;
+// #endif
+                    levelIO3 = 20;
                     pwm_fan.write(300);
                     pwm_heat.write(1); // for safe
                     temp_check[2] = 0;
