@@ -93,7 +93,7 @@ void Task_Thermo_get_data(void *pvParameters)
             BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, AMB_TEMP) + pid_parm.BT_tempfix;
 #endif
 
-#if defined(TC_PT100  )
+#if defined(TC_PT100)
             BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
 #endif
             ET_TEMP = 0.0;
@@ -225,7 +225,7 @@ void Task_PID_autotune(void *pvParameters)
 
         if (xResult == pdTRUE)
         {
-
+            vTaskSuspend(xTASK_BLE_CMD_handle);
             // 开始 PID自动整定
             // Serial.println("PID AUTOTUNE");
             for (int loop = 0; loop < 4; loop++)
@@ -479,8 +479,7 @@ void Task_PID_autotune(void *pvParameters)
         }
     }
     PID_TUNNING = false;
-    ESP.restart();
-    delay(5000);
+    esp_restart();
     vTaskResume(xTASK_BLE_CMD_handle);
     vTaskSuspend(NULL);
 }

@@ -110,7 +110,7 @@ void TASK_DATA_to_BLE(void *pvParameters)
 
             { // 从接收QueueCMD 接收指令
 #if defined(DEBUG_MODE)
-                //Serial.println(String((char *)BLE_DATA_Buffer));
+              // Serial.println(String((char *)BLE_DATA_Buffer));
 #endif
                 if (deviceConnected)
                 {
@@ -175,7 +175,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     CMD_String.trim();
                     CMD_String.toUpperCase();
 #if defined(DEBUG_MODE)
-                   Serial.println(CMD_String); // for debug
+                    Serial.println(CMD_String); // for debug
 #endif
 
                     // cmd from BLE cleaning
@@ -202,7 +202,6 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         if (levelIO3 < MIN_IO3)
                             levelIO3 = MIN_IO3; // don't allow OT1 to turn on less than minimum
                         pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
-
                     }
                     else if (CMD_Data[1] == "DOWN")
                     {
@@ -210,7 +209,6 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         if (levelIO3 < MIN_IO3 & levelIO3 != 0)
                             levelIO3 = 0; // turn ot1 off if trying to go below minimum. or use levelOT1 = MIN_HTR ?
                         pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
-
                     }
                     else
                     {
@@ -223,7 +221,6 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             if (levelIO3 < MIN_IO3 & levelIO3 != 0)
                                 levelIO3 = MIN_IO3; // don't allow to set less than minimum unless setting to zero
                             pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
-
                         }
                     }
                 }
@@ -294,7 +291,9 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         I2C_EEPROM.get(0, pid_parm);
                         Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
                         levelOT1 = 0;
+                        levelIO3 = 50;
                         pwm_heat.write(1);
+                        pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                         // Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
                         pid_status = false;
                         pid_sv = 0;
@@ -318,7 +317,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                                 pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                             }
                             // Serial.printf("PID ON OT1: %d;PID_output:%4.2f\n", levelOT1,PID_output);
-                            //pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                            // pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                         }
                     }
                     else if (CMD_Data[1] == "TUNE")
@@ -330,7 +329,6 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         vTaskResume(xTask_PID_autotune);
                         delay(100);
                         xTaskNotify(xTask_PID_autotune, 0, eIncrement); // 通知处理任务干活
-                        vTaskSuspend(xTASK_BLE_CMD_handle);
                     }
                 }
                 // END of  big handle case switch
