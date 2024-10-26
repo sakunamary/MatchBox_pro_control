@@ -276,12 +276,12 @@ void Task_PID_autotune(void *pvParameters)
                 {
                     tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
                     PID_TUNE_SV = PID_TUNE_SV_1;
-                    pid_sv = PID_TUNE_SV;
+                    pid_sv = PID_TUNE_SV_1;
                     levelIO3 = PID_TUNE_FAN_1;
                     tuner.setOutputRange(round(PID_STAGE_1_MIN_OUT * 255 / 100), round(PID_STAGE_1_MAX_OUT * 255 / 100));
                     tuner.setTuningCycles(PID_TUNE_CYCLE);
-                    tuner.setTargetInputValue(PID_TUNE_SV);
-                    pwm_heat.writeScaled(0.0);
+                    tuner.setTargetInputValue(PID_TUNE_SV_1);
+                    //pwm_heat.writeScaled(0.0);
 
                     pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     vTaskDelay(1000);
@@ -329,11 +329,11 @@ void Task_PID_autotune(void *pvParameters)
                 {
                     tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
                     PID_TUNE_SV = PID_TUNE_SV_2;
-                    pid_sv = PID_TUNE_SV;
+                    pid_sv = PID_TUNE_SV_2;
                     levelIO3 = PID_TUNE_FAN_2;
                     tuner.setTuningCycles(PID_TUNE_CYCLE);
                     tuner.setOutputRange(round(PID_STAGE_2_MIN_OUT * 255 / 100), round(PID_STAGE_2_MAX_OUT * 255 / 100));
-                    tuner.setTargetInputValue(PID_TUNE_SV);
+                    tuner.setTargetInputValue(PID_TUNE_SV_2);
                     pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     vTaskDelay(1000);
@@ -360,7 +360,7 @@ void Task_PID_autotune(void *pvParameters)
                         } // time units : us
                     }
                     // Turn the output off here.
-                    pwm_heat.writeScaled(0.0);
+                    //pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     // Get PID gains - set your PID controller's gains to these
                     pid_parm.p = tuner.getKp();
@@ -381,12 +381,12 @@ void Task_PID_autotune(void *pvParameters)
                 {
                     tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
                     PID_TUNE_SV = PID_TUNE_SV_3;
-                    pid_sv = PID_TUNE_SV;
+                    pid_sv = PID_TUNE_SV_3;
                     levelIO3 = PID_TUNE_FAN_3;
                     tuner.setTuningCycles(PID_TUNE_CYCLE);
                     tuner.setOutputRange(round(PID_STAGE_3_MIN_OUT * 255 / 100), round(PID_STAGE_3_MAX_OUT * 255 / 100));
-                    tuner.setTargetInputValue(PID_TUNE_SV);
-                    pwm_heat.writeScaled(0.0);
+                    tuner.setTargetInputValue(PID_TUNE_SV_3);
+                   // pwm_heat.writeScaled(0.0);
 
                     pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     vTaskDelay(1000);
@@ -446,18 +446,7 @@ void Task_PID_autotune(void *pvParameters)
             }
         }
     }
-    Heat_pid_controller.SetMode(MANUAL);
-    PID_TUNNING = false;
-    pid_status = false;
-    pid_sv = 0.0;
-    LCD.PCF8574_LCDClearScreen();
-    LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberOne, 0);
-    LCD.PCF8574_LCDSendString("PID TUNE DONE.");
-    LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberTwo, 0);
-    LCD.PCF8574_LCDSendString("PLS PWR OFF.");
-
-    delay(3000);
-    // vTaskResume(xTASK_BLE_CMD_handle);
+    esp_restart();
     vTaskSuspend(xTask_PID_autotune);
 }
 

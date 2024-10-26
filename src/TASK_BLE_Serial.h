@@ -330,14 +330,13 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             // Heat_pid_controller.stop();
-
                             Heat_pid_controller.SetMode(MANUAL);
                             pid_status = true;
                             pid_sv = 0;
                             PID_TUNNING = true;
+                            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                             vTaskResume(xTask_PID_autotune);
                             xTaskNotify(xTask_PID_autotune, 0, eIncrement); // 通知处理任务干活
-                            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
                     }
                 }
