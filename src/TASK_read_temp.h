@@ -295,7 +295,7 @@ void Task_PID_autotune(void *pvParameters)
 #endif
                     while (BT_TEMP < PID_TUNE_SV_2)
                     {
-                        vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_PERIOD_MS;);
+                        vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_PERIOD_MS);
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             levelOT1 = 85;
