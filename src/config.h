@@ -6,7 +6,7 @@
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 9600        // serial port baudrate
-#define VERSION "1.1.2l"
+#define VERSION "1.1.2n"
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
 #define DEBUG_MODE
 
@@ -58,8 +58,8 @@
 // PID自动整定 三个阶段的温度设置
 #define PID_TUNE_SV_1 110
 #define PID_TUNE_SV_2 160
-#define PID_TUNE_SV_3 175
-#define PID_TUNE_SV_4 190
+#define PID_TUNE_SV_3 180
+#define PID_TUNE_SV_4 200
 
 #define PID_TUNE_FAN_1 55
 #define PID_TUNE_FAN_2 50
@@ -85,14 +85,14 @@
 #define PID_STAGE_1_MAX_OUT 40 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 #define PID_STAGE_1_MIN_OUT 5  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
-#define PID_STAGE_2_MAX_OUT 75// 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
-#define PID_STAGE_2_MIN_OUT 15  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_2_MAX_OUT 85// 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_2_MIN_OUT 10  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
 #define PID_STAGE_3_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
-#define PID_STAGE_3_MIN_OUT 15  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_3_MIN_OUT 10  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
 #define PID_STAGE_4_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
-#define PID_STAGE_4_MIN_OUT 15  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_4_MIN_OUT 10  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
 #define BT_FILTER 80
 #define AMB_FILTER 80
