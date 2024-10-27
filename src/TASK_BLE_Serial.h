@@ -94,7 +94,7 @@ void TASK_DATA_to_BLE(void *pvParameters)
 {
     (void)pvParameters;
     uint8_t BLE_DATA_Buffer[BLE_BUFFER_SIZE];
-    const TickType_t timeOut = 150;
+    const TickType_t timeOut = 150 / portTICK_PERIOD_MS;
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
 
@@ -130,11 +130,11 @@ void TASK_BLE_CMD_handle(void *pvParameters)
     uint8_t BLE_CMD_Buffer[BLE_BUFFER_SIZE];
     char BLE_data_buffer_char[BLE_BUFFER_SIZE];
     uint8_t BLE_data_buffer_uint8[BLE_BUFFER_SIZE];
-    const TickType_t timeOut = 150;
+    const TickType_t timeOut = 150 / portTICK_PERIOD_MS;
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
     TickType_t xLastWakeTime;
-    const TickType_t xIntervel = 150 / portTICK_PERIOD_MS;
+    const TickType_t xIntervel = 300 / portTICK_PERIOD_MS;
     int i = 0;
     int j = 0;
     String TC4_data_String;
@@ -151,7 +151,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
             if (xQueueReceive(queueCMD_BLE, &BLE_CMD_Buffer, timeOut) == pdPASS)
             { // 从接收QueueCMD 接收指令
 
-                if (xSemaphoreTake(xSerialReadBufferMutex, xIntervel) == pdPASS)
+                if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS)
                 {
                     // cmd from BLE cleaning
                     TC4_data_String = String((char *)BLE_CMD_Buffer);
@@ -189,38 +189,51 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     }
                     i = 0;
                     CMD_String = "";
-                    xSemaphoreGive(xSerialReadBufferMutex);
+                    xSemaphoreGive(xThermoDataMutex);
                 }
                 // big handle case switch
                 if (CMD_Data[0] == "IO3")
                 {
                     if (CMD_Data[1] == "UP")
                     {
-                        levelIO3 = levelIO3 + DUTY_STEP;
-                        if (levelIO3 > MAX_IO3)
-                            levelIO3 = MAX_IO3; // don't allow OT1 to exceed maximum
-                        if (levelIO3 < MIN_IO3)
-                            levelIO3 = MIN_IO3; // don't allow OT1 to turn on less than minimum
-                        pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                        if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
+                        {
+
+                            levelIO3 = levelIO3 + DUTY_STEP;
+                            if (levelIO3 > MAX_IO3)
+                                levelIO3 = MAX_IO3; // don't allow OT1 to exceed maximum
+                            if (levelIO3 < MIN_IO3)
+                                levelIO3 = MIN_IO3; // don't allow OT1 to turn on less than minimum
+                            pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                            xSemaphoreGive(xThermoDataMutex);
+                        }
                     }
                     else if (CMD_Data[1] == "DOWN")
                     {
-                        levelIO3 = levelIO3 - DUTY_STEP;
-                        if (levelIO3 < MIN_IO3 & levelIO3 != 0)
-                            levelIO3 = 0; // turn ot1 off if trying to go below minimum. or use levelOT1 = MIN_HTR ?
-                        pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                        if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
+                        {
+                            levelIO3 = levelIO3 - DUTY_STEP;
+                            if (levelIO3 < MIN_IO3 & levelIO3 != 0)
+                                levelIO3 = 0; // turn ot1 off if trying to go below minimum. or use levelOT1 = MIN_HTR ?
+                            pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                            xSemaphoreGive(xThermoDataMutex);
+                        }
                     }
                     else
                     {
                         uint8_t len = sizeof(CMD_Data[1]);
                         if (len > 0)
                         {
-                            levelIO3 = CMD_Data[1].toInt();
-                            if (levelIO3 > MAX_IO3)
-                                levelIO3 = MAX_IO3; // don't allow OT1 to exceed maximum
-                            if (levelIO3 < MIN_IO3 & levelIO3 != 0)
-                                levelIO3 = MIN_IO3; // don't allow to set less than minimum unless setting to zero
-                            pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                            if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
+                            {
+                                levelIO3 = CMD_Data[1].toInt();
+                                if (levelIO3 > MAX_IO3)
+                                    levelIO3 = MAX_IO3; // don't allow OT1 to exceed maximum
+                                if (levelIO3 < MIN_IO3 & levelIO3 != 0)
+                                    levelIO3 = MIN_IO3; // don't allow to set less than minimum unless setting to zero
+                                pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                                xSemaphoreGive(xThermoDataMutex);
+                            }
                         }
                     }
                 }
@@ -228,45 +241,13 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                 {
                     if (CMD_Data[1] == "UP")
                     {
-
-                        levelOT1 = levelOT1 + DUTY_STEP;
-                        if (levelOT1 > MAX_OT1)
-                            levelOT1 = MAX_OT1; // don't allow OT1 to exceed maximum
-                        if (levelOT1 < MIN_OT1)
-                            levelOT1 = MIN_OT1; // don't allow OT1 to turn on less than minimum
-                        if (levelOT1 <= 10)
+                        if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
                         {
-                            pwm_heat.write(map(levelOT1, 0, 10, 5, 100));
-                        }
-                        else
-                        {
-                            pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
-                        }
-                    }
-                    else if (CMD_Data[1] == "DOWN")
-                    {
-                        levelOT1 = levelOT1 - DUTY_STEP;
-                        if (levelOT1 < MIN_OT1 & levelOT1 != 0)
-                            levelOT1 = 0; // turn ot1 off if trying to go below minimum. or use levelOT1 = MIN_HTR ?
-                        if (levelOT1 <= 10)
-                        {
-                            pwm_heat.write(map(levelOT1, 0, 10, 5, 100));
-                        }
-                        else
-                        {
-                            pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
-                        }
-                    }
-                    else
-                    {
-                        uint8_t len = sizeof(CMD_Data[1]);
-                        if (len > 0)
-                        {
-                            levelOT1 = CMD_Data[1].toInt();
+                            levelOT1 = levelOT1 + DUTY_STEP;
                             if (levelOT1 > MAX_OT1)
                                 levelOT1 = MAX_OT1; // don't allow OT1 to exceed maximum
-                            if (levelOT1 < MIN_OT1 & levelOT1 != 0)
-                                levelOT1 = MIN_OT1; // don't allow to set less than minimum unless setting to zero
+                            if (levelOT1 < MIN_OT1)
+                                levelOT1 = MIN_OT1; // don't allow OT1 to turn on less than minimum
                             if (levelOT1 <= 10)
                             {
                                 pwm_heat.write(map(levelOT1, 0, 10, 5, 100));
@@ -274,6 +255,49 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             else
                             {
                                 pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                            }
+                            xSemaphoreGive(xThermoDataMutex);
+                        }
+                    }
+                    else if (CMD_Data[1] == "DOWN")
+                    {
+                        if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
+                        {
+                            levelOT1 = levelOT1 - DUTY_STEP;
+                            if (levelOT1 < MIN_OT1 & levelOT1 != 0)
+                                levelOT1 = 0; // turn ot1 off if trying to go below minimum. or use levelOT1 = MIN_HTR ?
+                            if (levelOT1 <= 10)
+                            {
+                                pwm_heat.write(map(levelOT1, 0, 10, 5, 100));
+                            }
+                            else
+                            {
+                                pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                            }
+                            xSemaphoreGive(xThermoDataMutex);
+                        }
+                    }
+                    else
+                    {
+                        uint8_t len = sizeof(CMD_Data[1]);
+                        if (len > 0)
+                        {
+                            if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
+                            {
+                                levelOT1 = CMD_Data[1].toInt();
+                                if (levelOT1 > MAX_OT1)
+                                    levelOT1 = MAX_OT1; // don't allow OT1 to exceed maximum
+                                if (levelOT1 < MIN_OT1 & levelOT1 != 0)
+                                    levelOT1 = MIN_OT1; // don't allow to set less than minimum unless setting to zero
+                                if (levelOT1 <= 10)
+                                {
+                                    pwm_heat.write(map(levelOT1, 0, 10, 5, 100));
+                                }
+                                else
+                                {
+                                    pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                                }
+                                xSemaphoreGive(xThermoDataMutex);
                             }
                         }
                     }
@@ -282,53 +306,67 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                 {
                     if (CMD_Data[1] == "ON")
                     {
-                        pid_status = true;
-                        Heat_pid_controller.SetMode(AUTOMATIC);
+                        if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
+                        {
+                            pid_status = true;
+                            Heat_pid_controller.SetMode(AUTOMATIC);
+                            xSemaphoreGive(xThermoDataMutex);
+                        }
                     }
                     else if (CMD_Data[1] == "OFF")
                     {
-                        Heat_pid_controller.SetMode(MANUAL);
-                        I2C_EEPROM.get(0, pid_parm);
-                        Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
-                        levelOT1 = 0;
-                        levelIO3 = 50;
-                        pwm_heat.write(1);
-                        pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
-                        // Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
-                        pid_status = false;
-                        pid_sv = 0;
+                        if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
+                        {
+                            Heat_pid_controller.SetMode(MANUAL);
+                            I2C_EEPROM.get(0, pid_parm);
+                            Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
+                            levelOT1 = 0;
+                            levelIO3 = 50;
+                            pwm_heat.write(1);
+                            pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                            // Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
+                            pid_status = false;
+                            pid_sv = 0;
+                            xSemaphoreGive(xThermoDataMutex);
+                        }
                     }
                     else if (CMD_Data[1] == "SV")
                     {
                         if (pid_status == true)
                         {
-
-                            pid_sv = CMD_Data[2].toFloat();
-                            Heat_pid_controller.Compute();
-                            levelOT1 = int(round(PID_output));
-                            // levelOT1 = map(PID_output, 0, 255, 0, 100);
-
-                            if (levelOT1 <= 10)
+                            if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
                             {
-                                pwm_heat.write(map(levelOT1, 0, 10, 5, 100));
+                                pid_sv = CMD_Data[2].toFloat();
+                                Heat_pid_controller.Compute();
+                                levelOT1 = int(round(PID_output));
+                                // levelOT1 = map(PID_output, 0, 255, 0, 100);
+
+                                if (levelOT1 <= 10)
+                                {
+                                    pwm_heat.write(map(levelOT1, 0, 10, 5, 100));
+                                }
+                                else
+                                {
+                                    pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                                }
+                                // Serial.printf("PID ON OT1: %d;PID_output:%4.2f\n", levelOT1,PID_output);
+                                // pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                                xSemaphoreGive(xThermoDataMutex);
                             }
-                            else
-                            {
-                                pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
-                            }
-                            // Serial.printf("PID ON OT1: %d;PID_output:%4.2f\n", levelOT1,PID_output);
-                            // pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                         }
                     }
                     else if (CMD_Data[1] == "TUNE")
                     {
-                        Heat_pid_controller.SetMode(MANUAL);
-                        pid_status = false;
-                        pid_sv = 0;
-                        PID_TUNNING = true;
-                        vTaskResume(xTask_PID_autotune);
-                        delay(100);
-                        xTaskNotify(xTask_PID_autotune, 0, eIncrement); // 通知处理任务干活
+                        if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
+                        {
+                            Heat_pid_controller.SetMode(MANUAL);
+                            pid_status = false;
+                            pid_sv = 0;
+                            PID_TUNNING = true;
+                            xSemaphoreGive(xThermoDataMutex);
+                            vTaskResume(xTask_PID_autotune);
+                            xTaskNotify(xTask_PID_autotune, 0, eIncrement); // 通知处理任务干活
+                        }
                     }
                 }
                 // END of  big handle case switch
