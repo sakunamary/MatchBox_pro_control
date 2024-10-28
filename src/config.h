@@ -82,7 +82,7 @@
 #define MIN_IO3 30  // Set output % for lower limit for IO3.  0% power will always be available
 #define MAX_IO3 100 // Set output % for upper limit for IO3
 
-#define PID_STAGE_1_MAX_OUT 50 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_1_MAX_OUT 55 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 #define PID_STAGE_1_MIN_OUT 5  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
 #define PID_STAGE_2_MAX_OUT 85// 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
