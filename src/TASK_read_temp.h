@@ -61,7 +61,7 @@ void Task_Thermo_get_data(void *pvParameters)
     char temp_data_buffer_ble[BLE_BUFFER_SIZE];
     // uint8_t TEMP_DATA_Buffer[HMI_BUFFER_SIZE];
     const TickType_t xIntervel = (pid_parm.pid_CT * 1000) / portTICK_PERIOD_MS;
-    const TickType_t timeOUT = 250 / portTICK_PERIOD_MS;
+    const TickType_t timeOUT = 500 / portTICK_PERIOD_MS;
     /* Task Setup and Initialize */
     // Initial the xLastWakeTime variable with the current time.
     xLastWakeTime = xTaskGetTickCount();
@@ -216,7 +216,7 @@ void Task_PID_autotune(void *pvParameters)
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
     TickType_t xLastWakeTime;
-    const TickType_t xIntervel = 250 / portTICK_PERIOD_MS;
+    const TickType_t xIntervel = 300 / portTICK_PERIOD_MS;
     xLastWakeTime = xTaskGetTickCount();
     while (1)
     {
@@ -239,7 +239,7 @@ void Task_PID_autotune(void *pvParameters)
 
                     tuner.setTargetInputValue(PID_TUNE_SV_1);
                     tuner.startTuningLoop(pid_parm.pid_CT * uS_TO_S_FACTOR);
-                    tuner.setOutputRange((PID_STAGE_1_MIN_OUT * 255 / 100), (PID_STAGE_1_MAX_OUT * 255 / 100)); // (0-)
+                    tuner.setOutputRange(round(PID_STAGE_1_MIN_OUT * 255 / 100), round(PID_STAGE_1_MAX_OUT * 255 / 100)); // (0-)
                     tuner.setTuningCycles(PID_TUNE_CYCLE);
                     PID_TUNE_SV = PID_TUNE_SV_1;
                     levelIO3 = PID_TUNE_FAN_1;
@@ -293,7 +293,7 @@ void Task_PID_autotune(void *pvParameters)
                     Serial.printf("\nET fix:%4.2f", pid_parm.ET_tempfix);
                     Serial.printf("\nPID parms saved ...\n");
 #endif
-                    while (BT_TEMP < PID_TUNE_SV_2)
+                    while (BT_TEMP < PID_TUNE_SV_2 && BT_TEMP >80 )
                     {
                         vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_PERIOD_MS);
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
@@ -495,6 +495,7 @@ void Task_PID_autotune(void *pvParameters)
                     break;
                 } // end of switch
             } // end of for()
+            delay(3000);
             esp_restart();
             vTaskResume(xTASK_BLE_CMD_handle);
             vTaskSuspend(NULL);

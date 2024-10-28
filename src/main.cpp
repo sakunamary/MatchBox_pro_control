@@ -296,7 +296,7 @@ void setup()
     // INIT PID AUTOTUNE
     tuner.setTargetInputValue(PID_TUNE_SV_1);
     tuner.setLoopInterval(pid_parm.pid_CT * uS_TO_S_FACTOR);
-    // tuner.setOutputRange((PID_STAGE_1_MIN_OUT * 255 / 100), (PID_STAGE_1_MAX_OUT * 255 / 100));
+     tuner.setOutputRange(round(PID_STAGE_1_MIN_OUT * 255 / 100), round(PID_STAGE_1_MAX_OUT * 255 / 100));
     tuner.setZNMode(PIDAutotuner::ZNModeNoOvershoot);
 
     // Start ElegantOTA
@@ -332,7 +332,7 @@ void setup()
     Serial.println("WDT started");
 #endif
 
-    pwm_fan.write(300);
+    pwm_fan.write(400);
 }
 
 void loop()
