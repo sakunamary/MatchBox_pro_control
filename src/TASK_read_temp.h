@@ -137,7 +137,7 @@ void Task_Thermo_get_data(void *pvParameters)
         {
             if (BT_TEMP < PID_TUNE_SV_1)
             {
-                Heat_pid_controller.SetOutputLimits(PID_STAGE_1_MIN_OUT, PID_STAGE_1_MAX_OUT);
+                Heat_pid_controller.SetOutputLimits(PID_STAGE_1_MIN_OUT, PID_STAGE_1_MAX_OUT-5);
             }
             else if (BT_TEMP >= PID_TUNE_SV_1)
             {
@@ -298,7 +298,7 @@ void Task_PID_autotune(void *pvParameters)
                         vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_PERIOD_MS);
                         if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
-                            levelOT1 = 85;
+                            levelOT1 = 100;
                             pwm_heat.write(map(levelOT1, 10, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
 #if defined(DEBUG_MODE)
                             Serial.printf("PID Auto Tuneing pre-heat,IO1:%d ,BT_temp:%4.2f\n", levelOT1, BT_TEMP);

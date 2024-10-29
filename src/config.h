@@ -8,7 +8,7 @@
 #define BAUDRATE 9600        // serial port baudrate
 #define VERSION "1.1.2p"
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
-#define DEBUG_MODE
+//#define DEBUG_MODE
 
 
 //下面Thermo 选项 只能选择其中一个
@@ -58,13 +58,13 @@
 // PID自动整定 三个阶段的温度设置
 #define PID_TUNE_SV_1 110
 #define PID_TUNE_SV_2 160
-#define PID_TUNE_SV_3 180
-#define PID_TUNE_SV_4 200
+#define PID_TUNE_SV_3 175
+#define PID_TUNE_SV_4 190
 
 #define PID_TUNE_FAN_1 50
 #define PID_TUNE_FAN_2 50
-#define PID_TUNE_FAN_3 50
-#define PID_TUNE_FAN_4 50
+#define PID_TUNE_FAN_3 45
+#define PID_TUNE_FAN_4 45
 
 // PID自动整定的测定循环次数
 #define PID_TUNE_CYCLE 3
@@ -82,7 +82,7 @@
 #define MIN_IO3 30  // Set output % for lower limit for IO3.  0% power will always be available
 #define MAX_IO3 100 // Set output % for upper limit for IO3
 
-#define PID_STAGE_1_MAX_OUT 55 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_1_MAX_OUT 60 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 #define PID_STAGE_1_MIN_OUT 5  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
 #define PID_STAGE_2_MAX_OUT 85// 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
