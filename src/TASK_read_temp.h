@@ -97,7 +97,7 @@ void Task_Thermo_get_data(void *pvParameters)
 #endif
 
 #if defined(TC_PT100)
-            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
+            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0034));
 #endif
             ET_TEMP = 0.0;
             // delay(200);
