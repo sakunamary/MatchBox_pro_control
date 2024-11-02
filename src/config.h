@@ -7,14 +7,14 @@
 #include <Wire.h>
 
 #define BANNER "MATCHBOX H7 v2"
-#define VERSION "1.1.9m"
+#define VERSION "1.1.9n"
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
 #define HMI_BAUDRATE 9600        // serial port baudrate
 
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
- //#define DEBUG_MODE
+//#define DEBUG_MODE
 //不注释就选这Type K热电偶，注释掉就会选PT100
 //#define TC_TYPE_K
 
@@ -68,9 +68,9 @@
 #define MAX_IO3 100 // Set output % for upper limit for IO3
 
 // PID自动整定 三个阶段的温度设置
-#define PID_TUNE_SV_3 200
-#define PID_TUNE_SV_2 190
-#define PID_TUNE_SV_1 160
+#define PID_TUNE_SV_3 190
+#define PID_TUNE_SV_2 170
+#define PID_TUNE_SV_1 150
 
 #define PID_TUNE_FAN_3 45
 #define PID_TUNE_FAN_2 50
@@ -85,7 +85,7 @@
 #define PID_STAGE_3_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 #define PID_STAGE_3_MIN_OUT 10  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 // PID自动整定的测定循环次数
-#define PID_TUNE_CYCLE 4
+#define PID_TUNE_CYCLE 6
 
 // PID 自动切换模式，注释就只用eeprom内第一组pid参数
 #define PID_AUTO_SHIFT
@@ -161,6 +161,10 @@ const char index_html[] PROGMEM = R"rawliteral(
         <label>PID:I (current: %pid_I%)</label>
        </br>
         <label>PID:D (current: %pid_D%)</label>
+       </br>
+               <label>BT fix: (%bt_fix%)</label>
+       </br>
+               <label>ET fix: (%et_fix%)</label>
        </br>
         </main>
          </div>

@@ -129,6 +129,11 @@ String processor(const String &var)
     else if (var == "pid_D")
     {
         return String(pid_parm.d);
+    } else if (var == "bt_fix") {
+    return String(pid_parm.BT_tempfix);
+    }
+    else if (var == "et_fix") {
+    return String(pid_parm.ET_tempfix);
     }
     return String();
 }
@@ -310,7 +315,7 @@ void setup()
     tuner.setTargetInputValue(PID_TUNE_SV_1);
     tuner.setLoopInterval(pid_parm.pid_CT * uS_TO_S_FACTOR);
     tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
-    tuner.setZNMode(PIDAutotuner::ZNModeNoOvershoot);
+    tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
 
     // INIT OTA service
     // server.on("/", handle_root);
