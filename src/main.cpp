@@ -315,7 +315,7 @@ void setup()
     tuner.setTargetInputValue(PID_TUNE_SV_1);
     tuner.setLoopInterval(pid_parm.pid_CT * uS_TO_S_FACTOR);
     tuner.setOutputRange(round(PID_MIN_OUT * 255 / 100), round(PID_MAX_OUT * 255 / 100));
-    tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
+    tuner.setZNMode(PIDAutotuner::ZNModeNoOvershoot);
 
     // INIT OTA service
     // server.on("/", handle_root);

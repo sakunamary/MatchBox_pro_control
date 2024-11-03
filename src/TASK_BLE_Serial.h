@@ -135,7 +135,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
     TickType_t xLastWakeTime;
-    const TickType_t xIntervel = 300 / portTICK_PERIOD_MS;
+    const TickType_t xIntervel = 250 / portTICK_PERIOD_MS;
     int i = 0;
     int j = 0;
     String TC4_data_String;
@@ -283,9 +283,9 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                 {
                     if (CMD_Data[1] == "ON")
                     {
+                        Heat_pid_controller.SetMode(AUTOMATIC);
                         if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
-                            Heat_pid_controller.SetMode(AUTOMATIC);
                             pid_status = true;
                             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
@@ -294,20 +294,20 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     }
                     else if (CMD_Data[1] == "OFF")
                     {
-
+                        Heat_pid_controller.SetMode(MANUAL);
                         if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
-                            Heat_pid_controller.SetMode(MANUAL);
                             pid_status = false;
                             pid_sv = 0;
                             levelOT1 = 0;
                             levelIO3 = 50;
+                            pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                             pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
-                            LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberThree);
                             sprintf(line3, "HTR:%4d ", (int)round(levelOT1));
+                            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
+                            LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberThree);
                             LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberThree, 0);
                             LCD.PCF8574_LCDSendString(line3);
-                            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
                         I2C_EEPROM.get(0, pid_parm);
                         Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
@@ -343,7 +343,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                 }
             }
             // END of  big handle case switch
-            //delay(50);
+            // delay(50);
         }
     }
 }

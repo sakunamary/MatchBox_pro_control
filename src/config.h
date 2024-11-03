@@ -7,7 +7,7 @@
 #include <Wire.h>
 
 #define BANNER "MATCHBOX H7 v2"
-#define VERSION "1.1.9n"
+#define VERSION "1.1.9j"
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
@@ -16,7 +16,7 @@
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
 //#define DEBUG_MODE
 //不注释就选这Type K热电偶，注释掉就会选PT100
-//#define TC_TYPE_K
+#define TC_TYPE_K
 
 #define BLE_BUFFER_SIZE 64
 #define HMI_BUFFER_SIZE 17
@@ -77,15 +77,15 @@
 #define PID_TUNE_FAN_1 55
 
 #define PID_STAGE_1_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
-#define PID_STAGE_1_MIN_OUT 10  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_1_MIN_OUT 5  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
-#define PID_STAGE_2_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
-#define PID_STAGE_2_MIN_OUT 10  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_2_MAX_OUT 95 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_2_MIN_OUT 5  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
-#define PID_STAGE_3_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
-#define PID_STAGE_3_MIN_OUT 10  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_3_MAX_OUT 90 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_3_MIN_OUT 5  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 // PID自动整定的测定循环次数
-#define PID_TUNE_CYCLE 6
+#define PID_TUNE_CYCLE 5
 
 // PID 自动切换模式，注释就只用eeprom内第一组pid参数
 #define PID_AUTO_SHIFT
