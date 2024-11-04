@@ -5,17 +5,16 @@
 #include <Wire.h>
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
-#define BAUDRATE 9600        // serial port baudrate
+#define BAUDRATE 9600          // serial port baudrate
 #define VERSION "1.1.2k"
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
-//#define DEBUG_MODE
+// #define DEBUG_MODE
 
-
-//下面Thermo 选项 只能选择其中一个
-// thermocouple on typeK / PT100
-//#define TC_TYPE_K
-//thermocouple on PT100
-#define TC_PT100   
+// 下面Thermo 选项 只能选择其中一个
+//  thermocouple on typeK / PT100
+// #define TC_TYPE_K
+// thermocouple on PT100
+#define TC_PT100
 
 // 下面代码不要动，主板硬件IO对应。已测试。
 #define BLE_BUFFER_SIZE 64
@@ -46,7 +45,7 @@
 #define PWM_FAN_MIN 500
 #define PWM_HEAT_MIN 350
 
-#define PWM_FAN_MAX 1000  // 最大值，对应10bit的1024 ，pwm满载需要保留一点空隙。不能到1024
+#define PWM_FAN_MAX 1000 // 最大值，对应10bit的1024 ，pwm满载需要保留一点空隙。不能到1024
 #define PWM_HEAT_MAX 990 // 最大值，对应10bit的1024 ，pwm满载需要保留一点空隙。不能到1024
 
 // -------------------------- slew rate limitations for fan control 风门缓降参数设置
@@ -70,7 +69,7 @@
 #define PID_TUNE_CYCLE 3
 
 // PID 自动切换模式，注释就只用eeprom内第一组pid参数
- #define PID_AUTO_SHIFT
+#define PID_AUTO_SHIFT
 
 // #define PID_PWR_SHIFT
 
@@ -83,16 +82,16 @@
 #define MAX_IO3 100 // Set output % for upper limit for IO3
 
 #define PID_STAGE_1_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
-#define PID_STAGE_1_MIN_OUT 5  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_1_MIN_OUT 5   // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
-#define PID_STAGE_2_MAX_OUT 100// 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
-#define PID_STAGE_2_MIN_OUT 5  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_2_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_2_MIN_OUT 5   // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
 #define PID_STAGE_3_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
-#define PID_STAGE_3_MIN_OUT 5  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_3_MIN_OUT 5   // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
 #define PID_STAGE_4_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
-#define PID_STAGE_4_MIN_OUT 5  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_4_MIN_OUT 5   // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
 #define BT_FILTER 80
 #define AMB_FILTER 80
@@ -150,9 +149,12 @@ const char index_html[] PROGMEM = R"rawliteral(
        </br>
         <label>PID:D (current: %pid_D%)</label>
        </br>
-        </main>
-         </div>
+        </div>
+</main>
+
     </body>
  </html>
 )rawliteral";
+
+
 #endif
