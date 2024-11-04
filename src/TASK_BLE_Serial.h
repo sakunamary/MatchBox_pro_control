@@ -306,27 +306,29 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                 {
                     if (CMD_Data[1] == "ON")
                     {
+                        Heat_pid_controller.SetMode(AUTOMATIC);
                         if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
                         {
                             pid_status = true;
-                            Heat_pid_controller.SetMode(AUTOMATIC);
                             xSemaphoreGive(xThermoDataMutex);
                         }
                     }
                     else if (CMD_Data[1] == "OFF")
                     {
+                        Heat_pid_controller.SetMode(MANUAL);
                         if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
                         {
-                            Heat_pid_controller.SetMode(MANUAL);
-                            I2C_EEPROM.get(0, pid_parm);
-                            Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
+                            pid_status = false;
+                            pid_sv = 0;
+
                             levelOT1 = 0;
                             levelIO3 = 50;
                             pwm_heat.write(1);
                             pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                            I2C_EEPROM.get(0, pid_parm);
+                            Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
                             // Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
-                            pid_status = false;
-                            pid_sv = 0;
+
                             xSemaphoreGive(xThermoDataMutex);
                         }
                     }
@@ -357,9 +359,9 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     }
                     else if (CMD_Data[1] == "TUNE")
                     {
+                        Heat_pid_controller.SetMode(MANUAL);
                         if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
                         {
-                            Heat_pid_controller.SetMode(MANUAL);
                             pid_status = false;
                             pid_sv = 0;
                             PID_TUNNING = true;
@@ -370,7 +372,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     }
                 }
                 // END of  big handle case switch
-                delay(50);
+                // delay(50);
             }
         }
     }

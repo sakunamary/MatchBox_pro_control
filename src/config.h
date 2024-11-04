@@ -6,7 +6,7 @@
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 9600        // serial port baudrate
-#define VERSION "1.1.2j"
+#define VERSION "1.1.2k"
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
 //#define DEBUG_MODE
 
@@ -85,7 +85,7 @@
 #define PID_STAGE_1_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 #define PID_STAGE_1_MIN_OUT 5  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
-#define PID_STAGE_2_MAX_OUT 85// 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
+#define PID_STAGE_2_MAX_OUT 100// 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 #define PID_STAGE_2_MIN_OUT 5  // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
 
 #define PID_STAGE_3_MAX_OUT 100 // 0-100 ，跟OT3 IO1的数值一样,PID 和自整定保持一致,可以调整
@@ -108,7 +108,7 @@ typedef struct eeprom_settings
     double ET_tempfix;
 } pid_setting_t;
 
-#define TWDT_TIMEOUT_S 3
+#define TWDT_TIMEOUT_S 5
 
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
