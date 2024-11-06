@@ -304,10 +304,10 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                             pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                             sprintf(line3, "HTR:%4d ", (int)round(levelOT1));
-                            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                             LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberThree);
                             LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberThree, 0);
                             LCD.PCF8574_LCDSendString(line3);
+                            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
                         I2C_EEPROM.get(0, pid_parm);
                         Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
