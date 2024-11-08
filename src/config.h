@@ -110,9 +110,9 @@ typedef struct eeprom_settings
 typedef struct line_data_t
 {
 uint8_t time_s[15];
-uint8_t line_pidsv[15];
+uint16_t line_pidsv[15];
 uint8_t line_fan[15];
-uint8_t line_note[15][5];
+char line_note[15][5]; //char = uin8_t
 } line_data;
 
 

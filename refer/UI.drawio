@@ -4,6 +4,9 @@
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
+                <mxCell id="75" value="&lt;h1&gt;&lt;font color=&quot;#f05c1d&quot;&gt;框内代码不用变动&lt;/font&gt;&lt;/h1&gt;" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;dashPattern=12 12;fillColor=none;strokeColor=#F05C1D;strokeWidth=5;" vertex="1" parent="1">
+                    <mxGeometry x="540" y="110" width="990" height="360" as="geometry"/>
+                </mxCell>
                 <mxCell id="4" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="2" target="3">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
@@ -213,8 +216,21 @@
                         <mxPoint x="-35" y="2" as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="61" value="烘焙机脱机跑&lt;br&gt;00号曲线" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fa6800;fontColor=#000000;strokeColor=#C73500;" vertex="1" parent="1">
+                <mxCell id="61" value="烘焙机脱机跑&lt;br&gt;00号曲线&lt;br&gt;PID SV 风火都由烘焙机自己控制" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fa6800;fontColor=#000000;strokeColor=#C73500;" vertex="1" parent="1">
                     <mxGeometry x="1130" y="640" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="73" style="edgeStyle=none;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="62" target="61">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1475" y="570"/>
+                            <mxPoint x="1190" y="570"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="74" value="提前发送了PID,OFF指令优先于内置曲线" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="73">
+                    <mxGeometry x="0.0432" y="2" relative="1" as="geometry">
+                        <mxPoint x="18" as="offset"/>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="62" value="小程序接受数据，&lt;br&gt;在屏幕上打点&lt;br&gt;脱机跑线完成后，烘焙机发送烘焙结束指令给小程序" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#6d8764;fontColor=#ffffff;strokeColor=#3A5431;" vertex="1" parent="1">
                     <mxGeometry x="1390" y="615" width="170" height="110" as="geometry"/>
