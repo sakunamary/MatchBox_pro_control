@@ -7,7 +7,7 @@
 #include <Wire.h>
 
 #define BANNER "MATCHBOX H7 v2"
-#define VERSION "1.1.9j"
+#define VERSION "1.1.9k"
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
