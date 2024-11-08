@@ -1,0 +1,113 @@
+#命令类别：发送曲线到ESP32 EEPROM中
+#命令标识： LINE
+
+
+#数据结构：曲线数据为一个3行15列的二维数组 line[4][15]
+line[0]:时间（秒） int 从0开始
+line[1]:PID SV数据，对应line[0]格秒数时的曲线设定温度数值。数据格式int，发送需要将SV转为 hex（大端模式）
+line[2]:风力数据，对应line[0]格秒数时的曲线设风力数值。数据格式 int 0-100 
+line[3]:点位标识，最多5个字符 可为NULL。 只能为英文字符和数字 ASCII码 转换为 HEX 
+开始：BGN
+脱水结束：DYE
+一爆开始：FCS
+一爆结束：FCE
+二爆开始：SCS
+二爆结束：SCE
+下豆：DRY
+
+
+
+#命令行
+                    曲线编号 ｜ 二维数组列序号｜line[0]｜line[1]｜line[2]｜line[3]
+1.发送数据：LINE,SEND,00     ｜00           ｜00 00  ｜00 00  ｜00     ｜hex格式的字符 小程序->EEPROM
+2.发送结束：LINE,END                                                                小程序->EEPROM
+3.调用曲线：LINE,RUN,曲线编号                                                        小程序->EEPROM
+4.清楚曲线：LINE,CLR,曲线编号                                                        小程序->EEPROM
+5.从EEPROM同步曲线数据-触发：LINE,SYNC                                               小程序->EEPROM
+6.EEPROM发送过程开始：LINE,SYNC,START                                               EEPROM->小程序
+
+                             曲线编号 ｜ 二维数组列序号｜line[0]｜line[1]｜line[2]｜line[3]
+7.EEPROM曲线发送开始：LINE,SYNC,00     ｜00           ｜00 00  ｜00 00  ｜00     ｜hex格式的字符         EEPROM->小程序
+8.EEPROM曲线结束：LINE,SYNC,END,00                                                                   EEPROM->小程序
+9.EEPROM发送过程结束：LINE,SYNC,FINSH                                                                 EEPROM->小程序
+
+
+#数据样例
+
+EEPROM 数据样式
+          0          1                2             3                  4            5  //列数
+line[0] : 0          60              180            270              320            350
+line[1] : 4000      10000           16000           17000           19000           20000
+line[2] : 55         53              52              50              45             45
+line[3] :BGN        100             DYE             170             FCS             DRY   //数字被当作字符处理            
+
+#交互样例
+#1:数据提交（对应上面的数据样式）
+小程序：发送- LINE,CLR,00  //相当于线清理原来曲线后再重新写入新数据
+延时1000ms
+小程序：发送- LINE,SEND,00 00 00 00 0F 0A 37 42 47 4E  //这里hex可以不用加空格 即000000000F0A3742474E整包发送。空格只是为了方便好看而已。
+延时500ms
+小程序：发送- LINE,SEND,00 01 00 3C 27 10 35 31 30 30
+延时500ms
+小程序：发送- LINE,SEND,00 02 00 B4 3E 80 34 44 59 45
+延时500ms
+小程序：发送- LINE,SEND,00 03 01 0E 42 68 32 31 37 30
+延时500ms
+小程序：发送- LINE,SEND,00 04 01 40 4A 38 2D 46 43 53
+延时500ms
+小程序：发送- LINE,SEND,00 05 01 5E 4E 20 2D 44 52 59
+延时500ms
+小程序：发送- LINE,END
+
+
+#2.跑数据
+LINE,RUN,00 //跑第00条数据
+
+#3.从EEPEOM同步数据到小程序过程
+小程序：发送- LINE,SYNC 
+延时500ms
+EEPROM：发送- LINE,SYNC,START
+延时1000ms
+EEPROM：发送- LINE,SYNC,00 00 00 00 0F 0A 37 42 47 4E
+延时200ms
+EEPROM：发送- LINE,SYNC,00 01 00 3C 27 10 35 31 30 30
+延时200ms
+EEPROM：发送- LINE,SYNC,00 02 00 B4 3E 80 34 44 59 45
+延时200ms
+EEPROM：发送- LINE,SYNC,00 03 01 0E 42 68 32 31 37 30
+延时200ms
+EEPROM：发送- LINE,SYNC,00 04 01 40 4A 38 2D 46 43 53
+延时200ms
+EEPROM：发送- LINE,SYNC,00 05 01 5E 4E 20 2D 44 52 59
+延时200ms
+EEPROM：发送- LINE,SYNC,END,00 
+延时200ms
+EEPROM：发送- LINE,SYNC,01 00 00 00 0F 0A 37 42 47 4E
+延时200ms
+EEPROM：发送- LINE,SYNC,01 01 00 3C 27 10 35 31 30 30
+延时200ms
+EEPROM：发送- LINE,SYNC,01 02 00 B4 3E 80 34 44 59 45
+延时200ms
+EEPROM：发送- LINE,SYNC,01 03 01 0E 42 68 32 31 37 30
+延时200ms
+EEPROM：发送- LINE,SYNC,01 04 01 40 4A 38 2D 46 43 53
+延时200ms
+EEPROM：发送- LINE,SYNC,01 05 01 5E 4E 20 2D 44 52 59
+延时200ms
+EEPROM：发送- LINE,SYNC,END,01
+延时200ms
+EEPROM：发送- LINE,SYNC,02 00 00 00 0F 0A 37 42 47 4E
+延时200ms
+EEPROM：发送- LINE,SYNC,02 01 00 3C 27 10 35 31 30 30
+延时200ms
+EEPROM：发送- LINE,SYNC,02 02 00 B4 3E 80 34 44 59 45
+延时200m数
+EEPROM：发送- LINE,SYNC,02 03 01 0E 42 68 32 31 37 30
+延时200ms
+EEPROM：发送- LINE,SYNC,02 04 01 40 4A 38 2D 46 43 53
+延时200ms
+EEPROM：发送- LINE,SYNC,02 05 01 5E 4E 20 2D 44 52 59
+延时200ms
+EEPROM：发送- LINE,SYNC,END,02
+延时200ms
+EEPROM：发送- LINE,SYNC,FINSH 
