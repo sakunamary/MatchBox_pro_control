@@ -191,6 +191,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     CMD_String = "";
                     xSemaphoreGive(xThermoDataMutex);
                 }
+                // ////////////////////////////////////////////////////
                 // big handle case switch
                 if (CMD_Data[0] == "IO3")
                 {
@@ -370,7 +371,14 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             xTaskNotify(xTask_PID_autotune, 0, eIncrement); // 通知处理任务干活
                         }
                     }
+                } else if(CMD_Data[0] == "LINE")
+                {
+                    if(CMD_Data[1]=="RUN"){}
+                    else if (CMD_Data[1]=="CLR"){}
+                    else if (CMD_Data[1]=="SEND"){}
+                    
                 }
+
                 // END of  big handle case switch
                 // delay(50);
             }
@@ -395,3 +403,9 @@ void TASK_BLE_CMD_handle(void *pvParameters)
 //     UP
 //     DOWN
 //     data
+
+//LINE 
+//      CLR
+//      SEND
+//      END 
+//      RUN

@@ -107,6 +107,17 @@ typedef struct eeprom_settings
     double ET_tempfix;
 } pid_setting_t;
 
+typedef struct line_data_t
+{
+uint8_t time_s[15];
+uint8_t line_pidsv[15];
+uint8_t line_fan[15];
+uint8_t line_note[15][5];
+} line_data;
+
+
+
+
 #define TWDT_TIMEOUT_S 5
 
 // See the following for generating UUIDs:
