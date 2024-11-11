@@ -127,7 +127,6 @@ void Task_Thermo_get_data(void *pvParameters)
             {
                 AMB_TEMP = aht20.getTemperature_C();
                 AMB_TEMP = AMB_ft.doFilter(AMB_TEMP);
-                // AMB_RH = aht20.getHumidity_RH();
             }
 #endif
             if (!first)
@@ -164,7 +163,19 @@ void Task_Thermo_get_data(void *pvParameters)
             if (!first)
             {
                 rx = fRise.calcRise(ftemps_old, ftemps, ftimes_old, ftimes);
-                ror = fRoR.doFilter(rx / D_MULT) * D_MULT;
+
+                if (（fRoR.doFilter(rx / D_MULT) * D_MULT） >= 999)
+                {
+                    ror = 999.0;
+                }
+                else if (（fRoR.doFilter(rx / D_MULT) * D_MULT） <= -999)
+                {
+                    ror = -999.0;
+                }
+                else
+                {
+                    ror = fRoR.doFilter(rx / D_MULT) * D_MULT;
+                }
             }
 
             first = false;
@@ -286,7 +297,7 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.setTuningCycles(PID_TUNE_CYCLE);
                     tuner.setTargetInputValue(PID_TUNE_SV_1);
                     pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
-                   // vTaskDelay(1000);
+                    // vTaskDelay(1000);
                     while (!tuner.isFinished()) // 开始自动整定循环
                     {
                         prevMicroseconds = microseconds;
@@ -344,7 +355,7 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.setOutputRange(round(PID_STAGE_2_MIN_OUT * 255 / 100), round(PID_STAGE_2_MAX_OUT * 255 / 100));
                     tuner.setTargetInputValue(PID_TUNE_SV_2);
                     pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
-                   // vTaskDelay(1000);
+                    // vTaskDelay(1000);
                     while (!tuner.isFinished()) // 开始自动整定循环
                     {
                         prevMicroseconds = microseconds;
@@ -368,7 +379,7 @@ void Task_PID_autotune(void *pvParameters)
                         } // time units : us
                     }
                     // Turn the output off here.
-                     pwm_heat.writeScaled(0.0);
+                    pwm_heat.writeScaled(0.0);
                     pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     // Get PID gains - set your PID controller's gains to these
                     pid_parm.p = tuner.getKp();
@@ -402,10 +413,10 @@ void Task_PID_autotune(void *pvParameters)
                     tuner.setTuningCycles(PID_TUNE_CYCLE);
                     tuner.setOutputRange(round(PID_STAGE_3_MIN_OUT * 255 / 100), round(PID_STAGE_3_MAX_OUT * 255 / 100));
                     tuner.setTargetInputValue(PID_TUNE_SV_3);
-                     pwm_heat.writeScaled(0.0);
+                    pwm_heat.writeScaled(0.0);
 
                     pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
-                   // vTaskDelay(1000);
+                    // vTaskDelay(1000);
                     while (!tuner.isFinished()) // 开始自动整定循环
                     {
                         prevMicroseconds = microseconds;
@@ -437,9 +448,11 @@ void Task_PID_autotune(void *pvParameters)
                         PID_TUNNING = false;
                         pid_status = false;
                         pid_sv = 0.0;
-                        LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberThree);
                         pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                         pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+
+                        LCD.PCF8574_LCDClearScreen();
+                        
                         xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                     }
                     // Get PID gains - set your PID controller's gains to these
@@ -459,6 +472,7 @@ void Task_PID_autotune(void *pvParameters)
                     Serial.printf("\nET fix:%4.2f", pid_parm.ET_tempfix);
                     Serial.printf("\nPID parms saved ...\n");
 #endif
+
                     break;
 
                 default:
@@ -468,8 +482,8 @@ void Task_PID_autotune(void *pvParameters)
             } // for ending
         }
     }
-    delay(3000);
-    esp_restart();
+    // delay(3000);
+    // esp_restart();
     vTaskSuspend(xTask_PID_autotune);
 }
 
