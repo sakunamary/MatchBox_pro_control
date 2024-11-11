@@ -153,10 +153,10 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                                   portMAX_DELAY);       // 一直等待
         if (xResult == pdTRUE)
         {
-            if (xQueueReceive(queueCMD_BLE, &BLE_CMD_Buffer, timeOut) == pdPASS)
+            if (xQueueReceive(queueCMD_BLE, &BLE_CMD_Buffer, xIntervel) == pdPASS)
             { // 从接收QueueCMD 接收指令
 
-                if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS)
+                if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
                 {
                     // cmd from BLE cleaning
                     TC4_data_String = String((char *)BLE_CMD_Buffer);
