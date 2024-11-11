@@ -7,7 +7,7 @@
 #include <Wire.h>
 
 #define BANNER "MATCHBOX H7 v2"
-#define VERSION "1.1.9m"
+#define VERSION "1.2.0a"
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
@@ -127,6 +127,7 @@ typedef struct eeprom_settings
 #define CHARACTERISTIC_UUID_TX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
 
 static TaskHandle_t xTASK_data_to_BLE = NULL;
+static TaskHandle_t xTASK_LCD = NULL;
 static TaskHandle_t xTASK_BLE_CMD_handle = NULL;
 static TaskHandle_t xTask_Thermo_get_data = NULL;
 static TaskHandle_t xTask_PID_autotune = NULL;
@@ -136,8 +137,8 @@ static TaskHandle_t xTask_PID_autotune = NULL;
 SemaphoreHandle_t xThermoDataMutex = NULL;
 
 
-QueueHandle_t queueCMD_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
-QueueHandle_t queue_data_to_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
+QueueHandle_t queueCMD_BLE = xQueueCreate(10, sizeof(char[BLE_BUFFER_SIZE]));
+QueueHandle_t queue_data_to_BLE = xQueueCreate(10, sizeof(char[BLE_BUFFER_SIZE]));
 // 以上代码不要动，FreeRTOS用的代码
 
 
@@ -146,7 +147,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 
 <!doctype html><html lang='cn'>
  <head>
-<title>MATCH BOX MINI SETUP</title>
+<title>MATCH BOX H7 SETUP</title>
 </head> 
  <body>
 <main>

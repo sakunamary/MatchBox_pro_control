@@ -164,11 +164,11 @@ void Task_Thermo_get_data(void *pvParameters)
             {
                 rx = fRise.calcRise(ftemps_old, ftemps, ftimes_old, ftimes);
 
-                if (（fRoR.doFilter(rx / D_MULT) * D_MULT） >= 999)
+                if ((fRoR.doFilter(rx / D_MULT) * D_MULT) >= 999)
                 {
                     ror = 999.0;
                 }
-                else if (（fRoR.doFilter(rx / D_MULT) * D_MULT） <= -999)
+                else if ((fRoR.doFilter(rx / D_MULT) * D_MULT) <= -999)
                 {
                     ror = -999.0;
                 }
@@ -452,7 +452,7 @@ void Task_PID_autotune(void *pvParameters)
                         pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
 
                         LCD.PCF8574_LCDClearScreen();
-                        
+
                         xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                     }
                     // Get PID gains - set your PID controller's gains to these
@@ -480,6 +480,8 @@ void Task_PID_autotune(void *pvParameters)
                     break;
                 } // case ending
             } // for ending
+
+            
         }
     }
     // delay(3000);

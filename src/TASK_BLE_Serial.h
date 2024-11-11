@@ -39,7 +39,11 @@ extern double BT_TEMP;
 extern double ET_TEMP;
 extern double AMB_RH;
 extern double AMB_TEMP;
+
+extern char line1[20];
+extern char line2[20];
 extern char line3[20];
+extern char line4[20];
 
 extern double PID_output;
 extern double pid_sv;
@@ -134,7 +138,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
     const TickType_t timeOut = 150 / portTICK_PERIOD_MS;
     uint32_t ulNotificationValue; // 用来存放本任务的4个字节的notification value
     BaseType_t xResult;
-    TickType_t xLastWakeTime;
+    TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xIntervel = 250 / portTICK_PERIOD_MS;
     int i = 0;
     int j = 0;
@@ -340,6 +344,59 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             xTaskNotify(xTask_PID_autotune, 0, eIncrement); // 通知处理任务干活
                         }
                     }
+                    else if (CMD_Data[1] == "PARM")
+                    {
+                        vTaskSuspend(xTASK_LCD);
+                        LCD.PCF8574_LCDClearScreen();
+                        I2C_EEPROM.get(0, pid_parm);
+                        sprintf(line1, "EEPROM:000  CT:%4.2f ", pid_parm.pid_CT);
+                        LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberOne, 0);
+                        LCD.PCF8574_LCDSendString(line1);
+                        sprintf(line2, "P:%4.2f    BF:%4.2f", pid_parm.p, pid_parm.BT_tempfix);
+                        LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberTwo, 0);
+                        LCD.PCF8574_LCDSendString(line2);
+                        sprintf(line3, "I:%4.2f    EF:%4.2f", pid_parm.i, pid_parm.ET_tempfix);
+                        LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberThree, 0);
+                        LCD.PCF8574_LCDSendString(line3);
+                        sprintf(line4, "D:%4.2f", pid_parm.d);
+                        LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberFour, 0);
+                        LCD.PCF8574_LCDSendString(line4);
+
+                        vTaskDelayUntil(&xLastWakeTime, 2000 / portTICK_PERIOD_MS);
+
+                        I2C_EEPROM.get(64, pid_parm);
+                        sprintf(line1, "EEPROM:064  CT:%4.2f ", pid_parm.pid_CT);
+                        LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberOne, 0);
+                        LCD.PCF8574_LCDSendString(line1);
+                        sprintf(line2, "P:%4.2f    BF:%4.2f", pid_parm.p, pid_parm.BT_tempfix);
+                        LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberTwo, 0);
+                        LCD.PCF8574_LCDSendString(line2);
+                        sprintf(line3, "I:%4.2f    EF:%4.2f", pid_parm.i, pid_parm.ET_tempfix);
+                        LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberThree, 0);
+                        LCD.PCF8574_LCDSendString(line3);
+                        sprintf(line4, "D:%4.2f", pid_parm.d);
+                        LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberFour, 0);
+                        LCD.PCF8574_LCDSendString(line4);
+
+                        vTaskDelayUntil(&xLastWakeTime, 2000 / portTICK_PERIOD_MS);
+                        I2C_EEPROM.get(128, pid_parm);
+                        sprintf(line1, "EEPROM:128  CT:%4.2f ", pid_parm.pid_CT);
+                        LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberOne, 0);
+                        LCD.PCF8574_LCDSendString(line1);
+                        sprintf(line2, "P:%4.2f    BF:%4.2f", pid_parm.p, pid_parm.BT_tempfix);
+                        LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberTwo, 0);
+                        LCD.PCF8574_LCDSendString(line2);
+                        sprintf(line3, "I:%4.2f    EF:%4.2f", pid_parm.i, pid_parm.ET_tempfix);
+                        LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberThree, 0);
+                        LCD.PCF8574_LCDSendString(line3);
+                        sprintf(line4, "D:%4.2f", pid_parm.d);
+                        LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberFour, 0);
+                        LCD.PCF8574_LCDSendString(line4);
+
+                        vTaskDelayUntil(&xLastWakeTime, 2000 / portTICK_PERIOD_MS);
+                        LCD.PCF8574_LCDClearScreen();
+                        vTaskResume(xTASK_LCD);
+                    }
                 }
             }
             // END of  big handle case switch
@@ -354,6 +411,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
 // PID
 //     ON
 //     OFF
+//     PARM
 //     SV
 //         data
 

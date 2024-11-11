@@ -299,7 +299,7 @@ void setup()
         ,
         NULL, 2 // Priority, with 1 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
         ,
-        NULL // Running Core decided by FreeRTOS,let core0 run wifi and BT
+        &xTASK_LCD // Running Core decided by FreeRTOS,let core0 run wifi and BT
     );
 #if defined(DEBUG_MODE)
     Serial.printf("\nTASK2:TASK_LCD...");
