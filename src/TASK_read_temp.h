@@ -105,7 +105,8 @@ void Task_Thermo_get_data(void *pvParameters)
     TickType_t xLastWakeTime;
     char temp_data_buffer_ble[BLE_BUFFER_SIZE];
     // uint8_t temp_data_buffer_ble_out[BLE_BUFFER_SIZE];
-    const TickType_t xIntervel = (pid_parm.pid_CT * 1000) / portTICK_PERIOD_MS;
+    const TickType_t xIntervel = 2000 / portTICK_PERIOD_MS;
+    //const TickType_t xIntervel = (pid_parm.pid_CT * 1000) / portTICK_PERIOD_MS;
     const TickType_t timeOut = 500 / portTICK_PERIOD_MS;
     int i = 0;
     /* Task Setup and Initialize */
@@ -118,10 +119,7 @@ void Task_Thermo_get_data(void *pvParameters)
         esp_task_wdt_reset();
         // Wait for the next cycle (intervel 1500ms).
         vTaskDelayUntil(&xLastWakeTime, xIntervel);
-
         // step1:
-        if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
-        {
 #if defined(TC_TYPE_K)
             if (aht20.startMeasurementReady(/* crcEn = */ true))
             {
@@ -185,7 +183,6 @@ void Task_Thermo_get_data(void *pvParameters)
             delay(50);   // IO1
             readAnlg2(); // OT3
             // end of 获取 旋钮数值
-            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
         }
         // step2:
         //  PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
@@ -259,7 +256,7 @@ void Task_Thermo_get_data(void *pvParameters)
                     temp_check[0] = 0;
                 }
             }
-        }
+        
 
     } // while loop
 } // function
