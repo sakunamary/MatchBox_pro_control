@@ -15,8 +15,9 @@ Supports: WebSocket, SSE, Authentication, Arduino Json 7, File Upload, Static Fi
 
 This fork is based on [yubox-node-org/ESPAsyncWebServer](https://github.com/yubox-node-org/ESPAsyncWebServer) and includes all the concurrency fixes.
 
-- [Coordinate and dependencies](#coordinate-and-dependencies)
 - [Changes in this fork](#changes-in-this-fork)
+- [Dependencies](#dependencies)
+- [Performance](#performance)
 - [Important recommendations](#important-recommendations)
 - [`AsyncWebSocketMessageBuffer` and `makeBuffer()`](#asyncwebsocketmessagebuffer-and-makebuffer)
 - [How to replace a response](#how-to-replace-a-response)
@@ -24,24 +25,6 @@ This fork is based on [yubox-node-org/ESPAsyncWebServer](https://github.com/yubo
 - [How to use authentication with AuthenticationMiddleware](#how-to-use-authentication-with-authenticationmiddleware)
 - [Migration to Middleware to improve performance and memory usage](#migration-to-middleware-to-improve-performance-and-memory-usage)
 - [Original Documentation](#original-documentation)
-
-## Coordinate and dependencies
-
-**WARNING** The library name was changed from `ESP Async WebServer` to `ESPAsyncWebServer` as per the Arduino Lint recommendations.
-
-**PlatformIO / pioarduino:**
-
-```ini
-lib_compat_mode = strict
-lib_ldf_mode = chain
-lib_deps = mathieucarbou/ESPAsyncWebServer @ 3.3.12
-```
-
-**Dependencies:**
-
-- **ESP32**: `mathieucarbou/AsyncTCP @ 3.2.6` (Arduino IDE: [https://github.com/mathieucarbou/AsyncTCP#v3.2.6](https://github.com/mathieucarbou/AsyncTCP/releases))
-- **ESP8266**: `esphome/ESPAsyncTCP-esphome @ 2.0.0` (Arduino IDE: [https://github.com/mathieucarbou/esphome-ESPAsyncTCP#v2.0.0](https://github.com/mathieucarbou/esphome-ESPAsyncTCP/releases/tag/v2.0.0))
-- **RP2040**: `khoih-prog/AsyncTCP_RP2040W @ 1.2.0` (Arduino IDE: [https://github.com/khoih-prog/AsyncTCP_RP2040W#v1.2.0](https://github.com/khoih-prog/AsyncTCP_RP2040W/releases/tag/v1.2.0))
 
 ## Changes in this fork
 
@@ -59,6 +42,7 @@ lib_deps = mathieucarbou/ESPAsyncWebServer @ 3.3.12
 - (feat) **Resumable download** support using HEAD and bytes range
 - (feat) `StreamConcat` example to show how to stream multiple files in one response
 - (feat) Removed ESPIDF Editor (this is not the role of a web server library to do that - get the source files from the original repos if required)
+- (perf) [AsyncTCPSock](https://github.com/mathieucarbou/AsyncTCPSock) support: AsyncTCP can be ignored and AsyncTCPSock used instead
 - (perf) `char*` overloads to avoid using `String`
 - (perf) `DEFAULT_MAX_WS_CLIENTS` to change the number of allows WebSocket clients and use `cleanupClients()` to help cleanup resources about dead clients
 - (perf) `setCloseClientOnQueueFull(bool)` which can be set on a client to either close the connection or discard messages but not close the connection when the queue is full
@@ -68,6 +52,64 @@ lib_deps = mathieucarbou/ESPAsyncWebServer @ 3.3.12
 - (perf) Lot of code cleanup and optimizations
 - (perf) Performance improvements in terms of memory, speed and size
 
+## Dependencies
+
+**WARNING** The library name was changed from `ESP Async WebServer` to `ESPAsyncWebServer` as per the Arduino Lint recommendations, but its name had to stay `ESP Async WebServer` in Arduino Registry.
+
+**PlatformIO / pioarduino:**
+
+```ini
+lib_compat_mode = strict
+lib_ldf_mode = chain
+lib_deps = mathieucarbou/ESPAsyncWebServer @ 3.3.22
+```
+
+**Dependencies:**
+
+- **ESP32 with AsyncTCP**: `mathieucarbou/AsyncTCP @ 3.2.12`
+  Arduino IDE: [https://github.com/mathieucarbou/AsyncTCP#v3.2.12](https://github.com/mathieucarbou/AsyncTCP/releases)
+
+- **ESP32 with AsyncTCPSock**: `https://github.com/mathieucarbou/AsyncTCPSock/archive/refs/tags/v1.0.3-dev.zip`
+
+- **ESP8266**: `esphome/ESPAsyncTCP-esphome @ 2.0.0`
+  Arduino IDE: [https://github.com/mathieucarbou/esphome-ESPAsyncTCP#v2.0.0](https://github.com/mathieucarbou/esphome-ESPAsyncTCP/releases/tag/v2.0.0)
+
+- **RP2040**: `khoih-prog/AsyncTCP_RP2040W @ 1.2.0`
+  Arduino IDE: [https://github.com/khoih-prog/AsyncTCP_RP2040W#v1.2.0](https://github.com/khoih-prog/AsyncTCP_RP2040W/releases/tag/v1.2.0)
+
+**AsyncTCPSock**
+
+AsyncTCPSock can be used instead of AsyncTCP by excluding AsyncTCP from the library dependencies and adding AsyncTCPSock instead:
+
+```ini
+lib_compat_mode = strict
+lib_ldf_mode = chain
+lib_deps =
+  ; mathieucarbou/AsyncTCP @ 3.2.12
+  https://github.com/mathieucarbou/AsyncTCPSock/archive/refs/tags/v1.0.3-dev.zip
+  mathieucarbou/ESPAsyncWebServer @ 3.3.22
+lib_ignore =
+  AsyncTCP
+  mathieucarbou/AsyncTCP
+```
+
+## Performance
+
+Performance of `mathieucarbou/ESPAsyncWebServer @ 3.3.22`:
+
+```bash
+> brew install autocannon
+> autocannon -c 10 -w 10 -d 20 http://192.168.4.1
+```
+
+With `mathieucarbou/AsyncTCP @ 3.2.12`
+
+[![](https://mathieu.carbou.me/ESPAsyncWebServer/perf-c10.png)](https://mathieu.carbou.me/ESPAsyncWebServer/perf-c10.png)
+
+With `https://github.com/mathieucarbou/AsyncTCPSock/archive/refs/tags/v1.0.3-dev.zip`:
+
+[![](https://mathieu.carbou.me/ESPAsyncWebServer/perf-c10-asynctcpsock.png)](https://mathieu.carbou.me/ESPAsyncWebServer/perf-c10-asynctcpsock.png)
+
 ## Important recommendations
 
 Most of the crashes are caused by improper configuration of the library for the project.
@@ -76,7 +118,7 @@ Here are some recommendations to avoid them.
 1. Set the running core to be on the same core of your application (usually core 1) `-D CONFIG_ASYNC_TCP_RUNNING_CORE=1`
 2. Set the stack size appropriately with `-D CONFIG_ASYNC_TCP_STACK_SIZE=16384`.
    The default value of `16384` might be too much for your project.
-   You can look at the [MycilaTaskMonitor](https://oss.carbou.me/MycilaTaskMonitor) project to monitor the stack usage.
+   You can look at the [MycilaTaskMonitor](https://mathieu.carbou.me/MycilaTaskMonitor) project to monitor the stack usage.
 3. You can change **if you know what you are doing** the task priority with `-D CONFIG_ASYNC_TCP_PRIORITY=10`.
    Default is `10`.
 4. You can increase the queue size with `-D CONFIG_ASYNC_TCP_QUEUE_SIZE=128`.
@@ -1190,7 +1232,7 @@ For actual serving the file.
 
 ### Param Rewrite With Matching
 
-It is possible to rewrite the request url with parameter matchg. Here is an example with one parameter:
+It is possible to rewrite the request url with parameter match. Here is an example with one parameter:
 Rewrite for example "/radio/{frequence}" -> "/radio?f={frequence}"
 
 ```cpp

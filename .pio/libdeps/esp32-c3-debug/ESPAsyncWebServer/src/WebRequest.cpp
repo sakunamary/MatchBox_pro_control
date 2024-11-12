@@ -49,9 +49,9 @@ AsyncWebServerRequest::~AsyncWebServerRequest() {
 
   _pathParams.clear();
 
-  if (_response != NULL) {
-    delete _response;
-  }
+  AsyncWebServerResponse* r = _response;
+  _response = NULL;
+  delete r;
 
   if (_tempObject != NULL) {
     free(_tempObject);
@@ -280,38 +280,40 @@ bool AsyncWebServerRequest::_parseReqHeader() {
       }
     } else if (name.equalsIgnoreCase(T_Content_Length)) {
       _contentLength = atoi(value.c_str());
-    } else if (name.equalsIgnoreCase(T_EXPECT) && value == T_100_CONTINUE) {
+    } else if (name.equalsIgnoreCase(T_EXPECT) && value.equalsIgnoreCase(T_100_CONTINUE)) {
       _expectingContinue = true;
     } else if (name.equalsIgnoreCase(T_AUTH)) {
-      if (value.length() > 5 && value.substring(0, 5).equalsIgnoreCase(T_BASIC)) {
-        _authorization = value.substring(6);
-        _authMethod = AsyncAuthType::AUTH_BASIC;
-      } else if (value.length() > 6 && value.substring(0, 6).equalsIgnoreCase(T_DIGEST)) {
-        _authMethod = AsyncAuthType::AUTH_DIGEST;
-        _authorization = value.substring(7);
-      } else if (value.length() > 6 && value.substring(0, 6).equalsIgnoreCase(T_BEARER)) {
-        _authMethod = AsyncAuthType::AUTH_BEARER;
-        _authorization = value.substring(7);
-      } else {
+      int space = value.indexOf(' ');
+      if (space == -1) {
         _authorization = value;
         _authMethod = AsyncAuthType::AUTH_OTHER;
-      }
-    } else {
-      if (name.equalsIgnoreCase(T_UPGRADE) && value.equalsIgnoreCase(T_WS)) {
-        // WebSocket request can be uniquely identified by header: [Upgrade: websocket]
-        _reqconntype = RCT_WS;
-      } else if (name.equalsIgnoreCase(T_ACCEPT)) {
-        String lowcase(value);
-        lowcase.toLowerCase();
-#ifndef ESP8266
-        const char* substr = std::strstr(lowcase.c_str(), T_text_event_stream);
-#else
-        const char* substr = std::strstr(lowcase.c_str(), String(T_text_event_stream).c_str());
-#endif
-        if (substr != NULL) {
-          // WebEvent request can be uniquely identified by header:  [Accept: text/event-stream]
-          _reqconntype = RCT_EVENT;
+      } else {
+        String method = value.substring(0, space);
+        if (method.equalsIgnoreCase(T_BASIC)) {
+          _authMethod = AsyncAuthType::AUTH_BASIC;
+        } else if (method.equalsIgnoreCase(T_DIGEST)) {
+          _authMethod = AsyncAuthType::AUTH_DIGEST;
+        } else if (method.equalsIgnoreCase(T_BEARER)) {
+          _authMethod = AsyncAuthType::AUTH_BEARER;
+        } else {
+          _authMethod = AsyncAuthType::AUTH_OTHER;
         }
+        _authorization = value.substring(space + 1);
+      }
+    } else if (name.equalsIgnoreCase(T_UPGRADE) && value.equalsIgnoreCase(T_WS)) {
+      // WebSocket request can be uniquely identified by header: [Upgrade: websocket]
+      _reqconntype = RCT_WS;
+    } else if (name.equalsIgnoreCase(T_ACCEPT)) {
+      String lowcase(value);
+      lowcase.toLowerCase();
+#ifndef ESP8266
+      const char* substr = std::strstr(lowcase.c_str(), T_text_event_stream);
+#else
+      const char* substr = std::strstr(lowcase.c_str(), String(T_text_event_stream).c_str());
+#endif
+      if (substr != NULL) {
+        // WebEvent request can be uniquely identified by header:  [Accept: text/event-stream]
+        _reqconntype = RCT_EVENT;
       }
     }
     _headers.emplace_back(name, value);
@@ -779,7 +781,7 @@ void AsyncWebServerRequest::redirect(const char* url, int code) {
   send(response);
 }
 
-bool AsyncWebServerRequest::authenticate(const char* username, const char* password, const char* realm, bool passwordIsHash) {
+bool AsyncWebServerRequest::authenticate(const char* username, const char* password, const char* realm, bool passwordIsHash) const {
   if (_authorization.length()) {
     if (_authMethod == AsyncAuthType::AUTH_DIGEST)
       return checkDigestAuthentication(_authorization.c_str(), methodToString(), username, password, realm, passwordIsHash, NULL, NULL, NULL);
@@ -791,7 +793,7 @@ bool AsyncWebServerRequest::authenticate(const char* username, const char* passw
   return false;
 }
 
-bool AsyncWebServerRequest::authenticate(const char* hash) {
+bool AsyncWebServerRequest::authenticate(const char* hash) const {
   if (!_authorization.length() || hash == NULL)
     return false;
 
@@ -831,7 +833,7 @@ void AsyncWebServerRequest::requestAuthentication(AsyncAuthType method, const ch
       break;
     }
     case AsyncAuthType::AUTH_DIGEST: {
-      constexpr size_t len = strlen(T_DIGEST_) + strlen(T_realm__) + strlen(T_auth_nonce) + 32 + strlen(T__opaque) + 32 + 1;
+      size_t len = strlen(T_DIGEST_) + strlen(T_realm__) + strlen(T_auth_nonce) + 32 + strlen(T__opaque) + 32 + 1;
       String header;
       header.reserve(len + strlen(realm));
       header.concat(T_DIGEST_);
@@ -938,7 +940,6 @@ String AsyncWebServerRequest::urlDecode(const String& text) const {
   return decoded;
 }
 
-#ifndef ESP8266
 const char* AsyncWebServerRequest::methodToString() const {
   if (_method == HTTP_ANY)
     return T_ANY;
@@ -958,29 +959,7 @@ const char* AsyncWebServerRequest::methodToString() const {
     return T_OPTIONS;
   return T_UNKNOWN;
 }
-#else  // ESP8266
-const __FlashStringHelper* AsyncWebServerRequest::methodToString() const {
-  if (_method == HTTP_ANY)
-    return FPSTR(T_ANY);
-  if (_method & HTTP_GET)
-    return FPSTR(T_GET);
-  if (_method & HTTP_POST)
-    return FPSTR(T_POST);
-  if (_method & HTTP_DELETE)
-    return FPSTR(T_DELETE);
-  if (_method & HTTP_PUT)
-    return FPSTR(T_PUT);
-  if (_method & HTTP_PATCH)
-    return FPSTR(T_PATCH);
-  if (_method & HTTP_HEAD)
-    return FPSTR(T_HEAD);
-  if (_method & HTTP_OPTIONS)
-    return FPSTR(T_OPTIONS);
-  return FPSTR(T_UNKNOWN);
-}
-#endif // ESP8266
 
-#ifndef ESP8266
 const char* AsyncWebServerRequest::requestedConnTypeToString() const {
   switch (_reqconntype) {
     case RCT_NOT_USED:
@@ -997,32 +976,9 @@ const char* AsyncWebServerRequest::requestedConnTypeToString() const {
       return T_ERROR;
   }
 }
-#else  // ESP8266
-const __FlashStringHelper* AsyncWebServerRequest::requestedConnTypeToString() const {
-  switch (_reqconntype) {
-    case RCT_NOT_USED:
-      return FPSTR(T_RCT_NOT_USED);
-    case RCT_DEFAULT:
-      return FPSTR(T_RCT_DEFAULT);
-    case RCT_HTTP:
-      return FPSTR(T_RCT_HTTP);
-    case RCT_WS:
-      return FPSTR(T_RCT_WS);
-    case RCT_EVENT:
-      return FPSTR(T_RCT_EVENT);
-    default:
-      return FPSTR(T_ERROR);
-  }
-}
-#endif // ESP8266
 
-bool AsyncWebServerRequest::isExpectedRequestedConnType(RequestedConnectionType erct1, RequestedConnectionType erct2, RequestedConnectionType erct3) {
-  bool res = false;
-  if ((erct1 != RCT_NOT_USED) && (erct1 == _reqconntype))
-    res = true;
-  if ((erct2 != RCT_NOT_USED) && (erct2 == _reqconntype))
-    res = true;
-  if ((erct3 != RCT_NOT_USED) && (erct3 == _reqconntype))
-    res = true;
-  return res;
+bool AsyncWebServerRequest::isExpectedRequestedConnType(RequestedConnectionType erct1, RequestedConnectionType erct2, RequestedConnectionType erct3) const {
+  return ((erct1 != RCT_NOT_USED) && (erct1 == _reqconntype)) ||
+         ((erct2 != RCT_NOT_USED) && (erct2 == _reqconntype)) ||
+         ((erct3 != RCT_NOT_USED) && (erct3 == _reqconntype));
 }

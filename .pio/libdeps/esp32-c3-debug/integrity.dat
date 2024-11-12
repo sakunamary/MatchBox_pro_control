@@ -1,7 +1,7 @@
-gavinlyonsrepo/HD44780_LCD_PCF8574 @ ^1.3.0
 mathieucarbou/ESPAsyncWebServer @ 3.3.12
-sparkfun/SparkFun External EEPROM Arduino Library@^3.2.8
-madhephaestus/ESP32Servo @ ^3.0.5
-dfrobot/DFRobot_AHT20@^1.0.0
-ayushsharma82/ElegantOTA @ ^3.1.4
 mathieucarbou/AsyncTCP @ ^3.2.8
+dfrobot/DFRobot_AHT20@^1.0.0
+madhephaestus/ESP32Servo @ ^3.0.5
+sparkfun/SparkFun External EEPROM Arduino Library@^3.2.8
+gavinlyonsrepo/HD44780_LCD_PCF8574 @ ^1.3.0
+ayushsharma82/ElegantOTA @ ^3.1.4

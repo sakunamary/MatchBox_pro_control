@@ -127,6 +127,8 @@ void Task_Thermo_get_data(void *pvParameters)
         // Wait for the next cycle (intervel 1500ms).
         vTaskDelayUntil(&xLastWakeTime, xIntervel);
         // step1:
+        // if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
+        // {
 #if defined(TC_TYPE_K)
         if (aht20.startMeasurementReady(/* crcEn = */ true))
         {
@@ -149,7 +151,6 @@ void Task_Thermo_get_data(void *pvParameters)
 #else
         BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039283));
 #endif
-
         delay(100);
         MCP.Configuration(2, 16, 1, 1);               // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
         Voltage = MCP.Measure();                      // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
@@ -161,14 +162,12 @@ void Task_Thermo_get_data(void *pvParameters)
 #else
         ET_TEMP = (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
 #endif
-
         // cal RoR
         ftimes = millis();
         ftemps = fRise.doFilter(BT_TEMP * 1000);
         if (!first)
         {
             rx = fRise.calcRise(ftemps_old, ftemps, ftimes_old, ftimes);
-
             if ((fRoR.doFilter(rx / D_MULT) * D_MULT) >= 999)
             {
                 ror = 999.0;
@@ -182,7 +181,8 @@ void Task_Thermo_get_data(void *pvParameters)
                 ror = fRoR.doFilter(rx / D_MULT) * D_MULT;
             }
         }
-
+        //     xSemaphoreGive(xThermoDataMutex); // end of lock mutex
+        // }
         first = false;
 
         // 获取 旋钮数值
@@ -190,92 +190,91 @@ void Task_Thermo_get_data(void *pvParameters)
         delay(50);   // IO1
         readAnlg2(); // OT3
         // end of 获取 旋钮数值
-    }
-    // step2:
-    //  PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
-    if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
-    {
-        // 封装BLE 协议
-        sprintf(temp_data_buffer_ble, "#0.00,%4.2f,%4.2f,%d,%d,%4.2f;\n", ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
-        //sprintf(temp_data_buffer_ble, "#0.00,%4.2f,%4.2f,%d,%d,%f4.0f,%4.2f;\n", ET_TEMP, BT_TEMP, levelOT1, levelIO3,ror,pid_sv);
-        xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
-        xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
-        memset(&temp_data_buffer_ble, '\0', BLE_BUFFER_SIZE);
-        xSemaphoreGive(xThermoDataMutex); // end of lock mutex
-    }
+        // step2:
+        //  PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
+        if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
+        {
+            // 封装BLE 协议
+            sprintf(temp_data_buffer_ble, "#0.00,%4.2f,%4.2f,%d,%d,%4.2f;\n", ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
+            // sprintf(temp_data_buffer_ble, "#0.00,%4.2f,%4.2f,%d,%d,%f4.0f,%4.2f;\n", ET_TEMP, BT_TEMP, levelOT1, levelIO3,ror,pid_sv);
+            xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
+            xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
+            memset(&temp_data_buffer_ble, '\0', BLE_BUFFER_SIZE);
+            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
+        }
 
-    if (xSemaphoreTake(xLCDDataMutex, 150 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
-    {
-        BT_TEMP_LCD = BT_TEMP;
-        ET_TEMP_LCD = ET_TEMP;
-        ror_LCD = ror;
-        levelOT1_LCD = levelOT1;
-        levelIO3_LCD = levelIO3;
-        pid_sv_LCD = pid_sv;
-        xSemaphoreGive(xLCDDataMutex); // end of lock mutex
-    }
-    // step3:
-    //  检查温度是否达到切换PID参数
+        if (xSemaphoreTake(xLCDDataMutex, 250 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
+        {
+            BT_TEMP_LCD = BT_TEMP;
+            ET_TEMP_LCD = ET_TEMP;
+            ror_LCD = ror;
+            levelOT1_LCD = levelOT1;
+            levelIO3_LCD = levelIO3;
+            pid_sv_LCD = pid_sv;
+            xSemaphoreGive(xLCDDataMutex); // end of lock mutex
+        }
+        // step3:
+        //  检查温度是否达到切换PID参数
 #if defined(PID_AUTO_SHIFT)
-    if (pid_status == true && PID_TUNNING == false)
-    {
-        if (BT_TEMP >= PID_TUNE_SV_1)
+        if (pid_status == true && PID_TUNNING == false)
         {
-            I2C_EEPROM.get(64, pid_parm);
-            Heat_pid_controller.SetOutputLimits(PID_STAGE_2_MIN_OUT, PID_STAGE_2_MAX_OUT);
-            Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
-        }
-        else if (BT_TEMP >= PID_TUNE_SV_2)
-        {
-            I2C_EEPROM.get(128, pid_parm);
-            Heat_pid_controller.SetOutputLimits(PID_STAGE_3_MIN_OUT, PID_STAGE_3_MAX_OUT);
-            Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
-        }
-    }
-
-#endif
-    // step4:
-    //  检查温度是否达到降温降风
-    if (PID_TUNNING == false && pid_status == false)
-    {
-        if (BT_TEMP > 50 && BT_TEMP < 60)
-        {
-            temp_check[0] = millis();
-#if defined(DEBUG_MODE)
-            Serial.printf("\nTempCheck[0]:%ld\n", temp_check[0]);
-#endif
-        }
-        if (BT_TEMP > 120 && BT_TEMP < 135)
-        {
-            temp_check[1] = millis();
-#if defined(DEBUG_MODE)
-            Serial.printf("\nTempCheck[1]:%ld\n", temp_check[1]);
-#endif
-        }
-        if (BT_TEMP > 180)
-        {
-            temp_check[2] = millis();
-#if defined(DEBUG_MODE)
-            Serial.printf("\nTempCheck[2]:%ld\n", temp_check[2]);
-#endif
-        }
-
-        if (temp_check[2] != 0 && temp_check[1] != 0 && temp_check[0] != 0) // 确认是机器运行中
-        {
-            if (temp_check[2] < temp_check[1] && temp_check[1] < temp_check[0]) // 判断温度趋势是下降
+            if (BT_TEMP >= PID_TUNE_SV_1)
             {
-#if defined(DEBUG_MODE)
-                Serial.printf("\n Turn Down fan t0:%ld t1:%ld t2:%ld\n", temp_check[0], temp_check[1], temp_check[2]);
-#endif
-                levelIO3 = 35;
-                pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
-                pwm_heat.write(1); // for safe
-                temp_check[2] = 0;
-                temp_check[1] = 0;
-                temp_check[0] = 0;
+                I2C_EEPROM.get(64, pid_parm);
+                Heat_pid_controller.SetOutputLimits(PID_STAGE_2_MIN_OUT, PID_STAGE_2_MAX_OUT);
+                Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
+            }
+            else if (BT_TEMP >= PID_TUNE_SV_2)
+            {
+                I2C_EEPROM.get(128, pid_parm);
+                Heat_pid_controller.SetOutputLimits(PID_STAGE_3_MIN_OUT, PID_STAGE_3_MAX_OUT);
+                Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
             }
         }
 
+#endif
+        // step4:
+        //  检查温度是否达到降温降风
+        if (PID_TUNNING == false && pid_status == false)
+        {
+            if (BT_TEMP > 50 && BT_TEMP < 60)
+            {
+                temp_check[0] = millis();
+#if defined(DEBUG_MODE)
+                Serial.printf("\nTempCheck[0]:%ld\n", temp_check[0]);
+#endif
+            }
+            if (BT_TEMP > 120 && BT_TEMP < 135)
+            {
+                temp_check[1] = millis();
+#if defined(DEBUG_MODE)
+                Serial.printf("\nTempCheck[1]:%ld\n", temp_check[1]);
+#endif
+            }
+            if (BT_TEMP > 180)
+            {
+                temp_check[2] = millis();
+#if defined(DEBUG_MODE)
+                Serial.printf("\nTempCheck[2]:%ld\n", temp_check[2]);
+#endif
+            }
+
+            if (temp_check[2] != 0 && temp_check[1] != 0 && temp_check[0] != 0) // 确认是机器运行中
+            {
+                if (temp_check[2] < temp_check[1] && temp_check[1] < temp_check[0]) // 判断温度趋势是下降
+                {
+#if defined(DEBUG_MODE)
+                    Serial.printf("\n Turn Down fan t0:%ld t1:%ld t2:%ld\n", temp_check[0], temp_check[1], temp_check[2]);
+#endif
+                    levelIO3 = 35;
+                    pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                    pwm_heat.write(1); // for safe
+                    temp_check[2] = 0;
+                    temp_check[1] = 0;
+                    temp_check[0] = 0;
+                }
+            }
+        } // end of 检查温度是否达到降温降风
     } // while loop
 } // function
 
@@ -552,9 +551,9 @@ void readAnlg1()
     {
         reading = getAnalogValue(anlg1);
         if (reading <= 100 && reading != old_reading_anlg1)
-        {                                                                             // did it change?
-            old_reading_anlg1 = reading;                                              // save reading for next time
-            if (xSemaphoreTake(xThermoDataMutex, 150 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
+        {                                                            // did it change?
+            old_reading_anlg1 = reading;                             // save reading for next time
+            if (xSemaphoreTake(xThermoDataMutex, 250 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
             {
                 levelOT1 = reading;
                 pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
@@ -573,9 +572,9 @@ void readAnlg2()
     {
         reading = getAnalogValue(anlg2);
         if (reading <= 100 && reading != old_reading_anlg2)
-        {                                                                             // did it change?
-            old_reading_anlg2 = reading;                                              // save reading for next time
-            if (xSemaphoreTake(xThermoDataMutex, 150 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
+        {                                                            // did it change?
+            old_reading_anlg2 = reading;                             // save reading for next time
+            if (xSemaphoreTake(xThermoDataMutex, 250 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
             {
                 levelIO3 = reading;
                 pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
@@ -583,31 +582,32 @@ void readAnlg2()
             }
         }
     }
+}
 
-#endif
+#endif // end of __TASK_READ_TEMP_H__
 
-    // printh 00 00 00 ff ff ff 88 ff ff ff//输出上电信息到串口
-    // 69 ff 00 ff ff ff 69 69 69 67 67 67 ff ff ff ff ff //握手协议
+// printh 00 00 00 ff ff ff 88 ff ff ff//输出上电信息到串口
+// 69 ff 00 ff ff ff 69 69 69 67 67 67 ff ff ff ff ff //握手协议
 
-    // HMI --> MatchBox的数据帧 FrameLenght = 17
-    // 帧头: 69 FF
-    // 类型: 01 温度数据
-    // 环境温： 00 00 //uint16
-    // 温度1: 00 00 // uint16
-    // 温度2: 00 00 // uint16
-    // PID SV: 00 00 // uint16
-    // 火力 : 00
-    // 风力 : 00
-    // PID RUN: 00
-    // 帧尾:FF FF FF
+// HMI --> MatchBox的数据帧 FrameLenght = 17
+// 帧头: 69 FF
+// 类型: 01 温度数据
+// 环境温： 00 00 //uint16
+// 温度1: 00 00 // uint16
+// 温度2: 00 00 // uint16
+// PID SV: 00 00 // uint16
+// 火力 : 00
+// 风力 : 00
+// PID RUN: 00
+// 帧尾:FF FF FF
 
-    // HMI --> MatchBox的数据帧 FrameLenght = 17
-    // 帧头: 69 FF
-    // 类型: 02 PID设定
-    // BT fix: 00 00 // uint16
-    // ET fix: 00 00 // uint16
-    // P: 00 00 // uint16
-    // I: 00 00 // uint16
-    // D: 00 00 // uint16
-    // PID ct: 00
-    // 帧尾:FF FF FF
+// HMI --> MatchBox的数据帧 FrameLenght = 17
+// 帧头: 69 FF
+// 类型: 02 PID设定
+// BT fix: 00 00 // uint16
+// ET fix: 00 00 // uint16
+// P: 00 00 // uint16
+// I: 00 00 // uint16
+// D: 00 00 // uint16
+// PID ct: 00
+// 帧尾:FF FF FF

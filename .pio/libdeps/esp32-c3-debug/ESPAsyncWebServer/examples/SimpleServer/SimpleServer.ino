@@ -19,13 +19,85 @@
 
 #include <ESPAsyncWebServer.h>
 
-#if ASYNC_JSON_SUPPORT == 1
+#if __has_include("ArduinoJson.h")
   #include <ArduinoJson.h>
   #include <AsyncJson.h>
   #include <AsyncMessagePack.h>
 #endif
 
 #include <LittleFS.h>
+
+const char* htmlContent PROGMEM = R"(
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sample HTML</title>
+</head>
+<body>
+    <h1>Hello, World!</h1>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin euismod, purus a euismod
+    rhoncus, urna ipsum cursus massa, eu dictum tellus justo ac justo. Quisque ullamcorper
+    arcu nec tortor ullamcorper, vel fermentum justo fermentum. Vivamus sed velit ut elit
+    accumsan congue ut ut enim. Ut eu justo eu lacus varius gravida ut a tellus. Nulla facilisi.
+    Integer auctor consectetur ultricies. Fusce feugiat, mi sit amet bibendum viverra, orci leo
+    dapibus elit, id varius sem dui id lacus.</p>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin euismod, purus a euismod
+    rhoncus, urna ipsum cursus massa, eu dictum tellus justo ac justo. Quisque ullamcorper
+    arcu nec tortor ullamcorper, vel fermentum justo fermentum. Vivamus sed velit ut elit
+    accumsan congue ut ut enim. Ut eu justo eu lacus varius gravida ut a tellus. Nulla facilisi.
+    Integer auctor consectetur ultricies. Fusce feugiat, mi sit amet bibendum viverra, orci leo
+    dapibus elit, id varius sem dui id lacus.</p>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin euismod, purus a euismod
+    rhoncus, urna ipsum cursus massa, eu dictum tellus justo ac justo. Quisque ullamcorper
+    arcu nec tortor ullamcorper, vel fermentum justo fermentum. Vivamus sed velit ut elit
+    accumsan congue ut ut enim. Ut eu justo eu lacus varius gravida ut a tellus. Nulla facilisi.
+    Integer auctor consectetur ultricies. Fusce feugiat, mi sit amet bibendum viverra, orci leo
+    dapibus elit, id varius sem dui id lacus.</p>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin euismod, purus a euismod
+    rhoncus, urna ipsum cursus massa, eu dictum tellus justo ac justo. Quisque ullamcorper
+    arcu nec tortor ullamcorper, vel fermentum justo fermentum. Vivamus sed velit ut elit
+    accumsan congue ut ut enim. Ut eu justo eu lacus varius gravida ut a tellus. Nulla facilisi.
+    Integer auctor consectetur ultricies. Fusce feugiat, mi sit amet bibendum viverra, orci leo
+    dapibus elit, id varius sem dui id lacus.</p>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin euismod, purus a euismod
+    rhoncus, urna ipsum cursus massa, eu dictum tellus justo ac justo. Quisque ullamcorper
+    arcu nec tortor ullamcorper, vel fermentum justo fermentum. Vivamus sed velit ut elit
+    accumsan congue ut ut enim. Ut eu justo eu lacus varius gravida ut a tellus. Nulla facilisi.
+    Integer auctor consectetur ultricies. Fusce feugiat, mi sit amet bibendum viverra, orci leo
+    dapibus elit, id varius sem dui id lacus.</p>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin euismod, purus a euismod
+    rhoncus, urna ipsum cursus massa, eu dictum tellus justo ac justo. Quisque ullamcorper
+    arcu nec tortor ullamcorper, vel fermentum justo fermentum. Vivamus sed velit ut elit
+    accumsan congue ut ut enim. Ut eu justo eu lacus varius gravida ut a tellus. Nulla facilisi.
+    Integer auctor consectetur ultricies. Fusce feugiat, mi sit amet bibendum viverra, orci leo
+    dapibus elit, id varius sem dui id lacus.</p>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin euismod, purus a euismod
+    rhoncus, urna ipsum cursus massa, eu dictum tellus justo ac justo. Quisque ullamcorper
+    arcu nec tortor ullamcorper, vel fermentum justo fermentum. Vivamus sed velit ut elit
+    accumsan congue ut ut enim. Ut eu justo eu lacus varius gravida ut a tellus. Nulla facilisi.
+    Integer auctor consectetur ultricies. Fusce feugiat, mi sit amet bibendum viverra, orci leo
+    dapibus elit, id varius sem dui id lacus.</p>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin euismod, purus a euismod
+    rhoncus, urna ipsum cursus massa, eu dictum tellus justo ac justo. Quisque ullamcorper
+    arcu nec tortor ullamcorper, vel fermentum justo fermentum. Vivamus sed velit ut elit
+    accumsan congue ut ut enim. Ut eu justo eu lacus varius gravida ut a tellus. Nulla facilisi.
+    Integer auctor consectetur ultricies. Fusce feugiat, mi sit amet bibendum viverra, orci leo
+    dapibus elit, id varius sem dui id lacus.</p>
+</body>
+</html>
+)";
+
+const char* staticContent PROGMEM = R"(
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sample HTML</title>
+</head>
+<body>
+    <h1>Hello, %IP%</h1>
+</body>
+</html>
+)";
 
 AsyncWebServer server(80);
 AsyncEventSource events("/events");
@@ -111,7 +183,7 @@ void notFound(AsyncWebServerRequest* request) {
   request->send(404, "text/plain", "Not found");
 }
 
-#if ASYNC_JSON_SUPPORT == 1
+#if __has_include("ArduinoJson.h")
 AsyncCallbackJsonWebHandler* jsonHandler = new AsyncCallbackJsonWebHandler("/json2");
 AsyncCallbackMessagePackWebHandler* msgPackHandler = new AsyncCallbackMessagePackWebHandler("/msgpack2");
 #endif
@@ -122,24 +194,6 @@ static size_t charactersIndex = 0;
 void setup() {
 
   Serial.begin(115200);
-
-#ifdef ESP32
-  LittleFS.begin(true);
-#else
-  LittleFS.begin();
-#endif
-
-  if (!LittleFS.exists("/index.txt")) {
-    File f = LittleFS.open("/index.txt", "w");
-    if (f) {
-      for (size_t c = 0; c < sizeof(characters); c++) {
-        for (size_t i = 0; i < 1024; i++) {
-          f.print(characters[c]);
-        }
-      }
-      f.close();
-    }
-  }
 
 #ifndef CONFIG_IDF_TARGET_ESP32H2
   // WiFi.mode(WIFI_STA);
@@ -154,6 +208,32 @@ void setup() {
   WiFi.mode(WIFI_AP);
   WiFi.softAP("esp-captive");
 #endif
+
+#ifdef ESP32
+  LittleFS.begin(true);
+#else
+  LittleFS.begin();
+#endif
+
+  {
+    File f = LittleFS.open("/index.txt", "w");
+    if (f) {
+      for (size_t c = 0; c < sizeof(characters); c++) {
+        for (size_t i = 0; i < 1024; i++) {
+          f.print(characters[c]);
+        }
+      }
+      f.close();
+    }
+  }
+
+  {
+    File f = LittleFS.open("/index.html", "w");
+    if (f) {
+      f.print(staticContent);
+      f.close();
+    }
+  }
 
   // curl -v -X GET http://192.168.4.1/handler-not-sending-response
   server.on("/handler-not-sending-response", HTTP_GET, [](AsyncWebServerRequest* request) {
@@ -236,15 +316,17 @@ void setup() {
   headerFree.keep("X-Keep-Me");
   headerFree.keep("host");
 
-  // global middleware
-  server.addMiddleware(&requestLogger);
-  // server.addMiddlewares({&rateLimit, &cors, &headerFilter});
-
   cors.setOrigin("http://192.168.4.1");
   cors.setMethods("POST, GET, OPTIONS, DELETE");
   cors.setHeaders("X-Custom-Header");
   cors.setAllowCredentials(false);
   cors.setMaxAge(600);
+
+#ifndef PERF_TEST
+  // global middleware
+  server.addMiddleware(&requestLogger);
+  server.addMiddlewares({&rateLimit, &cors, &headerFilter});
+#endif
 
   // Test CORS preflight request
   // curl -v -X OPTIONS -H "origin: http://192.168.4.1" http://192.168.4.1/middleware/cors
@@ -320,12 +402,44 @@ void setup() {
     request->redirect("/");
   });
 
+  // PERF TEST:
+  // > brew install autocannon
+  // > autocannon -c 10 -w 10 -d 20 http://192.168.4.1
   server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
-    request->send(200, "text/plain", "Hello, world");
+    request->send(200, "text/html", htmlContent);
   });
 
-  server.on("/file", HTTP_GET, [](AsyncWebServerRequest* request) {
-    request->send(LittleFS, "/index.txt");
+  // curl -v -X GET http://192.168.4.1/index.txt
+  server.serveStatic("/index.txt", LittleFS, "/index.txt");
+
+  // curl -v -X GET http://192.168.4.1/index-private.txt
+  server.serveStatic("/index-private.txt", LittleFS, "/index.txt").setAuthentication("admin", "admin");
+
+  // ServeStatic static is used to serve static output which never changes over time.
+  // This special endpoints automatyically adds caching headers.
+  // If a template processor is used, it must enure that the outputed content will always be the ame over time and never changes.
+  // Otherwise, do not use serveStatic.
+  // Example below: IP never changes.
+  // curl -v -X GET http://192.168.4.1/index-static.html
+  server.serveStatic("/index-static.html", LittleFS, "/index.html").setTemplateProcessor([](const String& var) -> String {
+    if (var == "IP") {
+      // for CI, commented out since H2 board doesn ot support WiFi
+      // return WiFi.localIP().toString();
+      // return WiFi.softAPIP().toString();
+      return "127.0.0..1";
+    }
+    return emptyString;
+  });
+
+  // to serve a template with dynamic content (output changes over time), use normal
+  // Example below: content changes over tinme do not use serveStatic.
+  // curl -v -X GET http://192.168.4.1/index-dynamic.html
+  server.on("/index-dynamic.html", HTTP_GET, [](AsyncWebServerRequest* request) {
+    request->send(LittleFS, "/index.html", "text/html", false, [](const String& var) -> String {
+      if (var == "IP")
+        return String(random(0, 1000));
+      return emptyString;
+    });
   });
 
   // Issue #14: assert failed: tcp_update_rcv_ann_wnd (needs help to test fix)
@@ -399,7 +513,7 @@ void setup() {
     request->send(200, "text/plain", "Hello, POST: " + message);
   });
 
-#if ASYNC_JSON_SUPPORT == 1
+#if __has_include("ArduinoJson.h")
   // JSON
 
   // receives JSON and sends JSON
@@ -415,11 +529,22 @@ void setup() {
   });
 
   // sends JSON
+  // curl -v -X GET http://192.168.4.1/json1
   server.on("/json1", HTTP_GET, [](AsyncWebServerRequest* request) {
     AsyncJsonResponse* response = new AsyncJsonResponse();
     JsonObject root = response->getRoot().to<JsonObject>();
     root["hello"] = "world";
     response->setLength();
+    request->send(response);
+  });
+
+  // curl -v -X GET http://192.168.4.1/json2
+  server.on("/json2", HTTP_GET, [](AsyncWebServerRequest* request) {
+    AsyncResponseStream* response = request->beginResponseStream("application/json");
+    JsonDocument doc;
+    JsonObject root = doc.to<JsonObject>();
+    root["hello"] = "world";
+    serializeJson(root, *response);
     request->send(response);
   });
 
@@ -488,7 +613,7 @@ void setup() {
   // Run: websocat ws://192.168.4.1/ws
   server.addHandler(&ws);
 
-#if ASYNC_JSON_SUPPORT == 1
+#if __has_include("ArduinoJson.h")
   server.addHandler(jsonHandler);
   server.addHandler(msgPackHandler);
 #endif
@@ -512,7 +637,6 @@ void loop() {
   }
   if (now - lastWS >= deltaWS) {
     ws.printfAll("kp%.4f", (10.0 / 3.0));
-    // ws.getClients
     for (auto& client : ws.getClients()) {
       client.printf("kp%.4f", (10.0 / 3.0));
     }

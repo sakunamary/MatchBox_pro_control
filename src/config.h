@@ -7,7 +7,7 @@
 #include <Wire.h>
 
 #define BANNER "MATCHBOX H7 v2"
-#define VERSION "1.2.0b"
+#define VERSION "1.2.0c"
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
@@ -16,7 +16,7 @@
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
 //#define DEBUG_MODE
 //不注释就选这Type K热电偶，注释掉就会选PT100
-#define TC_TYPE_K
+//#define TC_TYPE_K
 
 #define BLE_BUFFER_SIZE 64
 #define HMI_BUFFER_SIZE 17
