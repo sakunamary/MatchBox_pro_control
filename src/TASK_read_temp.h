@@ -197,6 +197,7 @@ void Task_Thermo_get_data(void *pvParameters)
     {
         // 封装BLE 协议
         sprintf(temp_data_buffer_ble, "#0.00,%4.2f,%4.2f,%d,%d,%4.2f;\n", ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
+        //sprintf(temp_data_buffer_ble, "#0.00,%4.2f,%4.2f,%d,%d,%f4.0f,%4.2f;\n", ET_TEMP, BT_TEMP, levelOT1, levelIO3,ror,pid_sv);
         xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
         xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
         memset(&temp_data_buffer_ble, '\0', BLE_BUFFER_SIZE);
