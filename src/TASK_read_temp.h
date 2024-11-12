@@ -61,6 +61,7 @@ void Task_Thermo_get_data(void *pvParameters)
     char temp_data_buffer_ble[BLE_BUFFER_SIZE];
     // uint8_t TEMP_DATA_Buffer[HMI_BUFFER_SIZE];
     const TickType_t xIntervel = (pid_parm.pid_CT * 1000) / portTICK_PERIOD_MS;
+    //const TickType_t xIntervel = 2000 / portTICK_PERIOD_MS;
     const TickType_t timeOUT = 500 / portTICK_PERIOD_MS;
     /* Task Setup and Initialize */
     // Initial the xLastWakeTime variable with the current time.
@@ -72,7 +73,7 @@ void Task_Thermo_get_data(void *pvParameters)
     {         // for loop
               // 喂狗
         esp_task_wdt_reset();
-        // Wait for the next cycle (intervel 1500ms).
+        // Wait for the next cycle (intervel 2000ms).
         vTaskDelayUntil(&xLastWakeTime, xIntervel);
         if (xSemaphoreTake(xThermoDataMutex, timeOUT) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
@@ -128,30 +129,6 @@ void Task_Thermo_get_data(void *pvParameters)
                 I2C_EEPROM.get(192, pid_parm);
                 Heat_pid_controller.SetOutputLimits(PID_STAGE_4_MIN_OUT, PID_STAGE_4_MAX_OUT);
                 Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
-            }
-        }
-#endif
-
-#if defined(PID_PWR_SHIFT)
-        if (pid_status == true && PID_TUNNING == false)
-        {
-            if (BT_TEMP < PID_TUNE_SV_1)
-            {
-                Heat_pid_controller.SetOutputLimits(PID_STAGE_1_MIN_OUT, PID_STAGE_1_MAX_OUT - 5);
-            }
-            else if (BT_TEMP >= PID_TUNE_SV_1)
-            {
-
-                Heat_pid_controller.SetOutputLimits(PID_STAGE_2_MIN_OUT, PID_STAGE_2_MAX_OUT);
-            }
-            else if (BT_TEMP >= PID_TUNE_SV_2)
-            {
-                Heat_pid_controller.SetOutputLimits(PID_STAGE_3_MIN_OUT, PID_STAGE_3_MAX_OUT);
-            }
-            else if (BT_TEMP >= PID_TUNE_SV_3)
-            {
-
-                Heat_pid_controller.SetOutputLimits(PID_STAGE_4_MIN_OUT, PID_STAGE_4_MAX_OUT);
             }
         }
 #endif
