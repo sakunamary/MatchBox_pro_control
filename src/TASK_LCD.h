@@ -10,13 +10,14 @@
 
 HD44780LCD LCD(4, 20, 0x27, &Wire); // instantiate an object
 
-extern double BT_TEMP;
-extern double ET_TEMP;
-extern int levelOT1;
-extern int levelIO3;
-extern double pid_sv;
+extern double BT_TEMP_LCD;
+extern double ET_TEMP_LCD;
+extern double ror_LCD;
+extern int levelOT1_LCD;
+extern int levelIO3_LCD;
+extern double pid_sv_LCD;
 extern bool pid_status;
-extern double ror;
+
 char line1[20];
 char line2[20];
 char line3[20];
@@ -46,33 +47,33 @@ void TASK_LCD(void *pvParameters)
             if (pid_status == true && PID_TUNNING == true) //自动整定情况
             {
                 // LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberOne);
-                sprintf(line1, "MODE:TUNE    ET:%4d", (int)round(ET_TEMP));
+                sprintf(line1, "MODE:TUNE    ET:%4d", (int)round(ET_TEMP_LCD));
                 LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberOne, 0);
                 LCD.PCF8574_LCDSendString(line1);
                 // LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberThree);
-                sprintf(line3, "HTR:%4d     SV:%4d", (int)round(levelOT1), (int)round(pid_sv));
+                sprintf(line3, "HTR:%4d     SV:%4d", (int)round(levelOT1_LCD), (int)round(pid_sv_LCD));
                 LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberThree, 0);
                 LCD.PCF8574_LCDSendString(line3);
             }
             else if (pid_status == true && PID_TUNNING == false) // PID跑线情况
             {
                 // LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberOne);
-                sprintf(line1, "MODE:PID     ET:%4d", (int)round(ET_TEMP));
+                sprintf(line1, "MODE:PID     ET:%4d", (int)round(ET_TEMP_LCD));
                 LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberOne, 0);
                 LCD.PCF8574_LCDSendString(line1);
                 // LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberThree);
-                sprintf(line3, "HTR:%4d     SV:%4d", (int)round(levelOT1), (int)round(pid_sv));
+                sprintf(line3, "HTR:%4d     SV:%4d", (int)round(levelOT1_LCD), (int)round(pid_sv_LCD));
                 LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberThree, 0);
                 LCD.PCF8574_LCDSendString(line3);
             }
             else
             {
                 // LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberOne);
-                sprintf(line1, "MODE:MAN     ET:%4d", (int)round(ET_TEMP));
+                sprintf(line1, "MODE:MAN     ET:%4d", (int)round(ET_TEMP_LCD));
                 LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberOne, 0);
                 LCD.PCF8574_LCDSendString(line1);
                 // LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberThree);
-                sprintf(line3, "HTR:%4d ", (int)round(levelOT1));
+                sprintf(line3, "HTR:%4d ", (int)round(levelOT1_LCD));
                 LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberThree, 0);
                 LCD.PCF8574_LCDSendString(line3);
             }
@@ -81,10 +82,10 @@ void TASK_LCD(void *pvParameters)
 
         if (xSemaphoreTake(xLCDDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
-            sprintf(line2, "RoR:%4d     BT:%4d", (int)round(ror), (int)round(BT_TEMP));
+            sprintf(line2, "RoR:%4d     BT:%4d", (int)round(ror_LCD), (int)round(BT_TEMP_LCD));
             LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberTwo, 0);
             LCD.PCF8574_LCDSendString(line2);
-            sprintf(line4, "FAN:%4d  ", (int)round(levelIO3));
+            sprintf(line4, "FAN:%4d  ", (int)round(levelIO3_LCD));
             LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberFour, 0);
             LCD.PCF8574_LCDSendString(line4);
             xSemaphoreGive(xLCDDataMutex); // end of lock mutex
