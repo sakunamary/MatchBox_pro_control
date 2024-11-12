@@ -142,6 +142,7 @@ void setup()
 {
 
     xThermoDataMutex = xSemaphoreCreateMutex();
+    xLCDDataMutex = xSemaphoreCreateMutex();
 
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);

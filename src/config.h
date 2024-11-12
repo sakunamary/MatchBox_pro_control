@@ -135,7 +135,7 @@ static TaskHandle_t xTask_PID_autotune = NULL;
 
 
 SemaphoreHandle_t xThermoDataMutex = NULL;
-
+SemaphoreHandle_t xLCDDataMutex = NULL;
 
 QueueHandle_t queueCMD_BLE = xQueueCreate(10, sizeof(char[BLE_BUFFER_SIZE]));
 QueueHandle_t queue_data_to_BLE = xQueueCreate(10, sizeof(char[BLE_BUFFER_SIZE]));

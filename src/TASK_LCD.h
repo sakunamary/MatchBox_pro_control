@@ -41,7 +41,7 @@ void TASK_LCD(void *pvParameters)
     while (1)
     {
         vTaskDelayUntil(&xLastWakeTime, xIntervel);
-        if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
+        if (xSemaphoreTake(xLCDDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
             if (pid_status == true && PID_TUNNING == true) //自动整定情况
             {
@@ -76,10 +76,10 @@ void TASK_LCD(void *pvParameters)
                 LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberThree, 0);
                 LCD.PCF8574_LCDSendString(line3);
             }
-            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
+            xSemaphoreGive(xLCDDataMutex); // end of lock mutex
         }
 
-        if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
+        if (xSemaphoreTake(xLCDDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
             sprintf(line2, "RoR:%4d     BT:%4d", (int)round(ror), (int)round(BT_TEMP));
             LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberTwo, 0);
@@ -87,7 +87,7 @@ void TASK_LCD(void *pvParameters)
             sprintf(line4, "FAN:%4d  ", (int)round(levelIO3));
             LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberFour, 0);
             LCD.PCF8574_LCDSendString(line4);
-            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
+            xSemaphoreGive(xLCDDataMutex); // end of lock mutex
         }
     }
 }

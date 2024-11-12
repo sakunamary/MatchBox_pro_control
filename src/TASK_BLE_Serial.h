@@ -156,8 +156,8 @@ void TASK_BLE_CMD_handle(void *pvParameters)
             if (xQueueReceive(queueCMD_BLE, &BLE_CMD_Buffer, xIntervel) == pdPASS)
             { // 从接收QueueCMD 接收指令
 
-                if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
-                {
+                // if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
+                // {
                     // cmd from BLE cleaning
                     TC4_data_String = String((char *)BLE_CMD_Buffer);
 
@@ -191,7 +191,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     }
                     i = 0;
                     CMD_String = "";
-                    xSemaphoreGive(xThermoDataMutex);
+                    //xSemaphoreGive(xThermoDataMutex);
                 }
 
                 // big handle case switch
@@ -362,7 +362,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberFour, 0);
                         LCD.PCF8574_LCDSendString(line4);
 
-                        vTaskDelayUntil(&xLastWakeTime, 2000 / portTICK_PERIOD_MS);
+                        vTaskDelay(2000 / portTICK_PERIOD_MS);
 
                         I2C_EEPROM.get(64, pid_parm);
                         sprintf(line1, "EEPROM:064  CT:%4.2f ", pid_parm.pid_CT);
@@ -378,7 +378,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberFour, 0);
                         LCD.PCF8574_LCDSendString(line4);
 
-                        vTaskDelayUntil(&xLastWakeTime, 2000 / portTICK_PERIOD_MS);
+                         vTaskDelay(2000 / portTICK_PERIOD_MS);
                         I2C_EEPROM.get(128, pid_parm);
                         sprintf(line1, "EEPROM:128  CT:%4.2f ", pid_parm.pid_CT);
                         LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberOne, 0);
@@ -393,7 +393,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberFour, 0);
                         LCD.PCF8574_LCDSendString(line4);
 
-                        vTaskDelayUntil(&xLastWakeTime, 2000 / portTICK_PERIOD_MS);
+                       vTaskDelay(2000 / portTICK_PERIOD_MS);
                         LCD.PCF8574_LCDClearScreen();
                         vTaskResume(xTASK_LCD);
                     }
