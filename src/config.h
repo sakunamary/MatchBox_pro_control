@@ -6,7 +6,7 @@
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 9600          // serial port baudrate
-#define VERSION "1.1.2k"
+#define VERSION "1.1.2j"
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
 // #define DEBUG_MODE
 
@@ -95,6 +95,10 @@
 
 #define BT_FILTER 80
 #define AMB_FILTER 80
+#define ET_FILTER 70
+#define D_MULT 0.001 
+#define RISE_FILTER 85 // heavy filtering on non-displayed BT for RoR calculations
+#define ROR_FILTER 80 // post-filtering for the computed RoR values
 
 // 以下代码不要动，FreeRTOS用的代码
 typedef struct eeprom_settings
@@ -132,8 +136,6 @@ static TaskHandle_t xTask_PID_autotune = NULL;
 static TaskHandle_t xTASK_BLE_CMD_handle = NULL;
 
 SemaphoreHandle_t xThermoDataMutex = NULL;       // mutex for  bt et
-SemaphoreHandle_t xSerialReadBufferMutex = NULL; // mutex for serial read
-SemaphoreHandle_t xContrlDataMutex = NULL;       // mutex for OT1 IO3
 
 QueueHandle_t queueCMD_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));
 QueueHandle_t queue_data_to_BLE = xQueueCreate(8, sizeof(char[BLE_BUFFER_SIZE]));

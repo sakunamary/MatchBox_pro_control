@@ -34,6 +34,10 @@ String CMD_Data[6];
 extern int levelOT1;
 extern int levelIO3;
 extern bool pid_status;
+extern double BT_TEMP;
+extern double ET_TEMP;
+extern double AMB_RH;
+extern double AMB_TEMP;
 
 extern double PID_output;
 extern double pid_sv;
@@ -151,8 +155,8 @@ void TASK_BLE_CMD_handle(void *pvParameters)
             if (xQueueReceive(queueCMD_BLE, &BLE_CMD_Buffer, timeOut) == pdPASS)
             { // 从接收QueueCMD 接收指令
 
-                if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS)
-                {
+                // if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS)
+                // {
                     // cmd from BLE cleaning
                     TC4_data_String = String((char *)BLE_CMD_Buffer);
 
@@ -189,8 +193,8 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     }
                     i = 0;
                     CMD_String = "";
-                    xSemaphoreGive(xThermoDataMutex);
-                }
+                //     xSemaphoreGive(xThermoDataMutex);
+                // }
                 // ////////////////////////////////////////////////////
                 // big handle case switch
                 if (CMD_Data[0] == "IO3")

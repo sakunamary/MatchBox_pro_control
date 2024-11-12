@@ -70,10 +70,12 @@ public:
  filterRC();
  void init( int32_t percent );
  int32_t doFilter( int32_t xi );
+ float calcRise(int32_t T1, int32_t T2, int32_t t1, int32_t t2);
 protected:
  int32_t level; // filtering level, 0 to 100%
  int32_t y; // most recent value of function
  bool first; // special handling of first call
 };
+
 
 #endif

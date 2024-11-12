@@ -35,6 +35,7 @@ int levelOT1 = 0;
 int levelIO3 = 30;
 bool pid_status = false;
 bool PID_TUNNING = false;
+bool first = true;
 double PID_output = 0;
 double pid_sv;
 
@@ -134,7 +135,6 @@ void setup()
 
     loopTaskWDTEnabled = true;
     xThermoDataMutex = xSemaphoreCreateMutex();
-    xSerialReadBufferMutex = xSemaphoreCreateMutex();
 
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);
@@ -147,6 +147,11 @@ void setup()
 
     BT_TEMP_ft.init(BT_FILTER);
     AMB_ft.init(AMB_FILTER);
+    fRise.init(RISE_FILTER); // digital filtering for RoR calculation
+    fRoR.init(ROR_FILTER);   // post-filtering on RoR values
+    first = true;
+
+
     Serial.begin(BAUDRATE);
     // read pid data from EEPROM
 #if defined(DEBUG_MODE)

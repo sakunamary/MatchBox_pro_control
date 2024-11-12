@@ -16,11 +16,19 @@ double BT_TEMP;
 double ET_TEMP;
 double AMB_RH;
 double AMB_TEMP;
+double ror;
+float rx;
+int32_t ftemps;     // heavily filtered temps
+int32_t ftimes;     // filtered sample timestamps
+int32_t ftemps_old; // for calculating derivative
+int32_t ftimes_old; // for calculating derivative
+
 extern int levelOT1;
 extern int levelIO3;
 extern double pid_sv;
 extern bool pid_status;
 extern bool PID_TUNNING;
+extern bool first;
 extern pid_setting_t pid_parm;
 float PID_TUNE_SV;
 long prevMicroseconds;
@@ -34,8 +42,13 @@ extern PID Heat_pid_controller;
 extern PIDAutotuner tuner;
 extern ESP32PWM pwm_heat;
 extern ESP32PWM pwm_fan;
-filterRC BT_TEMP_ft;
+
 filterRC AMB_ft;
+filterRC BT_TEMP_ft;
+filterRC ET_TEMP_ft;
+filterRC fRise;
+filterRC fRoR;
+
 // Need this for the lower level access to set them up.
 uint8_t address = 0x68;
 long Voltage; // Array used to store results
@@ -61,7 +74,7 @@ void Task_Thermo_get_data(void *pvParameters)
     char temp_data_buffer_ble[BLE_BUFFER_SIZE];
     // uint8_t TEMP_DATA_Buffer[HMI_BUFFER_SIZE];
     const TickType_t xIntervel = (pid_parm.pid_CT * 1000) / portTICK_PERIOD_MS;
-    //const TickType_t xIntervel = 2000 / portTICK_PERIOD_MS;
+    // const TickType_t xIntervel = 2000 / portTICK_PERIOD_MS;
     const TickType_t timeOUT = 500 / portTICK_PERIOD_MS;
     /* Task Setup and Initialize */
     // Initial the xLastWakeTime variable with the current time.
@@ -75,8 +88,6 @@ void Task_Thermo_get_data(void *pvParameters)
         esp_task_wdt_reset();
         // Wait for the next cycle (intervel 2000ms).
         vTaskDelayUntil(&xLastWakeTime, xIntervel);
-        if (xSemaphoreTake(xThermoDataMutex, timeOUT) == pdPASS) // 给温度数组的最后一个数值写入数据
-        {
 
 #if defined(TC_TYPE_K)
             if (aht20.startMeasurementReady(/* crcEn = */ true))
@@ -86,6 +97,11 @@ void Task_Thermo_get_data(void *pvParameters)
                 // AMB_RH = aht20.getHumidity_RH();
             }
 #endif
+            if (!first)
+            {
+                ftemps_old = ftemps; // save old filtered temps for RoR calcs
+                ftimes_old = ftimes; // save old timestamps for filtered temps for RoR calcs
+            }
             delay(200);
             MCP.Configuration(1, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
 
@@ -95,18 +111,37 @@ void Task_Thermo_get_data(void *pvParameters)
             // Voltage >>= 10;
 #if defined(TC_TYPE_K)
             BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, AMB_TEMP) + pid_parm.BT_tempfix;
-#endif
-
-#if defined(TC_PT100)
+#else
             BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0034));
 #endif
             ET_TEMP = 0.0;
+            // cal RoR
+            ftimes = millis();
+            ftemps = fRise.doFilter(BT_TEMP * 1000);
+            if (!first)
+            {
+                rx = fRise.calcRise(ftemps_old, ftemps, ftimes_old, ftimes);
+
+                if ((fRoR.doFilter(rx / D_MULT) * D_MULT) >= 999)
+                {
+                    ror = 999.0;
+                }
+                else if ((fRoR.doFilter(rx / D_MULT) * D_MULT) <= -999)
+                {
+                    ror = -999.0;
+                }
+                else
+                {
+                    ror = fRoR.doFilter(rx / D_MULT) * D_MULT;
+                }
+            }
+
+            first = false;
             // delay(200);
             // MCP.Configuration(2, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
             // Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
             // ET_TEMP = pid_parm.ET_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
-            xSemaphoreGive(xThermoDataMutex); // end of lock mutex
-        }
+           
 
         // 检查温度是否达到切换PID参数
 #if defined(PID_AUTO_SHIFT)
