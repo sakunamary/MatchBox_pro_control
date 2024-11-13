@@ -23,12 +23,6 @@ double AMB_RH;
 double AMB_TEMP;
 double ror;
 
-double BT_TEMP_LCD;
-double ET_TEMP_LCD;
-double ror_LCD;
-int levelOT1_LCD;
-int levelIO3_LCD;
-double pid_sv_LCD;
 
 float rx;
 int32_t ftemps;     // heavily filtered temps
@@ -139,6 +133,7 @@ void Task_Thermo_get_data(void *pvParameters)
             ftemps_old = ftemps; // save old filtered temps for RoR calcs
             ftimes_old = ftimes; // save old timestamps for filtered temps for RoR calcs
         }
+
         // delay(200);
         MCP.Configuration(1, 16, 1, 1);               // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
         Voltage = MCP.Measure();                      // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
@@ -165,6 +160,7 @@ void Task_Thermo_get_data(void *pvParameters)
         // cal RoR
         ftimes = millis();
         ftemps = fRise.doFilter(BT_TEMP * 1000);
+
         if (!first)
         {
             rx = fRise.calcRise(ftemps_old, ftemps, ftimes_old, ftimes);
@@ -181,6 +177,7 @@ void Task_Thermo_get_data(void *pvParameters)
             {
                 ror = fRoR.doFilter(rx / D_MULT) * D_MULT;
             }
+
         }
 
         first = false;
