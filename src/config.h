@@ -16,7 +16,7 @@
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
 //#define DEBUG_MODE
 //不注释就选这Type K热电偶，注释掉就会选PT100
-#define TC_TYPE_K
+//#define TC_TYPE_K
 
 #define BLE_BUFFER_SIZE 64
 #define HMI_BUFFER_SIZE 17

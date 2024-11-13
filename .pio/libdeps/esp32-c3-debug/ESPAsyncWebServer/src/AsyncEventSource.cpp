@@ -141,7 +141,7 @@ size_t AsyncEventSourceMessage::ack(size_t len, __attribute__((unused)) uint32_t
 }
 
 size_t AsyncEventSourceMessage::write(AsyncClient* client) {
-  if(!client)
+  if (!client)
     return 0;
 
   if (_sent >= _len || !client->canSend()) {
@@ -270,7 +270,7 @@ size_t AsyncEventSourceClient::packetsWaiting() const {
 }
 
 void AsyncEventSourceClient::_runQueue() {
-  if(!_client)
+  if (!_client)
     return;
 
   size_t total_bytes_written = 0;
@@ -385,11 +385,8 @@ size_t AsyncEventSource::count() const {
   return n_clients;
 }
 
-bool AsyncEventSource::canHandle(AsyncWebServerRequest* request) {
-  if (request->method() != HTTP_GET || !request->url().equals(_url)) {
-    return false;
-  }
-  return true;
+bool AsyncEventSource::canHandle(AsyncWebServerRequest* request) const {
+  return request->isSSE() && request->url().equals(_url);
 }
 
 void AsyncEventSource::handleRequest(AsyncWebServerRequest* request) {

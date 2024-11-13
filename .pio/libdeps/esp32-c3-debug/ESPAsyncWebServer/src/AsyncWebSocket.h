@@ -278,9 +278,9 @@ class AsyncWebSocket : public AsyncWebHandler {
 
   public:
     typedef enum {
-      DISCARDED = 0,       // sent to no client
-      ENQUEUED = 1,     // sent to all clients
-      PARTIALLY_ENQUEUED = 2, // sent to some clients
+      DISCARDED = 0,
+      ENQUEUED = 1,
+      PARTIALLY_ENQUEUED = 2,
     } SendStatus;
 
     explicit AsyncWebSocket(const char* url) : _url(url), _cNextId(1), _enabled(true) {}
@@ -350,8 +350,8 @@ class AsyncWebSocket : public AsyncWebHandler {
     uint32_t _getNextId() { return _cNextId++; }
     AsyncWebSocketClient* _newClient(AsyncWebServerRequest* request);
     void _handleEvent(AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len);
-    virtual bool canHandle(AsyncWebServerRequest* request) override final;
-    virtual void handleRequest(AsyncWebServerRequest* request) override final;
+    bool canHandle(AsyncWebServerRequest* request) const override final;
+    void handleRequest(AsyncWebServerRequest* request) override final;
 
     //  messagebuffer functions/objects.
     AsyncWebSocketMessageBuffer* makeBuffer(size_t size = 0);

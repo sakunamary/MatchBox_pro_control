@@ -185,12 +185,12 @@ class AsyncWebSocketControl {
         _data = NULL;
     }
 
-    virtual ~AsyncWebSocketControl() {
+    ~AsyncWebSocketControl() {
       if (_data != NULL)
         free(_data);
     }
 
-    virtual bool finished() const { return _finished; }
+    bool finished() const { return _finished; }
     uint8_t opcode() { return _opcode; }
     uint8_t len() { return _len + 2; }
     size_t send(AsyncClient* client) {
@@ -1121,14 +1121,8 @@ const char __WS_STR_UUID[] PROGMEM = {"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"};
 #define WS_STR_ACCEPT     FPSTR(__WS_STR_ACCEPT)
 #define WS_STR_UUID       FPSTR(__WS_STR_UUID)
 
-bool AsyncWebSocket::canHandle(AsyncWebServerRequest* request) {
-  if (!_enabled)
-    return false;
-
-  if (request->method() != HTTP_GET || !request->url().equals(_url) || !request->isExpectedRequestedConnType(RCT_WS))
-    return false;
-
-  return true;
+bool AsyncWebSocket::canHandle(AsyncWebServerRequest* request) const {
+  return _enabled && request->isWebSocketUpgrade() && request->url().equals(_url);
 }
 
 void AsyncWebSocket::handleRequest(AsyncWebServerRequest* request) {

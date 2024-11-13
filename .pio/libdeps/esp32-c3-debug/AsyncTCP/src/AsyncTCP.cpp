@@ -39,6 +39,24 @@ extern "C"{
 #include <NetworkInterface.h>
 #endif
 
+#define TAG "AsyncTCP"
+
+// https://github.com/espressif/arduino-esp32/issues/10526
+#ifdef CONFIG_LWIP_TCPIP_CORE_LOCKING
+#define TCP_MUTEX_LOCK()                                \
+  if (!sys_thread_tcpip(LWIP_CORE_LOCK_QUERY_HOLDER)) { \
+    LOCK_TCPIP_CORE();                                  \
+  }
+
+#define TCP_MUTEX_UNLOCK()                             \
+  if (sys_thread_tcpip(LWIP_CORE_LOCK_QUERY_HOLDER)) { \
+    UNLOCK_TCPIP_CORE();                               \
+  }
+#else  // CONFIG_LWIP_TCPIP_CORE_LOCKING
+#define TCP_MUTEX_LOCK()
+#define TCP_MUTEX_UNLOCK()
+#endif  // CONFIG_LWIP_TCPIP_CORE_LOCKING
+
 #define INVALID_CLOSED_SLOT -1
 
 /*
@@ -448,6 +466,8 @@ static err_t _tcp_recved_api(struct tcpip_api_call_data *api_call_msg){
     tcp_api_call_t * msg = (tcp_api_call_t *)api_call_msg;
     msg->err = ERR_CONN;
     if(msg->closed_slot == INVALID_CLOSED_SLOT || !_closed_slots[msg->closed_slot]) {
+    // if(msg->closed_slot != INVALID_CLOSED_SLOT && !_closed_slots[msg->closed_slot]) {
+    // if(msg->closed_slot != INVALID_CLOSED_SLOT) {
         msg->err = 0;
         tcp_recved(msg->pcb, msg->received);
     }
@@ -720,17 +740,20 @@ bool AsyncClient::_connect(ip_addr_t addr, uint16_t port){
         return false;
     }
 
+    TCP_MUTEX_LOCK();
     tcp_pcb* pcb = tcp_new_ip_type(addr.type);
     if (!pcb){
+        TCP_MUTEX_UNLOCK();
         log_e("pcb == NULL");
         return false;
     }
-
     tcp_arg(pcb, this);
     tcp_err(pcb, &_tcp_error);
     tcp_recv(pcb, &_tcp_recv);
     tcp_sent(pcb, &_tcp_sent);
     tcp_poll(pcb, &_tcp_poll, 1);
+    TCP_MUTEX_UNLOCK();
+
     esp_err_t err =_tcp_connect(pcb, _closed_slot, &addr, port,(tcp_connected_fn)&_tcp_connected);
     return err == ESP_OK;
 }
@@ -861,11 +884,13 @@ int8_t AsyncClient::_close(){
     //ets_printf("X: 0x%08x\n", (uint32_t)this);
     int8_t err = ERR_OK;
     if(_pcb) {
+        TCP_MUTEX_LOCK();
         tcp_arg(_pcb, NULL);
         tcp_sent(_pcb, NULL);
         tcp_recv(_pcb, NULL);
         tcp_err(_pcb, NULL);
         tcp_poll(_pcb, NULL, 0);
+        TCP_MUTEX_UNLOCK();
         _tcp_clear_events(this);
         err = _tcp_close(_pcb, _closed_slot);
         if(err != ERR_OK) {
@@ -926,6 +951,7 @@ int8_t AsyncClient::_connected(tcp_pcb* pcb, int8_t err){
 
 void AsyncClient::_error(int8_t err) {
     if(_pcb){
+        TCP_MUTEX_LOCK();
         tcp_arg(_pcb, NULL);
         if(_pcb->state == LISTEN) {
             tcp_sent(_pcb, NULL);
@@ -933,6 +959,7 @@ void AsyncClient::_error(int8_t err) {
             tcp_err(_pcb, NULL);
             tcp_poll(_pcb, NULL, 0);
         }
+        TCP_MUTEX_UNLOCK();
         _free_closed_slot();
         _pcb = NULL;
     }
@@ -983,19 +1010,13 @@ int8_t AsyncClient::_sent(tcp_pcb* pcb, uint16_t len) {
 }
 
 int8_t AsyncClient::_recv(tcp_pcb* pcb, pbuf* pb, int8_t err) {
-    if(!_pcb || pcb != _pcb){
-        log_d("0x%08x != 0x%08x", (uint32_t)pcb, (uint32_t)_pcb);
-        return ERR_OK;
-    }
-    size_t total = 0;
-    while((pb != NULL) && (ERR_OK == err)) {
+    while(pb != NULL) {
         _rx_last_packet = millis();
         //we should not ack before we assimilate the data
         _ack_pcb = true;
         pbuf *b = pb;
         pb = b->next;
         b->next = NULL;
-        total += b->len;
         if(_pb_cb){
             _pb_cb(_pb_cb_arg, this, b);
         } else {
@@ -1004,11 +1025,13 @@ int8_t AsyncClient::_recv(tcp_pcb* pcb, pbuf* pb, int8_t err) {
             }
             if(!_ack_pcb) {
                 _rx_ack_len += b->len;
+            } else if(_pcb) {
+                _tcp_recved(_pcb, _closed_slot, b->len);
             }
         }
         pbuf_free(b);
     }
-    return _tcp_recved(pcb, _closed_slot, total);
+    return ERR_OK; 
 }
 
 int8_t AsyncClient::_poll(tcp_pcb* pcb){
@@ -1463,7 +1486,9 @@ void AsyncServer::begin(){
         return;
     }
     int8_t err;
+    TCP_MUTEX_LOCK();
     _pcb = tcp_new_ip_type(_bind4 && _bind6 ? IPADDR_TYPE_ANY : (_bind6 ? IPADDR_TYPE_V6 : IPADDR_TYPE_V4));
+    TCP_MUTEX_UNLOCK();
     if (!_pcb){
         log_e("_pcb == NULL");
         return;
@@ -1495,14 +1520,18 @@ void AsyncServer::begin(){
         log_e("listen_pcb == NULL");
         return;
     }
+    TCP_MUTEX_LOCK();
     tcp_arg(_pcb, (void*) this);
     tcp_accept(_pcb, &_s_accept);
+    TCP_MUTEX_UNLOCK();
 }
 
 void AsyncServer::end(){
     if(_pcb){
+        TCP_MUTEX_LOCK();
         tcp_arg(_pcb, NULL);
         tcp_accept(_pcb, NULL);
+        TCP_MUTEX_UNLOCK();
         if(tcp_close(_pcb) != ERR_OK){
             _tcp_abort(_pcb, -1);
         }

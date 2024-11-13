@@ -176,9 +176,9 @@ void ElegantOTAClass::begin(ELEGANTOTA_WEBSERVER *server, const char * username,
           update_size = ((size_t)&_FS_end - (size_t)&_FS_start);
           LittleFS.end();
         } else {
-          FSInfo64 i;
+          FSInfo i;
           LittleFS.begin();
-          LittleFS.info64(i);
+          LittleFS.info(i);
           update_size = i.totalBytes - i.usedBytes;
         }
         // Start update process
