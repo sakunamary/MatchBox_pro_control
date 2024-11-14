@@ -143,6 +143,7 @@ void setup()
 
     xThermoDataMutex = xSemaphoreCreateMutex();
     xLCDDataMutex = xSemaphoreCreateMutex();
+    first = true;
 
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);
@@ -160,7 +161,7 @@ void setup()
     AMB_ft.init(AMB_FILTER);
     fRise.init(RISE_FILTER); // digital filtering for RoR calculation
     fRoR.init(ROR_FILTER);   // post-filtering on RoR values
-    first = true;
+
 
     Serial.begin(HMI_BAUDRATE);
 
