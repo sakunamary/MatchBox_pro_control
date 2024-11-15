@@ -379,9 +379,9 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             pid_sv = 0;
                             PID_TUNNING = true;
                             xSemaphoreGive(xThermoDataMutex);
-                            vTaskResume(xTask_PID_autotune);
-                            xTaskNotify(xTask_PID_autotune, 0, eIncrement); // 通知处理任务干活
                         }
+                        vTaskResume(xTask_PID_autotune);
+                        xTaskNotify(xTask_PID_autotune, 0, eIncrement); // 通知处理任务干活
                     }
                     else if (CMD_Data[1] == "DROP")
                     {
