@@ -288,6 +288,10 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                 if (CMD_Data[1] == "ON")
                 {
                     Heat_pid_controller.SetMode(AUTOMATIC);
+                    pid_parm.p = 2.0;
+                    pid_parm.i = 0.12;
+                    pid_parm.d = 5.0;
+                    Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
                     if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
                     {
                         pid_status = true;
@@ -299,6 +303,10 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                 else if (CMD_Data[1] == "OFF")
                 {
                     Heat_pid_controller.SetMode(MANUAL);
+                    pid_parm.p = 2.0;
+                    pid_parm.i = 0.12;
+                    pid_parm.d = 5.0;
+                    Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
                     if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
                     {
                         pid_status = false;
@@ -313,8 +321,6 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         LCD.PCF8574_LCDSendString(line3);
                         xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                     }
-                    I2C_EEPROM.get(0, pid_parm);
-                    Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
                 }
                 else if (CMD_Data[1] == "SV")
                 {
@@ -398,7 +404,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     vTaskResume(xTASK_LCD);
                 }
             }
-        }// END of  big handle case switch
+        } // END of  big handle case switch
         // delay(50);
     }
 }

@@ -55,7 +55,7 @@ char ap_name[16];
 uint8_t macAddr[6];
 
 pid_setting_t pid_parm = {
-    .pid_CT = 1.5,     // uint16_t pid_CT;
+    .pid_CT = 1.0,     // uint16_t pid_CT;
     .p = 2.0,          // double p ;
     .i = 0.12,         // double i ;
     .d = 5.0,          // double d ;
@@ -309,7 +309,11 @@ void setup()
 
     // // init PID
     Heat_pid_controller.SetMode(MANUAL);
-    Heat_pid_controller.SetOutputLimits(PID_MIN_OUT, PID_MAX_OUT);
+    Heat_pid_controller.SetOutputLimits(PID_STAGE_1_MIN_OUT, PID_STAGE_1_MAX_OUT);
+    pid_parm.p = 2.0;
+    pid_parm.i = 0.12;
+    pid_parm.d = 5.0;
+    Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
     Heat_pid_controller.SetSampleTime(int(pid_parm.pid_CT * 1000));
 
     // INIT PID AUTOTUNE
