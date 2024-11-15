@@ -90,58 +90,57 @@ void Task_Thermo_get_data(void *pvParameters)
         vTaskDelayUntil(&xLastWakeTime, xIntervel);
 
 #if defined(TC_TYPE_K)
-            if (aht20.startMeasurementReady(/* crcEn = */ true))
-            {
-                AMB_TEMP = aht20.getTemperature_C();
-                AMB_TEMP = AMB_ft.doFilter(AMB_TEMP);
-                // AMB_RH = aht20.getHumidity_RH();
-            }
+        if (aht20.startMeasurementReady(/* crcEn = */ true))
+        {
+            AMB_TEMP = aht20.getTemperature_C();
+            AMB_TEMP = AMB_ft.doFilter(AMB_TEMP);
+            // AMB_RH = aht20.getHumidity_RH();
+        }
 #endif
-            if (!first)
-            {
-                ftemps_old = ftemps; // save old filtered temps for RoR calcs
-                ftimes_old = ftimes; // save old timestamps for filtered temps for RoR calcs
-            }
-            delay(200);
-            MCP.Configuration(1, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
+        if (!first)
+        {
+            ftemps_old = ftemps; // save old filtered temps for RoR calcs
+            ftimes_old = ftimes; // save old timestamps for filtered temps for RoR calcs
+        }
+        delay(200);
+        MCP.Configuration(1, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
 
-            Voltage = MCP.Measure(); // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
-            Voltage = BT_TEMP_ft.doFilter(Voltage);
-            // Voltage = BT_TEMP_ft.doFilter(Voltage << 10); // multiply by 1024 to create some resolution for filter
-            // Voltage >>= 10;
+        Voltage = MCP.Measure(); // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
+        Voltage = BT_TEMP_ft.doFilter(Voltage);
+        // Voltage = BT_TEMP_ft.doFilter(Voltage << 10); // multiply by 1024 to create some resolution for filter
+        // Voltage >>= 10;
 #if defined(TC_TYPE_K)
-            BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, AMB_TEMP) + pid_parm.BT_tempfix;
+        BT_TEMP = temp_K_cal.Temp_C(Voltage * 0.001, AMB_TEMP) + pid_parm.BT_tempfix;
 #else
-            BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0035));
+        BT_TEMP = pid_parm.BT_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0035));
 #endif
-            ET_TEMP = 0.0;
-            // cal RoR
-            ftimes = millis();
-            ftemps = fRise.doFilter(BT_TEMP * 1000);
-            if (!first)
+        ET_TEMP = 0.0;
+        // cal RoR
+        ftimes = millis();
+        ftemps = fRise.doFilter(BT_TEMP * 1000);
+        if (!first)
+        {
+            rx = fRise.calcRise(ftemps_old, ftemps, ftimes_old, ftimes);
+
+            if ((fRoR.doFilter(rx / D_MULT) * D_MULT) >= 999)
             {
-                rx = fRise.calcRise(ftemps_old, ftemps, ftimes_old, ftimes);
-
-                if ((fRoR.doFilter(rx / D_MULT) * D_MULT) >= 999)
-                {
-                    ror = 999.0;
-                }
-                else if ((fRoR.doFilter(rx / D_MULT) * D_MULT) <= -999)
-                {
-                    ror = -999.0;
-                }
-                else
-                {
-                    ror = fRoR.doFilter(rx / D_MULT) * D_MULT;
-                }
+                ror = 999.0;
             }
+            else if ((fRoR.doFilter(rx / D_MULT) * D_MULT) <= -999)
+            {
+                ror = -999.0;
+            }
+            else
+            {
+                ror = fRoR.doFilter(rx / D_MULT) * D_MULT;
+            }
+        }
 
-            first = false;
-            // delay(200);
-            // MCP.Configuration(2, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
-            // Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
-            // ET_TEMP = pid_parm.ET_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
-           
+        first = false;
+        // delay(200);
+        // MCP.Configuration(2, 16, 1, 1); // MCP3424 is configured to channel i with 18 bits resolution, continous mode and gain defined to 8
+        // Voltage = MCP.Measure();        // Measure is stocked in array Voltage, note that the library will wait for a completed conversion that takes around 200 ms@18bits
+        // ET_TEMP = pid_parm.ET_tempfix + (((Voltage / 1000 * Rref) / ((3.3 * 1000) - Voltage / 1000) - R0) / (R0 * 0.0039083));
 
         // 检查温度是否达到切换PID参数
 #if defined(PID_AUTO_SHIFT)
@@ -213,9 +212,12 @@ void Task_Thermo_get_data(void *pvParameters)
         // PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
         if (xSemaphoreTake(xThermoDataMutex, timeOUT) == pdPASS) // 给温度数组的最后一个数值写入数据
         {
-            sprintf(temp_data_buffer_ble, "#0.00,0.00,%4.2f,%d,%d,%4.2f;\n", (int)round(BT_TEMP), levelOT1, levelIO3, pid_sv);
+            sprintf(temp_data_buffer_ble, "#0.00,0.00,%4.2f,%d,%d,%4.2f;\n", BT_TEMP, levelOT1, levelIO3, pid_sv);
             xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
             xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
+#if defined(DEBUG_MODE)
+            Serial.printf("#0.00,0.00,%4.2f,%d,%d,%4.2f;\n", BT_TEMP, levelOT1, levelIO3, pid_sv);
+#endif
         }
         xSemaphoreGive(xThermoDataMutex); // end of lock mutex
     }
