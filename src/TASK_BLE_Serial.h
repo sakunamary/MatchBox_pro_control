@@ -28,6 +28,7 @@ extern ExternalEEPROM I2C_EEPROM;
 extern PID Heat_pid_controller;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
+bool drop_on = false;
 extern char ap_name[16];
 String CMD_Data[6];
 
@@ -382,6 +383,29 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             xTaskNotify(xTask_PID_autotune, 0, eIncrement); // 通知处理任务干活
                         }
                     }
+                    else if (CMD_Data[1] == "DROP")
+                    {
+                        if (drop_on == false)
+                        {
+                            if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
+                            {
+                                levelIO3 = 999;
+                                pwm_fan.write(1000);
+                                xSemaphoreGive(xThermoDataMutex);
+                            }
+                            drop_on = true;
+                        }
+                        else
+                        {
+                            if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
+                            {
+                                levelIO3 = 0;
+                                pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                                xSemaphoreGive(xThermoDataMutex);
+                            }
+                            drop_on == false;
+                        }
+                    }
                 }
                 else if (CMD_Data[0] == "LINE")
                 {
@@ -409,6 +433,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
 // PID
 //     ON
 //     OFF
+//     DROP
 //     SV
 //         data
 
