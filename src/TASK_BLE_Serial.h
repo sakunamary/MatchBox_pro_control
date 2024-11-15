@@ -157,42 +157,42 @@ void TASK_BLE_CMD_handle(void *pvParameters)
 
                 // if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS)
                 // {
-                    // cmd from BLE cleaning
-                    TC4_data_String = String((char *)BLE_CMD_Buffer);
+                // cmd from BLE cleaning
+                TC4_data_String = String((char *)BLE_CMD_Buffer);
 
-                    while (j < TC4_data_String.length() && TC4_data_String.length() > 0)
+                while (j < TC4_data_String.length() && TC4_data_String.length() > 0)
+                {
+
+                    if (TC4_data_String[j] == '\n')
                     {
-
-                        if (TC4_data_String[j] == '\n')
-                        {
-                            CMD_String += TC4_data_String[j]; // copy value
-                            TC4_data_String = "";
-                            j = 0; // clearing
-                            break; // 跳出循环
-                        }
-                        else
-                        {
-                            CMD_String += TC4_data_String[j]; // copy value
-                            j++;
-                        }
+                        CMD_String += TC4_data_String[j]; // copy value
+                        TC4_data_String = "";
+                        j = 0; // clearing
+                        break; // 跳出循环
                     }
-                    CMD_String.trim();
-                    CMD_String.toUpperCase();
+                    else
+                    {
+                        CMD_String += TC4_data_String[j]; // copy value
+                        j++;
+                    }
+                }
+                CMD_String.trim();
+                CMD_String.toUpperCase();
 #if defined(DEBUG_MODE)
-                    Serial.println(CMD_String); // for debug
+                Serial.println(CMD_String); // for debug
 #endif
 
-                    // cmd from BLE cleaning
-                    StringTokenizer BLE_CMD(CMD_String, ",");
+                // cmd from BLE cleaning
+                StringTokenizer BLE_CMD(CMD_String, ",");
 
-                    while (BLE_CMD.hasNext())
-                    {
-                        CMD_Data[i] = BLE_CMD.nextToken(); // prints the next token in the string
-                        // Serial.println(CMD_Data[i]);
-                        i++;
-                    }
-                    i = 0;
-                    CMD_String = "";
+                while (BLE_CMD.hasNext())
+                {
+                    CMD_Data[i] = BLE_CMD.nextToken(); // prints the next token in the string
+                    // Serial.println(CMD_Data[i]);
+                    i++;
+                }
+                i = 0;
+                CMD_String = "";
                 //     xSemaphoreGive(xThermoDataMutex);
                 // }
                 // ////////////////////////////////////////////////////
@@ -312,6 +312,12 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     if (CMD_Data[1] == "ON")
                     {
                         Heat_pid_controller.SetMode(AUTOMATIC);
+                        pid_parm.p = 2.0;
+                        pid_parm.i = 0.12;
+                        pid_parm.d = 5.0;
+
+                        Heat_pid_controller.SetOutputLimits(PID_STAGE_1_MIN_OUT, PID_STAGE_1_MAX_OUT);
+                        Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
                         if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
                         {
                             pid_status = true;
@@ -321,19 +327,20 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     else if (CMD_Data[1] == "OFF")
                     {
                         Heat_pid_controller.SetMode(MANUAL);
+                        pid_parm.p = 2.0;
+                        pid_parm.i = 0.12;
+                        pid_parm.d = 5.0;
+                        Heat_pid_controller.SetOutputLimits(PID_STAGE_1_MIN_OUT, PID_STAGE_1_MAX_OUT);
+                        Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
+
                         if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS)
                         {
                             pid_status = false;
                             pid_sv = 0;
-
                             levelOT1 = 0;
                             levelIO3 = 50;
                             pwm_heat.write(1);
                             pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
-                            I2C_EEPROM.get(0, pid_parm);
-                            Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
-                            // Heat_pid_controller.setCoefficients(pid_parm.p, pid_parm.i, pid_parm.d);
-
                             xSemaphoreGive(xThermoDataMutex);
                         }
                     }
@@ -375,12 +382,18 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             xTaskNotify(xTask_PID_autotune, 0, eIncrement); // 通知处理任务干活
                         }
                     }
-                } else if(CMD_Data[0] == "LINE")
+                }
+                else if (CMD_Data[0] == "LINE")
                 {
-                    if(CMD_Data[1]=="RUN"){}
-                    else if (CMD_Data[1]=="CLR"){}
-                    else if (CMD_Data[1]=="SEND"){}
-                    
+                    if (CMD_Data[1] == "RUN")
+                    {
+                    }
+                    else if (CMD_Data[1] == "CLR")
+                    {
+                    }
+                    else if (CMD_Data[1] == "SEND")
+                    {
+                    }
                 }
 
                 // END of  big handle case switch
@@ -408,8 +421,8 @@ void TASK_BLE_CMD_handle(void *pvParameters)
 //     DOWN
 //     data
 
-//LINE 
-//      CLR
-//      SEND
-//      END 
-//      RUN
+// LINE
+//       CLR
+//       SEND
+//       END
+//       RUN
