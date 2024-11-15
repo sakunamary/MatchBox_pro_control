@@ -151,7 +151,6 @@ void setup()
     fRoR.init(ROR_FILTER);   // post-filtering on RoR values
     first = true;
 
-
     Serial.begin(BAUDRATE);
     // read pid data from EEPROM
 #if defined(DEBUG_MODE)
@@ -296,12 +295,13 @@ void setup()
 
     Heat_pid_controller.SetMode(MANUAL);
     Heat_pid_controller.SetOutputLimits(PID_STAGE_1_MIN_OUT, PID_STAGE_1_MAX_OUT);
+    Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
     Heat_pid_controller.SetSampleTime(int(pid_parm.pid_CT * 1000));
 
     // INIT PID AUTOTUNE
     tuner.setTargetInputValue(PID_TUNE_SV_1);
     tuner.setLoopInterval(pid_parm.pid_CT * uS_TO_S_FACTOR);
-     tuner.setOutputRange(round(PID_STAGE_1_MIN_OUT * 255 / 100), round(PID_STAGE_1_MAX_OUT * 255 / 100));
+    tuner.setOutputRange(round(PID_STAGE_1_MIN_OUT * 255 / 100), round(PID_STAGE_1_MAX_OUT * 255 / 100));
     tuner.setZNMode(PIDAutotuner::ZNModeNoOvershoot);
 
     // Start ElegantOTA
