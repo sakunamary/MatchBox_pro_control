@@ -187,21 +187,7 @@ void Task_Thermo_get_data(void *pvParameters)
         delay(50);   // IO1
         readAnlg2(); // OT3
         // end of 获取 旋钮数值
-
-        // step2: 发送数据到小程序
-        //  PID ON:ambient,chan1,chan2,  heater duty, fan duty, SV
-        // if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
-        // {
-        //     // 封装BLE 协议
-        //     sprintf(temp_data_buffer_ble, "#0.00,%4.2f,%4.2f,%d,%d,%4.2f;\n", ET_TEMP, BT_TEMP, levelOT1, levelIO3, pid_sv);
-        //     // sprintf(temp_data_buffer_ble, "#0.00,%4.2f,%4.2f,%d,%d,%f4.0f,%4.2f;\n", ET_TEMP, BT_TEMP, levelOT1, levelIO3,ror,pid_sv);
-        //     xQueueSend(queue_data_to_BLE, &temp_data_buffer_ble, xIntervel);
-        //     xTaskNotify(xTASK_data_to_BLE, 0, eIncrement); // send notify to TASK_data_to_HMI
-        //     memset(&temp_data_buffer_ble, '\0', BLE_BUFFER_SIZE);
-        //     xSemaphoreGive(xThermoDataMutex); // end of lock mutex
-        // }
-        // end of step2:发送数据到小程序
-
+        
         // step3:
         //  检查温度是否达到切换PID参数
 #if defined(PID_AUTO_SHIFT)
