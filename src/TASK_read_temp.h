@@ -239,8 +239,8 @@ void Task_Thermo_get_data(void *pvParameters)
 #if defined(DEBUG_MODE)
                     Serial.printf("\n Turn Down fan t0:%ld t1:%ld t2:%ld\n", temp_check[0], temp_check[1], temp_check[2]);
 #endif
-                    levelIO3 = 25; //make sure OT1 = 0 ;
-                    levelOT1 = 0;  //dobule make sure OT1 =0;
+                    levelIO3 = 25; // make sure OT1 = 0 ;
+                    levelOT1 = 0;  // dobule make sure OT1 =0;
                     pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     pwm_heat.write(1); // for safe
                     temp_check[2] = 0;
@@ -524,22 +524,31 @@ void readAnlg1()
     if (pid_status == false)
     {
         reading = getAnalogValue(anlg1);
-        if (reading <= 100 && reading != old_reading_anlg1)
-        {                                                                             // did it change?
-            old_reading_anlg1 = reading;                                              // save reading for next time
-            if (xSemaphoreTake(xThermoDataMutex, 150 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
-            {
-                if (levelIO3 >= 30)
+        if (levelIO3 >= 30)
+        {
+            if (reading <= 100 && reading != old_reading_anlg1)
+            {                                                                             // did it change?
+                old_reading_anlg1 = reading;                                              // save reading for next time
+                if (xSemaphoreTake(xThermoDataMutex, 150 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
                 {
+
                     levelOT1 = reading;
+
+                    pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                    xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                 }
-                else
-                {
-                    levelOT1 = 0;
-                }
-                pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
-                xSemaphoreGive(xThermoDataMutex); // end of lock mutex
             }
+        }
+        else // shutdown heat pwr
+        {
+                if (xSemaphoreTake(xThermoDataMutex, 150 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
+                {
+
+                    levelOT1 = 0;
+
+                    pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                    xSemaphoreGive(xThermoDataMutex); // end of lock mutex
+                }
         }
     }
 }
