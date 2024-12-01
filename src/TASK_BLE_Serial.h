@@ -245,11 +245,18 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                 {
                     if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
                     {
-                        levelOT1 = levelOT1 + DUTY_STEP;
-                        if (levelOT1 > MAX_OT1)
-                            levelOT1 = MAX_OT1; // don't allow OT1 to exceed maximum
-                        if (levelOT1 < MIN_OT1)
-                            levelOT1 = MIN_OT1; // don't allow OT1 to turn on less than minimum
+                        if (levelIO3 >= 30)
+                        {
+                            levelOT1 = levelOT1 + DUTY_STEP;
+                            if (levelOT1 > MAX_OT1)
+                                levelOT1 = MAX_OT1; // don't allow OT1 to exceed maximum
+                            if (levelOT1 < MIN_OT1)
+                                levelOT1 = MIN_OT1; // don't allow OT1 to turn on less than minimum
+                        }
+                        else
+                        {
+                            levelOT1 = 0;
+                        }
                         pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                         xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                     }
@@ -258,9 +265,16 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                 {
                     if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
                     {
-                        levelOT1 = levelOT1 - DUTY_STEP;
-                        if (levelOT1 < MIN_OT1 & levelOT1 != 0)
-                            levelOT1 = 0; // turn ot1 off if trying to go below minimum. or use levelOT1 = MIN_HTR ?
+                        if (levelIO3 >= 30)
+                        {
+                            levelOT1 = levelOT1 - DUTY_STEP;
+                            if (levelOT1 < MIN_OT1 & levelOT1 != 0)
+                                levelOT1 = 0; // turn ot1 off if trying to go below minimum. or use levelOT1 = MIN_HTR ?
+                        }
+                        else
+                        {
+                            levelOT1 = 0;
+                        }
                         pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                         xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                     }
@@ -273,10 +287,18 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
                             levelOT1 = CMD_Data[1].toInt();
-                            if (levelOT1 > MAX_OT1)
-                                levelOT1 = MAX_OT1; // don't allow OT1 to exceed maximum
-                            if (levelOT1 < MIN_OT1 & levelOT1 != 0)
-                                levelOT1 = MIN_OT1; // don't allow to set less than minimum unless setting to zero
+                            if (levelIO3 >= 30)
+                            {
+                                if (levelOT1 > MAX_OT1)
+                                    levelOT1 = MAX_OT1; // don't allow OT1 to exceed maximum
+                                if (levelOT1 < MIN_OT1 & levelOT1 != 0)
+                                    levelOT1 = MIN_OT1; // don't allow to set less than minimum unless setting to zero
+                            }
+                            else
+                            {
+                                levelOT1 = 0;
+                            }
+
                             pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }

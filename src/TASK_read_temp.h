@@ -23,7 +23,6 @@ double AMB_RH;
 double AMB_TEMP;
 double ror;
 
-
 float rx;
 int32_t ftemps;     // heavily filtered temps
 int32_t ftimes;     // filtered sample timestamps
@@ -104,8 +103,8 @@ void Task_Thermo_get_data(void *pvParameters)
     /* Variable Definition */
     (void)pvParameters;
     TickType_t xLastWakeTime;
-    //char temp_data_buffer_ble[BLE_BUFFER_SIZE];
-    // uint8_t temp_data_buffer_ble_out[BLE_BUFFER_SIZE];
+    // char temp_data_buffer_ble[BLE_BUFFER_SIZE];
+    //  uint8_t temp_data_buffer_ble_out[BLE_BUFFER_SIZE];
     const TickType_t xIntervel = pid_parm.pid_CT / portTICK_PERIOD_MS;
     // const TickType_t xIntervel = (pid_parm.pid_CT * 1000) / portTICK_PERIOD_MS;
     const TickType_t timeOut = 500 / portTICK_PERIOD_MS;
@@ -177,7 +176,6 @@ void Task_Thermo_get_data(void *pvParameters)
             {
                 ror = fRoR.doFilter(rx / D_MULT) * D_MULT;
             }
-
         }
 
         first = false;
@@ -186,8 +184,8 @@ void Task_Thermo_get_data(void *pvParameters)
         readAnlg1();
         delay(50);   // IO1
         readAnlg2(); // OT3
-        // end of 获取 旋钮数值
-        
+                     // end of 获取 旋钮数值
+
         // step3:
         //  检查温度是否达到切换PID参数
 #if defined(PID_AUTO_SHIFT)
@@ -205,7 +203,7 @@ void Task_Thermo_get_data(void *pvParameters)
                 Heat_pid_controller.SetOutputLimits(PID_STAGE_3_MIN_OUT, PID_STAGE_3_MAX_OUT);
                 Heat_pid_controller.SetTunings(pid_parm.p, pid_parm.i, pid_parm.d);
             }
-        }// end of step3:检查温度是否达到切换PID参数
+        } // end of step3:检查温度是否达到切换PID参数
 
 #endif
         // step4:
@@ -241,7 +239,8 @@ void Task_Thermo_get_data(void *pvParameters)
 #if defined(DEBUG_MODE)
                     Serial.printf("\n Turn Down fan t0:%ld t1:%ld t2:%ld\n", temp_check[0], temp_check[1], temp_check[2]);
 #endif
-                    levelIO3 = 30;
+                    levelIO3 = 25; //make sure OT1 = 0 ;
+                    levelOT1 = 0;  //dobule make sure OT1 =0;
                     pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                     pwm_heat.write(1); // for safe
                     temp_check[2] = 0;
@@ -249,7 +248,7 @@ void Task_Thermo_get_data(void *pvParameters)
                     temp_check[0] = 0;
                 }
             }
-        }  // end of step4: 检查温度是否达到降温降风
+        } // end of step4: 检查温度是否达到降温降风
     } // while loop
 } // function
 
@@ -530,7 +529,14 @@ void readAnlg1()
             old_reading_anlg1 = reading;                                              // save reading for next time
             if (xSemaphoreTake(xThermoDataMutex, 150 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
             {
-                levelOT1 = reading;
+                if (levelIO3 >= 30)
+                {
+                    levelOT1 = reading;
+                }
+                else
+                {
+                    levelOT1 = 0;
+                }
                 pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
                 xSemaphoreGive(xThermoDataMutex); // end of lock mutex
             }
