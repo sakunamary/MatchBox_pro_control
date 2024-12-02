@@ -35,7 +35,7 @@ extern bool loopTaskWDTEnabled;
 extern TaskHandle_t loopTaskHandle;
 // uint8_t HMI_HAND[HMI_BUFFER_SIZE];
 int levelOT1 = 0;
-int levelIO3 = 30;
+int levelIO3 = 25;
 bool pid_status = false;
 bool PID_TUNNING = false;
 bool first = true;
@@ -148,7 +148,7 @@ void setup()
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);
     pwm_fan.attachPin(pwm_fan_out, frequency, resolution); // 1KHz 8 bit
-    pwm_fan.write(600);
+    pwm_fan.write(600); // level IO3=65
     pwm_heat.attachPin(pwm_heat_out, 1000, resolution); // 1KHz 8 bit
     pwm_heat.write(1);
 

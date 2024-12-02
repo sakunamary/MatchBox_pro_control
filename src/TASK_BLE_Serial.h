@@ -206,7 +206,15 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             levelIO3 = MAX_IO3; // don't allow OT1 to exceed maximum
                         if (levelIO3 < MIN_IO3)
                             levelIO3 = MIN_IO3; // don't allow OT1 to turn on less than minimum
-                        pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+
+                        if (levelIO3 >= 25)
+                        {
+                            pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                        }
+                        else
+                        {
+                            pwm_fan.write(PWM_FAN_FIX_OUT_LOW);
+                        }
                         xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                     }
                 }
@@ -216,8 +224,17 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     {
                         levelIO3 = levelIO3 - DUTY_STEP;
                         if (levelIO3 < MIN_IO3 & levelIO3 != 0)
-                            levelIO3 = 0; // turn ot1 off if trying to go below minimum. or use levelOT1 = MIN_HTR ?
-                        pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                        {
+                            levelIO3 = 0;
+                        } // turn ot1 off if trying to go below minimum. or use levelOT1 = MIN_HTR ?
+                        if (levelIO3 >= 25)
+                        {
+                            pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                        }
+                        else
+                        {
+                            pwm_fan.write(PWM_FAN_FIX_OUT_LOW);
+                        }
                         xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                     }
                 }
@@ -230,10 +247,22 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         {
                             levelIO3 = CMD_Data[1].toInt();
                             if (levelIO3 > MAX_IO3)
+                            {
                                 levelIO3 = MAX_IO3; // don't allow OT1 to exceed maximum
+                            }
                             if (levelIO3 < MIN_IO3 & levelIO3 != 0)
+                            {
                                 levelIO3 = MIN_IO3; // don't allow to set less than minimum unless setting to zero
-                            pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                            }
+
+                            if (levelIO3 >= 25)
+                            {
+                                pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                            }
+                            else
+                            {
+                                pwm_fan.write(PWM_FAN_FIX_OUT_LOW);
+                            }
                             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
                     }

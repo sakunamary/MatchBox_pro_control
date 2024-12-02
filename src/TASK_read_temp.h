@@ -431,7 +431,7 @@ void Task_PID_autotune(void *pvParameters)
 
                     if (xSemaphoreTake(xThermoDataMutex, xIntervel) == pdPASS) // 给温度数组的最后一个数值写入数据
                     {
-                        levelIO3 = 30;
+                        levelIO3 = 25;
                         levelOT1 = 0;
                         PID_TUNNING = false;
                         pid_status = false;
@@ -541,14 +541,14 @@ void readAnlg1()
         }
         else // shutdown heat pwr
         {
-                if (xSemaphoreTake(xThermoDataMutex, 150 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
-                {
+            if (xSemaphoreTake(xThermoDataMutex, 150 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
+            {
 
-                    levelOT1 = 0;
+                levelOT1 = 0;
 
-                    pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
-                    xSemaphoreGive(xThermoDataMutex); // end of lock mutex
-                }
+                pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                xSemaphoreGive(xThermoDataMutex); // end of lock mutex
+            }
         }
     }
 }
@@ -567,7 +567,14 @@ void readAnlg2()
             if (xSemaphoreTake(xThermoDataMutex, 150 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
             {
                 levelIO3 = reading;
-                pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                if (levelIO3 >= 25)
+                {
+                    pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                }
+                else
+                {
+                     pwm_fan.write(PWM_FAN_FIX_OUT_LOW); 
+                }
                 xSemaphoreGive(xThermoDataMutex); // end of lock mutex
             }
         }

@@ -7,7 +7,7 @@
 #include <Wire.h>
 
 #define BANNER "MATCHBOX H7 v2"
-#define VERSION "1.2.0e"
+#define VERSION "1.2.0f"
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
@@ -42,8 +42,8 @@
 #define PWM_FREQ 4000
 #define PWM_RESOLUTION 10 // 0-1024
 
-
-#define PWM_FAN_MIN 200
+#define PWM_FAN_FIX_OUT_LOW 200 //低于level IO3 25 以后的pwm 最小限值，防止风机停转
+#define PWM_FAN_MIN 175
 #define PWM_HEAT_MIN 100
 
 #define PWM_FAN_MAX 700
@@ -64,7 +64,7 @@
 #define MIN_OT1 0   // Set output % for lower limit for OT1.  0% power will always be available
 #define MAX_OT1 100 // Set output % for upper limit for OT1
 
-#define MIN_IO3 10  // Set output % for lower limit for IO3.  0% power will always be available
+#define MIN_IO3 25  // Set output % for lower limit for IO3.  0% power will always be available
 #define MAX_IO3 100 // Set output % for upper limit for IO3
 
 // PID自动整定 三个阶段的温度设置
