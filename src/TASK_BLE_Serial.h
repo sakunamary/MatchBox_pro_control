@@ -363,9 +363,9 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         pid_status = false;
                         pid_sv = 0;
                         levelOT1 = 0;
-                        levelIO3 = 50;
+                        //levelIO3 = 50;
                         pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
-                        pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                        //pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                         sprintf(line3, "HTR:%4d ", (int)round(levelOT1));
                         LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberThree);
                         LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberThree, 0);
