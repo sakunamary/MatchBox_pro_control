@@ -46,7 +46,7 @@
 #define PWM_FAN_MIN 175
 #define PWM_HEAT_MIN 100
 
-#define PWM_FAN_MAX 700
+#define PWM_FAN_MAX 1000
 #define PWM_HEAT_MAX 1000
 
 #define PID_MAX_OUT 100
