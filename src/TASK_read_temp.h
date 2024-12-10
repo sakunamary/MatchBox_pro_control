@@ -32,6 +32,8 @@ int32_t ftimes_old; // for calculating derivative
 // uint32_t AMB_PRESS;
 extern int levelOT1;
 extern int levelIO3;
+extern int OT1_OUT;
+extern int PWM_OT1;
 extern double pid_sv;
 extern bool pid_status;
 extern bool PID_TUNNING;
@@ -478,8 +480,13 @@ void Task_PID_autotune(void *pvParameters)
 int32_t getAnalogValue(uint8_t CH)
 {
     int32_t mod, trial, min_anlg1, max_anlg1, min_anlg2, max_anlg2;
-    min_anlg1 = MIN_OT1;
+
+#ifdef PID_OFF_PWR_LIMT
+    max_anlg1 = MAX_OT1_LIMT;
+#else
     max_anlg1 = MAX_OT1;
+#endif
+    min_anlg1 = MIN_OT1;
     min_anlg2 = MIN_IO3;
     max_anlg2 = MAX_IO3;
     float aval;
@@ -526,15 +533,26 @@ void readAnlg1()
         reading = getAnalogValue(anlg1);
         if (levelIO3 >= 30)
         {
+
             if (reading <= 100 && reading != old_reading_anlg1)
             {                                                                             // did it change?
                 old_reading_anlg1 = reading;                                              // save reading for next time
                 if (xSemaphoreTake(xThermoDataMutex, 150 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
                 {
+#ifdef PID_OFF_PWR_LIMT
 
+                    OT1_OUT = MAX_OT1;
+                    PWM_OT1 = PWM_HEAT_MAX;
+
+#else
+
+                    OT1_OUT = MAX_OT1_LIMT;
+                    PWM_OT1 = PWM_HEAT_MAX_LIMT;
+
+#endif
                     levelOT1 = reading;
 
-                    pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                    pwm_heat.write(map(levelOT1, 0, OT1_OUT, PWM_HEAT_MIN, PWM_OT1));
                     xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                 }
             }
@@ -543,10 +561,12 @@ void readAnlg1()
         {
             if (xSemaphoreTake(xThermoDataMutex, 150 / portTICK_PERIOD_MS) == pdPASS) // 给温度数组的最后一个数值写入数据
             {
-
+                OT1_OUT = MAX_OT1;
+                PWM_OT1 = PWM_HEAT_MAX;
+                
                 levelOT1 = 0;
 
-                pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                pwm_heat.write(map(levelOT1, 0, OT1_OUT, PWM_HEAT_MIN, PWM_OT1));
                 xSemaphoreGive(xThermoDataMutex); // end of lock mutex
             }
         }
@@ -573,7 +593,7 @@ void readAnlg2()
                 }
                 else
                 {
-                     pwm_fan.write(PWM_FAN_FIX_OUT_LOW); 
+                    pwm_fan.write(PWM_FAN_FIX_OUT_LOW);
                 }
                 xSemaphoreGive(xThermoDataMutex); // end of lock mutex
             }

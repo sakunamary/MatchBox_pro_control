@@ -7,7 +7,7 @@
 #include <Wire.h>
 
 #define BANNER "MATCHBOX H7 v2"
-#define VERSION "1.2.0g"
+#define VERSION "1.2.0h"
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 115200        // serial port baudrate
@@ -48,6 +48,7 @@
 
 #define PWM_FAN_MAX 1000
 #define PWM_HEAT_MAX 1000
+#define PWM_HEAT_MAX_LIMT 800
 
 #define PID_MAX_OUT 100
 #define PID_MIN_OUT 10
@@ -60,12 +61,19 @@
 #define DUTY_STEP 2                                         // Use 1, 2, 4, 5, or 10.
 
 ////////////////////
+
+#define PID_OFF_PWR_LIMT //pid off 模式下 火力输出强制限制到80
+
 // Heater and Fan Limits/Options
 #define MIN_OT1 0   // Set output % for lower limit for OT1.  0% power will always be available
 #define MAX_OT1 100 // Set output % for upper limit for OT1
+#define MAX_OT1_LIMT 80 // Set output % for upper limit for OT1
+
 
 #define MIN_IO3 25  // Set output % for lower limit for IO3.  0% power will always be available
 #define MAX_IO3 100 // Set output % for upper limit for IO3
+
+
 
 // PID自动整定 三个阶段的温度设置
 #define PID_TUNE_SV_3 190
