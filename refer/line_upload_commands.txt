@@ -20,16 +20,18 @@ line[3]:点位标识，最多5个字符 可为NULL。 只能为英文字符和�
 #命令行
                     曲线编号 ｜ 二维数组列序号｜line[0]｜line[1]｜line[2]｜line[3]
 1.发送数据：LINE,SEND,00     ｜00           ｜00 00  ｜00 00  ｜00     ｜hex格式的字符 小程序->EEPROM
-2.发送结束：LINE,END                                                                小程序->EEPROM
-3.调用曲线：LINE,RUN,曲线编号                                                        小程序->EEPROM
-4.清楚曲线：LINE,CLR,曲线编号                                                        小程序->EEPROM
-5.从EEPROM同步曲线数据-触发：LINE,SYNC                                               小程序->EEPROM
-6.EEPROM发送过程开始：LINE,SYNC,START                                               EEPROM->小程序
+2.发送数据成功：LINE,SEND,FF/00                                                      EEPROM->小程序 FF 成功 00 失败
+3.发送结束：LINE,END                                                                小程序->EEPROM
+4.调用曲线：LINE,RUN,曲线编号                                                        小程序->EEPROM
+5.清楚曲线：LINE,CLR,曲线编号                                                        小程序->EEPROM
+6.从EEPROM同步曲线数据-触发：LINE,SYNC                                               小程序->EEPROM
+7.EEPROM发送过程开始：LINE,SYNC,00                                                  EEPROM->小程序  FF 结束 00 开始
 
                              曲线编号 ｜ 二维数组列序号｜line[0]｜line[1]｜line[2]｜line[3]
-7.EEPROM曲线发送开始：LINE,SYNC,00     ｜00           ｜00 00  ｜00 00  ｜00     ｜hex格式的字符         EEPROM->小程序
-8.EEPROM曲线结束：LINE,SYNC,END,00                                                                   EEPROM->小程序
-9.EEPROM发送过程结束：LINE,SYNC,FINSH                                                                 EEPROM->小程序
+8.EEPROM曲线发送开始：LINE,SYNC,00     ｜00           ｜00 00  ｜00 00  ｜00     ｜hex格式的字符         EEPROM->小程序
+9.EEPROM曲线发送OK：：LINE,SYNC,FF/00                                                                 小程序->EEPROM  FF 成功 00 失败
+9.EEPROM曲线结束：LINE,SYNC,END,00                                                                   EEPROM->小程序
+10.EEPROM发送过程结束：LINE,SYNC,FF                                                                   EEPROM->小程序 FF 结束 00 开始
 
 
 #数据样例
@@ -46,17 +48,25 @@ line[3] :BGN        100             DYE             170             FCS         
 小程序：发送- LINE,CLR,00  //相当于线清理原来曲线后再重新写入新数据
 延时1000ms
 小程序：发送- LINE,SEND,00 00 00 00 0F 0A 37 42 47 4E  //这里hex可以不用加空格 即000000000F0A3742474E整包发送。空格只是为了方便好看而已。
-延时500ms
+EEPROM接收数据成功返回命令：LINE,SEND,FF /接收失败发送LINE,SEND,00
+延时200ms 
+EEPROM接收数据失败-->重发
+EEPROM接收数据成功即发送下一条
 小程序：发送- LINE,SEND,00 01 00 3C 27 10 35 31 30 30
-延时500ms
+EEPROM：LINE,SEND,FF
+延时200ms
 小程序：发送- LINE,SEND,00 02 00 B4 3E 80 34 44 59 45
-延时500ms
+EEPROM：LINE,SEND,FF
+延时200ms
 小程序：发送- LINE,SEND,00 03 01 0E 42 68 32 31 37 30
-延时500ms
+EEPROM：LINE,SEND,FF
+延时200ms
 小程序：发送- LINE,SEND,00 04 01 40 4A 38 2D 46 43 53
-延时500ms
+EEPROM：LINE,SEND,FF
+延时200ms
 小程序：发送- LINE,SEND,00 05 01 5E 4E 20 2D 44 52 59
-延时500ms
+EEPROM：LINE,SEND,FF
+延时200ms
 小程序：发送- LINE,END
 
 
@@ -69,45 +79,68 @@ LINE,RUN,00 //跑第00条数据
 EEPROM：发送- LINE,SYNC,START
 延时1000ms
 EEPROM：发送- LINE,SYNC,00 00 00 00 0F 0A 37 42 47 4E
+小程序接收数据失败-->重发 LINE,SYNC,00
+小程序接收数据成功即发送下一条 LINE,SYNC,FF
+
 延时200ms
 EEPROM：发送- LINE,SYNC,00 01 00 3C 27 10 35 31 30 30
+小程序：LINE,SYNC,FF
 延时200ms
 EEPROM：发送- LINE,SYNC,00 02 00 B4 3E 80 34 44 59 45
+小程序：LINE,SYNC,FF
 延时200ms
 EEPROM：发送- LINE,SYNC,00 03 01 0E 42 68 32 31 37 30
+小程序：LINE,SYNC,FF
 延时200ms
 EEPROM：发送- LINE,SYNC,00 04 01 40 4A 38 2D 46 43 53
+小程序：LINE,SYNC,FF
 延时200ms
 EEPROM：发送- LINE,SYNC,00 05 01 5E 4E 20 2D 44 52 59
+小程序：LINE,SYNC,FF
 延时200ms
 EEPROM：发送- LINE,SYNC,END,00 
+小程序：LINE,SYNC,FF
 延时200ms
 EEPROM：发送- LINE,SYNC,01 00 00 00 0F 0A 37 42 47 4E
+小程序：LINE,SYNC,FF
 延时200ms
 EEPROM：发送- LINE,SYNC,01 01 00 3C 27 10 35 31 30 30
+小程序：LINE,SYNC,FF
 延时200ms
 EEPROM：发送- LINE,SYNC,01 02 00 B4 3E 80 34 44 59 45
+小程序：LINE,SYNC,FF
 延时200ms
 EEPROM：发送- LINE,SYNC,01 03 01 0E 42 68 32 31 37 30
+小程序：LINE,SYNC,FF
 延时200ms
 EEPROM：发送- LINE,SYNC,01 04 01 40 4A 38 2D 46 43 53
+小程序：LINE,SYNC,FF
 延时200ms
 EEPROM：发送- LINE,SYNC,01 05 01 5E 4E 20 2D 44 52 59
+小程序：LINE,SYNC,FF
 延时200ms
 EEPROM：发送- LINE,SYNC,END,01
+小程序：LINE,SYNC,FF
 延时200ms
 EEPROM：发送- LINE,SYNC,02 00 00 00 0F 0A 37 42 47 4E
+小程序：LINE,SYNC,FF
 延时200ms
 EEPROM：发送- LINE,SYNC,02 01 00 3C 27 10 35 31 30 30
+小程序：LINE,SYNC,FF
 延时200ms
 EEPROM：发送- LINE,SYNC,02 02 00 B4 3E 80 34 44 59 45
+小程序：LINE,SYNC,FF
 延时200m数
 EEPROM：发送- LINE,SYNC,02 03 01 0E 42 68 32 31 37 30
+小程序：LINE,SYNC,FF
 延时200ms
 EEPROM：发送- LINE,SYNC,02 04 01 40 4A 38 2D 46 43 53
+小程序：LINE,SYNC,FF
 延时200ms
 EEPROM：发送- LINE,SYNC,02 05 01 5E 4E 20 2D 44 52 59
+小程序：LINE,SYNC,FF
 延时200ms
 EEPROM：发送- LINE,SYNC,END,02
+小程序：LINE,SYNC,FF
 延时200ms
 EEPROM：发送- LINE,SYNC,FINSH 

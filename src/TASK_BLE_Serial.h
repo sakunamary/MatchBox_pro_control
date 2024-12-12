@@ -34,6 +34,8 @@ String CMD_Data[6];
 
 extern int levelOT1;
 extern int levelIO3;
+extern int OT1_OUT;
+extern int PWM_OT1;
 extern bool pid_status;
 extern double BT_TEMP;
 extern double ET_TEMP;
@@ -276,6 +278,19 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     {
                         if (levelIO3 >= 30)
                         {
+#ifdef PID_OFF_PWR_LIMT
+                            if (pid_status == true)
+                            {
+                                OT1_OUT = MAX_OT1;
+                                PWM_OT1 = PWM_HEAT_MAX;
+                            }
+                            else
+                            {
+                                OT1_OUT = MAX_OT1_LIMT;
+                                PWM_OT1 = PWM_HEAT_MAX_LIMT;
+                            }
+
+#endif
                             levelOT1 = levelOT1 + DUTY_STEP;
                             if (levelOT1 > MAX_OT1)
                                 levelOT1 = MAX_OT1; // don't allow OT1 to exceed maximum
@@ -286,7 +301,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         {
                             levelOT1 = 0;
                         }
-                        pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                        pwm_heat.write(map(levelOT1, 0, OT1_OUT, PWM_HEAT_MIN, PWM_OT1));
                         xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                     }
                 }
@@ -304,7 +319,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         {
                             levelOT1 = 0;
                         }
-                        pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                        pwm_heat.write(map(levelOT1, 0, OT1_OUT, PWM_HEAT_MIN, PWM_OT1));
                         xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                     }
                 }
@@ -318,6 +333,19 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                             levelOT1 = CMD_Data[1].toInt();
                             if (levelIO3 >= 30)
                             {
+#ifdef PID_OFF_PWR_LIMT
+                                if (pid_status == true)
+                                {
+                                    OT1_OUT = MAX_OT1;
+                                    PWM_OT1 = PWM_HEAT_MAX;
+                                }
+                                else
+                                {
+                                    OT1_OUT = MAX_OT1_LIMT;
+                                    PWM_OT1 = PWM_HEAT_MAX_LIMT;
+                                }
+
+#endif
                                 if (levelOT1 > MAX_OT1)
                                     levelOT1 = MAX_OT1; // don't allow OT1 to exceed maximum
                                 if (levelOT1 < MIN_OT1 & levelOT1 != 0)
@@ -328,7 +356,7 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                                 levelOT1 = 0;
                             }
 
-                            pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                            pwm_heat.write(map(levelOT1, 0, OT1_OUT, PWM_HEAT_MIN, PWM_OT1));
                             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
                     }
@@ -338,6 +366,8 @@ void TASK_BLE_CMD_handle(void *pvParameters)
             {
                 if (CMD_Data[1] == "ON")
                 {
+                    OT1_OUT = MAX_OT1;
+                    PWM_OT1 = PWM_HEAT_MAX;
                     Heat_pid_controller.SetMode(AUTOMATIC);
                     pid_parm.p = 2.0;
                     pid_parm.i = 0.12;
@@ -353,6 +383,8 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                 }
                 else if (CMD_Data[1] == "OFF")
                 {
+                    OT1_OUT = MAX_OT1_LIMT;
+                    PWM_OT1 = PWM_HEAT_MAX_LIMT;
                     Heat_pid_controller.SetMode(MANUAL);
                     pid_parm.p = 2.0;
                     pid_parm.i = 0.12;
@@ -363,9 +395,9 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                         pid_status = false;
                         pid_sv = 0;
                         levelOT1 = 0;
-                        //levelIO3 = 50;
-                        pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
-                        //pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
+                        // levelIO3 = 50;
+                        pwm_heat.write(map(levelOT1, 0, OT1_OUT, PWM_HEAT_MIN, PWM_OT1));
+                        // pwm_fan.write(map(levelIO3, MIN_IO3, MAX_IO3, PWM_FAN_MIN, PWM_FAN_MAX));
                         sprintf(line3, "HTR:%4d ", (int)round(levelOT1));
                         LCD.PCF8574_LCDClearLine(LCD.LCDLineNumberThree);
                         LCD.PCF8574_LCDGOTO(LCD.LCDLineNumberThree, 0);
@@ -379,10 +411,12 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     {
                         if (xSemaphoreTake(xThermoDataMutex, timeOut) == pdPASS) // 给温度数组的最后一个数值写入数据
                         {
+                            OT1_OUT = MAX_OT1;
+                            PWM_OT1 = PWM_HEAT_MAX;
                             pid_sv = CMD_Data[2].toFloat();
                             Heat_pid_controller.Compute();
                             levelOT1 = int(round(PID_output));
-                            pwm_heat.write(map(levelOT1, 0, 100, PWM_HEAT_MIN, PWM_HEAT_MAX));
+                            pwm_heat.write(map(levelOT1, 0, OT1_OUT, PWM_HEAT_MIN, PWM_OT1));
                             xSemaphoreGive(xThermoDataMutex); // end of lock mutex
                         }
                     }
@@ -453,6 +487,23 @@ void TASK_BLE_CMD_handle(void *pvParameters)
                     vTaskDelay(2000 / portTICK_PERIOD_MS);
                     LCD.PCF8574_LCDClearScreen();
                     vTaskResume(xTASK_LCD);
+                }
+            }
+            else if (CMD_Data[0] == "SET")
+            {
+                if (CMD_Data[1] == "BT")
+                {
+                    pid_parm.BT_tempfix = CMD_Data[2].toFloat();
+                    I2C_EEPROM.put(0, pid_parm);
+                    I2C_EEPROM.put(64, pid_parm);
+                    I2C_EEPROM.put(128, pid_parm);
+                }
+                else if (CMD_Data[1] == "BT")
+                {
+                    pid_parm.ET_tempfix = CMD_Data[2].toFloat();
+                    I2C_EEPROM.put(0, pid_parm);
+                    I2C_EEPROM.put(64, pid_parm);
+                    I2C_EEPROM.put(128, pid_parm);
                 }
             }
         } // END of  big handle case switch

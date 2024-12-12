@@ -36,6 +36,8 @@ extern TaskHandle_t loopTaskHandle;
 // uint8_t HMI_HAND[HMI_BUFFER_SIZE];
 int levelOT1 = 0;
 int levelIO3 = 25;
+int OT1_OUT = MAX_OT1;
+int PWM_OT1 = PWM_HEAT_MAX;
 bool pid_status = false;
 bool PID_TUNNING = false;
 bool first = true;
