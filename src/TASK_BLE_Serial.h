@@ -72,6 +72,7 @@ class MyCallbacks : public BLECharacteristicCallbacks
         while (i < rxValue.length() && rxValue.length() > 0)
         {
 #if defined(DEBUG_MODE)
+            Serial.print("BLE OUT : ");
             Serial.print(rxValue[i]);
 #endif
             if (rxValue[i] == 0x0A)
@@ -115,7 +116,7 @@ void TASK_DATA_to_BLE(void *pvParameters)
 
             { // 从接收QueueCMD 接收指令
 #if defined(DEBUG_MODE)
-                Serial.print("CMD for BLE: ");
+                Serial.print("CMD from BLE: ");
                 Serial.println(String((char *)BLE_DATA_Buffer));
 #endif
                 if (deviceConnected)
