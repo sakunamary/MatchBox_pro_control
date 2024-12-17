@@ -6,9 +6,9 @@
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define BAUDRATE 9600          // serial port baudrate
-#define VERSION "1.1.3"
+#define VERSION "1.1.4"
 //  DEBUG_MODE 会在串口输出用于调试的测试反馈信息
- //#define DEBUG_MODE
+ #define DEBUG_MODE
 
 // 下面Thermo 选项 只能选择其中一个
 //  thermocouple on typeK / PT100
